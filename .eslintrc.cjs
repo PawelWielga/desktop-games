@@ -1,1 +1,0 @@
-﻿module.exports = {\n  root: true,\n  env: { browser: true, es2022: true },\n  extends: ["eslint:recommended", "plugin:react/recommended", "plugin:react-hooks/recommended", "prettier"],\n  parserOptions: { ecmaVersion: "latest", sourceType: "module" },\n  settings: { react: { version: "detect" } },\n  rules: {},\n};\n
