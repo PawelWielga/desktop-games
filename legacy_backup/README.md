@@ -1,3 +1,13 @@
+# Legacy backup archive
+
+This folder contains a historical static HTML/CSS/JavaScript version of the project. The active React/Vite application lives in `src`, with current public assets under `public` and active configuration files in the repository root.
+
+Use this folder only as reference material when comparing old game implementations. Do not add new active app code here.
+
+The duplicated nested `legacy_backup/legacy_backup` copy was removed so repository searches return one historical copy instead of duplicate legacy files.
+
+## Original legacy README
+
 # chatgpt_codex_tests
 
 This repository was created to test the ChatGPT Codex tool and contains a small number of example demos: <https://pawelwielga.github.io/chatgpt_codex_tests/index.html>
@@ -39,7 +49,5 @@ As of now the project remains a static HTML/JS collection and has not been conve
 - Create a component for each game currently under `games/` and move their HTML, CSS and JS logic into Angular components and services.
 - Set up routing so that each game is accessible via its own path.
 - Migrate shared utilities such as `player-settings.js` and `codeconnect.js` into Angular services.
-- Update build configuration to include assets in `css/` and `js/` folders.
+- Update build configuration to include assets in `css/` and `js` folders.
 - Replace CDN loaded dependencies with package-based installations where possible.
-
-
