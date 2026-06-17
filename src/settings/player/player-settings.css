@@ -1,6 +1,6 @@
 /* Player Settings Panel styles
    - Modal, Drawer, and Inline variants
-   - Respects site tokens from src/styles/base.css and layout.css
+   - Respects site tokens from src/styles/base.css
    - Dark/light aware via data-theme
 */
 
