@@ -3,6 +3,10 @@ import react from "@vitejs/plugin-react";
 
 const srcPath = new URL("./src", import.meta.url).pathname;
 
+declare const process: {
+  env?: Record<string, string | undefined>;
+};
+
 const normalizeBasePath = (value?: string): string => {
   if (!value || value.trim().length === 0) {
     return "/";
@@ -13,7 +17,7 @@ const normalizeBasePath = (value?: string): string => {
   return withLeadingSlash.endsWith("/") ? withLeadingSlash : `${withLeadingSlash}/`;
 };
 
-const base = normalizeBasePath(process.env.VITE_BASE_PATH);
+const base = normalizeBasePath(process.env?.VITE_BASE_PATH);
 
 export default defineConfig({
   plugins: [react()],
