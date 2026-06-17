@@ -35,8 +35,7 @@ export type GameErrorMessage = BaseMultiplayerMessage<"game:error"> & {
 
 export type CommonMultiplayerMessage = PlayerHelloMessage | GameResetMessage | GameReadyMessage | GameErrorMessage;
 
-export type GameSpecificMessage<TType extends string, TPayload extends JsonObject = JsonObject> = BaseMultiplayerMessage<TType> &
-  TPayload;
+export type GameSpecificMessage<TType extends string, TPayload = JsonObject> = BaseMultiplayerMessage<TType> & TPayload;
 
 export type AnyMultiplayerMessage = CommonMultiplayerMessage | BaseMultiplayerMessage;
 
