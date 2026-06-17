@@ -18,6 +18,17 @@ export type WindowDefaults = {
 // Registry maps well-known window ids to their default metadata and content loader.
 // Desktop can use this to open windows without hardcoding sizes/positions everywhere.
 export const WindowRegistry: Record<string, WindowDefaults> = {
+  tictactoe: {
+    id: "tictactoe",
+    title: "Kółko i Krzyżyk",
+    width: 620,
+    height: 760,
+    minWidth: 420,
+    minHeight: 620,
+    x: 100,
+    y: 70,
+    loader: () => import("@/games/tictactoe/TicTacToeGame"),
+  },
   snake: {
     id: "snake",
     title: "Wąż",
