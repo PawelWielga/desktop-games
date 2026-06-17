@@ -68,11 +68,9 @@ export function useWindowDrag(
 
     // Snap to other windows (query by class). Use bounding rects in CSS pixels.
     const rectA = { x: sx, y: sy, w, h };
-    const currentLabel = document.activeElement?.getAttribute?.("aria-label");
     const others = Array.from(document.querySelectorAll<HTMLElement>(".window"));
 
     for (const el of others) {
-      // skip elements without geometry
       const r = el.getBoundingClientRect();
       const edges = {
         left: r.left,
@@ -128,36 +126,7 @@ export function useWindowDrag(
     if (typeof (e as any).preventDefault === "function") (e as any).preventDefault();
 
     startPoint.current = { x: e.clientX, y: e.clientY };
-
-    // Determine the live on-screen starting position to avoid snap-back between drags.
-    // Prefer inline left/top (sync writes in WindowManager onPatch), else computed rect, else state fallback.
-    let liveX = st.x;
-    let liveY = st.y;
-    try {
-      // Find the nearest .window element by traversing from header/content
-      const rootEl =
-        (opts?.headerEl?.closest?.(".window") as HTMLElement | null) ??
-        (opts?.contentEl?.closest?.(".window") as HTMLElement | null) ??
-        null;
-      if (rootEl) {
-        const inlineLeft = (rootEl.style && rootEl.style.left) ? parseFloat(rootEl.style.left) : NaN;
-        const inlineTop = (rootEl.style && rootEl.style.top) ? parseFloat(rootEl.style.top) : NaN;
-        if (Number.isFinite(inlineLeft) && Number.isFinite(inlineTop)) {
-          liveX = inlineLeft;
-          liveY = inlineTop;
-        } else {
-          // Fall back to bounding rect relative to viewport
-          const rect = rootEl.getBoundingClientRect();
-          // The window root container is fixed to the viewport; use rect.left/top directly.
-          liveX = rect.left;
-          liveY = rect.top;
-        }
-      }
-    } catch {
-      // ignore, keep state fallback
-    }
-
-    startPos.current = { x: liveX, y: liveY };
+    startPos.current = { x: st.x, y: st.y };
     dragActive.current = false;
 
     // Hold-to-drag support
