@@ -1,18 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSettings } from "@/settings/SettingsContext";
 import "./snake.css";
-
-/** Types */
-type Point = { x: number; y: number };
-type Dir = "up" | "down" | "left" | "right";
-type Vec = { x: number; y: number };
-type SnakeState = {
-  snake: Point[];
-  dir: Vec;
-  food: Point;
-  score: number;
-  alive: boolean;
-};
+import {
+  DIR_VECTORS,
+  type Dir,
+  type Point,
+  type SnakeState,
+  placeFood,
+  step,
+} from "./snake.logic";
 
 /** Constants */
 const DEFAULT_GRID_SIZE = 24;
@@ -24,12 +20,9 @@ const GRID_STROKE = "rgba(255,255,255,0.05)";
 const HEAD_COLOR = "#4caf50";
 const BODY_COLOR = "#81c784";
 const FOOD_COLOR = "#d9534f";
-const SCORE_PER_FOOD = 10;
-
 // Loop and input constants
 const TICK_BASE_MS = 1000;
 const GRID_LINE_WIDTH = 1;
-const FOOD_PLACE_ATTEMPTS = 100;
 const QUEUE_DRAIN_PER_TICK = 1 as const;
 const START_DIR: Dir = "right";
 const INITIAL_SNAKE: Point[] = [{ x: 3, y: 5 }, { x: 2, y: 5 }, { x: 1, y: 5 }];
@@ -45,58 +38,6 @@ const DIR_KEYS: Record<string, Dir | undefined> = {
   arrowright: "right",
   d: "right",
 };
-
-/** Direction vectors */
-const DIR_VECTORS: Record<Dir, Vec> = {
-  up: { x: 0, y: -1 },
-  down: { x: 0, y: 1 },
-  left: { x: -1, y: 0 },
-  right: { x: 1, y: 0 },
-};
-
-/** Pure helpers */
-function wrap(v: number, max: number): number {
-  return (v + max) % max;
-}
-
-function randInt(max: number, rng: () => number): number {
-  return Math.floor(rng() * max);
-}
-
-function placeFood(cols: number, rows: number, taken: Point[], rng: () => number): Point {
-  const takenKey = new Set(taken.map((p) => `${p.x},${p.y}`));
-  for (let attempt = 0; attempt < FOOD_PLACE_ATTEMPTS; attempt++) {
-    const p = { x: randInt(cols, rng), y: randInt(rows, rng) };
-    if (!takenKey.has(`${p.x},${p.y}`)) return p;
-  }
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      if (!takenKey.has(`${x},${y}`)) return { x, y };
-    }
-  }
-  return { x: 0, y: 0 };
-}
-
-/** Pure game step with injectable RNG */
-function step(state: SnakeState, input: Dir, cfg: { cols: number; rows: number; rng: () => number }): SnakeState {
-  if (!state.alive) return state;
-  const d = DIR_VECTORS[input];
-  const head = { x: wrap(state.snake[0].x + d.x, cfg.cols), y: wrap(state.snake[0].y + d.y, cfg.rows) };
-  const body = [head, ...state.snake];
-  const ate = head.x === state.food.x && head.y === state.food.y;
-
-  let food = state.food;
-  let score = state.score;
-  if (ate) {
-    score += SCORE_PER_FOOD;
-    food = placeFood(cfg.cols, cfg.rows, body, cfg.rng);
-  } else {
-    body.pop();
-  }
-
-  const collided = body.slice(1).some((p) => p.x === head.x && p.y === head.y);
-  return { snake: body, dir: d, food, score, alive: !collided };
-}
 
 /** Component */
 export default function SnakeGame(): React.ReactElement {

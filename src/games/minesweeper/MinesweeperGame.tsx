@@ -1,17 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./minesweeper.css";
-
-type Cell = {
-  mine: boolean;
-  revealed: boolean;
-  flagged: boolean;
-  adj: number; // adjacent mines
-};
-
-type Difficulty = { cols: number; rows: number; mines: number };
+import {
+  DEFAULT_DIFFICULTY,
+  type Cell,
+  computeWaveDistances,
+  createBoard,
+  hasWon,
+  placeMinesDeterministic,
+  revealFlood,
+} from "./minesweeper.logic";
 
 /** Constants */
-const DEFAULT_DIFFICULTY: Difficulty = { cols: 9, rows: 9, mines: 10 };
 const TIMER_INTERVAL_MS = 1000;
 const MAX_TIMER = 999;
 const CELL_PX = 28;
@@ -22,107 +21,6 @@ type WaveMeta = {
   waveId: number;
   dist: number;
 } | null;
-
-function inBounds(c: number, r: number, cols: number, rows: number) {
-  return c >= 0 && c < cols && r >= 0 && r < rows;
-}
-
-function neighbors(index: number, cols: number, rows: number) {
-  const r = Math.floor(index / cols);
-  const c = index % cols;
-  const result: number[] = [];
-  for (let rr = r - 1; rr <= r + 1; rr++) {
-    for (let cc = c - 1; cc <= c + 1; cc++) {
-      if (rr === r && cc === c) continue;
-      if (inBounds(cc, rr, cols, rows)) result.push(rr * cols + cc);
-    }
-  }
-  return result;
-}
-
-function createBoard(cols: number, rows: number): Cell[] {
-  return Array.from({ length: cols * rows }, () => ({
-    mine: false,
-    revealed: false,
-    flagged: false,
-    adj: 0,
-  }));
-}
-
-/**
- * Deterministic mine placement with injectable RNG.
- * Keeps "first click and neighbors are safe" guarantee.
- */
-function placeMinesDeterministic(
-  board: Cell[],
-  cols: number,
-  rows: number,
-  mines: number,
-  safeIndex: number,
-  rng: () => number
-) {
-  const forbidden = new Set([safeIndex, ...neighbors(safeIndex, cols, rows)]);
-  let placed = 0;
-  while (placed < mines) {
-    const pos = Math.floor(rng() * board.length);
-    if (forbidden.has(pos)) continue;
-    if (!board[pos].mine) {
-      board[pos].mine = true;
-      placed++;
-    }
-  }
-  // compute adj counts
-  for (let i = 0; i < board.length; i++) {
-    if (board[i].mine) continue;
-    const adj = neighbors(i, cols, rows).reduce((acc, n) => acc + (board[n].mine ? 1 : 0), 0);
-    board[i].adj = adj;
-  }
-}
-
-function revealFlood(board: Cell[], start: number, cols: number, rows: number) {
-  const stack = [start];
-  while (stack.length) {
-    const idx = stack.pop()!;
-    const cell = board[idx];
-    if (cell.revealed || cell.flagged) continue;
-    cell.revealed = true;
-    if (!cell.mine && cell.adj === 0) {
-      for (const n of neighbors(idx, cols, rows)) {
-        if (!board[n].revealed && !board[n].flagged) stack.push(n);
-      }
-    }
-  }
-}
-
-/**
- * Compute BFS distances only within the set of cells that will be revealed in this wave.
- * This mirrors legacy revealWave timing (d * 60ms), and does NOT include mines.
- */
-function computeWaveDistances(revealedNow: Set<number>, startIdx: number, cols: number, rows: number): Map<number, number> {
-  const dist = new Map<number, number>();
-  if (!revealedNow.size) return dist;
-
-  // Prefer starting wave from the clicked cell if it is part of the reveal set
-  const seed = revealedNow.has(startIdx) ? startIdx : [...revealedNow][0];
-  dist.set(seed, 0);
-
-  const q: number[] = [seed];
-  while (q.length) {
-    const u = q.shift()!;
-    const du = dist.get(u)!;
-    for (const v of neighbors(u, cols, rows)) {
-      if (!revealedNow.has(v)) continue;
-      if (dist.has(v)) continue;
-      dist.set(v, du + 1);
-      q.push(v);
-    }
-  }
-  return dist;
-}
-
-// Compute BFS distances for ripple like legacy revealWave().
-// It traverses only across cells that will be revealed in this action.
-/* duplicate removed */
 
 export default function MinesweeperGame(): React.ReactElement {
   const { cols, rows, mines } = DEFAULT_DIFFICULTY;
@@ -191,16 +89,7 @@ export default function MinesweeperGame(): React.ReactElement {
   };
 
   const checkWin = (next: Cell[]) => {
-    // win if all non-mine cells revealed
-    const total = cols * rows;
-    let revealedSafe = 0;
-    let minesCount = 0;
-    for (let i = 0; i < total; i++) {
-      const c = next[i];
-      if (c.mine) minesCount++;
-      else if (c.revealed) revealedSafe++;
-    }
-    if (minesCount === mines && revealedSafe === total - mines) {
+    if (hasWon(next, cols, rows, mines)) {
       if (timerRef.current) window.clearInterval(timerRef.current);
       setWon(true);
     }
