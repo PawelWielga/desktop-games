@@ -39,6 +39,7 @@ export type {
   GameSpecificMessage,
   MessageMetadata,
   MessageSend,
+  OutgoingMultiplayerMessage,
   PlayerHelloMessage,
   PlayerProfile,
   RoomPlayersMessage,
