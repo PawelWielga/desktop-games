@@ -22,7 +22,7 @@ const browserGlobals = {
 
 export default [
   {
-    ignores: ["dist/**", "build/**", "coverage/**", "node_modules/**"],
+    ignores: ["build/**", "coverage/**", "dist/**", "legacy_backup/**", "node_modules/**", "public/**"],
   },
   js.configs.recommended,
   {
