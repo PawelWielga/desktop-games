@@ -17,7 +17,7 @@ export default function Desktop(): React.ReactElement {
   // Centralize shortcut definitions; labels can later be i18n'ed
   const shortcuts: Shortcut[] = useMemo(
     () => [
-      { id: "tictactoe", icon: "🔢", label: "Kółko i Krzyżyk", implemented: false },
+      { id: "tictactoe", icon: "🔢", label: "Kółko i Krzyżyk", implemented: true },
       { id: "memo", icon: "🧠", label: "Memo", implemented: false },
       { id: "snake", icon: "🐍", label: "Wąż", implemented: true },
       { id: "rps", icon: "✊", label: "Kamień Papier Nożyce", implemented: false },

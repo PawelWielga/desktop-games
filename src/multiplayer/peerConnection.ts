@@ -206,6 +206,10 @@ export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage
       throw new Error("Wiadomość multiplayer musi być obiektem JSON.");
     }
 
+    if (typeof parsed.type !== "string" || parsed.type.trim().length === 0) {
+      throw new Error("Wiadomość multiplayer musi mieć typ.");
+    }
+
     return parsed as TMessage;
   }
 
