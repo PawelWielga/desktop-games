@@ -6,9 +6,9 @@ import {
   type BaseMultiplayerMessage,
   type PlayerHelloMessage,
   type PlayerProfile,
+  type RoomPlayersMessage,
   isPlayerHelloMessage,
   parseMultiplayerMessage,
-  sendMessage as sendTypedMessage,
 } from "./messages";
 import type { HostClientRoomEvent, HostClientRoomOptions, HostClientRoomStatus, RemotePlayer } from "./hostClientRoom.types";
 
@@ -50,12 +50,12 @@ export function usePeerHostRoom<TMessage extends BaseMultiplayerMessage = BaseMu
 
   const publishPlayers = useCallback(() => {
     const remotePlayers = Array.from(playersRef.current.values());
-    const allPlayers = options.localPlayer ? [options.localPlayer, ...remotePlayers] : remotePlayers;
-    const message = {
+    const allPlayers: PlayerProfile[] = options.localPlayer ? [options.localPlayer, ...remotePlayers] : remotePlayers;
+    const message: RoomPlayersMessage = {
       type: "room:players",
       senderId: options.localPlayer?.id,
       players: allPlayers,
-    } as Parameters<typeof sendTypedMessage>[1] & { players: PlayerProfile[] };
+    };
 
     for (const connection of connectionsRef.current.values()) {
       sendRaw(connection, message);
