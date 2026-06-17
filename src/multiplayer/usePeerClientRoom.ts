@@ -2,12 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Peer, { type DataConnection } from "peerjs";
 import { isValidRoomCode, normalizeRoomCode } from "./peerConnection";
 import type { MultiplayerConnectionError } from "./multiplayer.types";
-import {
-  type BaseMultiplayerMessage,
-  isRoomPlayersMessage,
-  parseMultiplayerMessage,
-  sendMessage as sendTypedMessage,
-} from "./messages";
+import { type BaseMultiplayerMessage, type PlayerHelloMessage, isRoomPlayersMessage, parseMultiplayerMessage } from "./messages";
 import type { HostClientRoomEvent, HostClientRoomOptions, HostClientRoomStatus, RemotePlayer } from "./hostClientRoom.types";
 
 export type UsePeerClientRoomResult<TMessage extends BaseMultiplayerMessage = BaseMultiplayerMessage> = {
@@ -68,11 +63,13 @@ export function usePeerClientRoom<TMessage extends BaseMultiplayerMessage = Base
       connection.on("open", () => {
         setStatus("connected");
         if (options.localPlayer) {
-          sendTypedMessage(sendRaw.bind(null, connection), {
+          const helloMessage: PlayerHelloMessage = {
             type: "player:hello",
             senderId: options.localPlayer.id,
+            sentAt: Date.now(),
             player: options.localPlayer,
-          });
+          };
+          sendRaw(connection, helloMessage);
         }
       });
 
