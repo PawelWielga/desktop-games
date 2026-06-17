@@ -46,10 +46,54 @@
   transform: translateY(1px);
 }
 
+
+.ms-difficulty {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f7f7f7;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.ms-difficulty-option {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  min-width: 128px;
+  padding: 6px 10px;
+  border: 1px solid #b8b8b8;
+  border-radius: 4px;
+  background: #efefef;
+  color: #222;
+  cursor: pointer;
+  font: inherit;
+}
+
+.ms-difficulty-option:hover {
+  background: #ffffff;
+}
+
+.ms-difficulty-option[data-active="true"] {
+  background: #dceeff;
+  border-color: #6aa6d8;
+  box-shadow: inset 0 0 0 1px #6aa6d8;
+}
+
+.ms-difficulty-option small {
+  color: #555;
+  font-size: 11px;
+}
+
+.ms-grid-wrap {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding: 12px;
+}
+
 /* Remove gray background below the grid and mirror legacy chrome */
 .ms-grid {
-  flex: 1 1 auto;
-  padding: 12px;
   display: grid;
   gap: 1px;                /* legacy gap between tiles */
   background: transparent; /* requested: no gray panel behind board */
