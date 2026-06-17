@@ -37,7 +37,7 @@ export function isValidRoomCode(roomCode: string): boolean {
 export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage> {
   private peer: Peer | null = null;
   private connection: DataConnection | null = null;
-  private connectionTimeout: number | null = null;
+  private connectionTimeout: ReturnType<typeof setTimeout> | null = null;
   private readonly messageHandlers = new Set<MultiplayerMessageHandler<TMessage>>();
   private readonly statusHandlers = new Set<MultiplayerStatusHandler>();
   private readonly errorHandlers = new Set<MultiplayerErrorHandler>();
@@ -269,12 +269,12 @@ export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage
 
   private startConnectionTimeout(onTimeout: () => void): void {
     this.clearConnectionTimeout();
-    this.connectionTimeout = window.setTimeout(onTimeout, this.options.connectionTimeoutMs ?? DEFAULT_CONNECTION_TIMEOUT_MS);
+    this.connectionTimeout = setTimeout(onTimeout, this.options.connectionTimeoutMs ?? DEFAULT_CONNECTION_TIMEOUT_MS);
   }
 
   private clearConnectionTimeout(): void {
     if (this.connectionTimeout !== null) {
-      window.clearTimeout(this.connectionTimeout);
+      clearTimeout(this.connectionTimeout);
       this.connectionTimeout = null;
     }
   }
