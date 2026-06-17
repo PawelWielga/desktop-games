@@ -1,5 +1,5 @@
 import type { MultiplayerConnectionError, MultiplayerConnectionStatus, MultiplayerRole } from "./multiplayer.types";
-import type { BaseMultiplayerMessage, PlayerProfile } from "./messages";
+import type { BaseMultiplayerMessage, OutgoingMultiplayerMessage, PlayerProfile } from "./messages";
 
 export type GameSessionRole = MultiplayerRole;
 
@@ -23,7 +23,7 @@ export type GameSessionSnapshot<TMessage extends BaseMultiplayerMessage = BaseMu
   roomCode: string | null;
   error: MultiplayerConnectionError | null;
   lastMessage: TMessage | null;
-  sendMessage: (message: Omit<TMessage, "sentAt"> & Partial<Pick<TMessage, "sentAt">>) => boolean;
+  sendMessage: (message: OutgoingMultiplayerMessage<TMessage>) => boolean;
 };
 
 export function getStartingTurn(role: GameSessionRole | null): TurnOwner | null {
