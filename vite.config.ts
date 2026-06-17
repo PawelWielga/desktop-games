@@ -1,21 +1,27 @@
-﻿import { defineConfig } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// Use URL-based alias to avoid relying on Node globals/types in ESM
 const srcPath = new URL("./src", import.meta.url).pathname;
 
-// Determine base path for GitHub Pages deployments.
-// Avoid Node types by reading from import.meta.env at build-time.
-// The workflow sets VITE_BASE_PATH env which Vite exposes as import.meta.env.VITE_BASE_PATH.
-const baseFromEnv = (import.meta as any).env?.VITE_BASE_PATH as string | undefined;
-const base = baseFromEnv && baseFromEnv.trim().length > 0 ? baseFromEnv : "/";
+declare const process: {
+  env?: Record<string, string | undefined>;
+};
+
+const normalizeBasePath = (value?: string): string => {
+  if (!value || value.trim().length === 0) {
+    return "/";
+  }
+
+  const trimmed = value.trim();
+  const withLeadingSlash = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+  return withLeadingSlash.endsWith("/") ? withLeadingSlash : `${withLeadingSlash}/`;
+};
+
+const base = normalizeBasePath(process.env?.VITE_BASE_PATH);
 
 export default defineConfig({
   plugins: [react()],
-  // Force correct base for GitHub Pages project site:
-  // https://pawelwielga.github.io/desktop-games/
-  // This avoids absolute /assets/... pointing to the root user page.
-  base: "/desktop-games/",
+  base,
   resolve: {
     alias: {
       "@": srcPath,
