@@ -1,49 +1,27 @@
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import "./desktop.css";
 import { useWindowManager } from "@/window/WindowManager";
-import { getWindowDefaults } from "@/window/registry";
+import { getAppRegistration, getDesktopApps, getWindowDefaults } from "@/window/registry";
 import ProgressiveImage from "@/components/ProgressiveImage";
-
-type Shortcut = {
-  id: string;
-  icon: string; // emoji
-  label: string;
-  implemented?: boolean;
-};
 
 export default function Desktop(): React.ReactElement {
   const { open, handles, focus } = useWindowManager();
 
-  // Centralize shortcut definitions; labels can later be i18n'ed
-  const shortcuts: Shortcut[] = useMemo(
-    () => [
-      { id: "tictactoe", icon: "🔢", label: "Kółko i Krzyżyk", implemented: true },
-      { id: "memo", icon: "🧠", label: "Memo", implemented: false },
-      { id: "snake", icon: "🐍", label: "Wąż", implemented: true },
-      { id: "rps", icon: "✊", label: "Kamień Papier Nożyce", implemented: false },
-      { id: "minesweeper", icon: "🚩", label: "Saper", implemented: true },
-      { id: "tetris", icon: "🧱", label: "Tetris", implemented: false },
-      { id: "connect4", icon: "🟡", label: "Connect 4", implemented: false },
-      { id: "pong", icon: "🏓", label: "Pong", implemented: false },
-      { id: "cards", icon: "🃏", label: "Ewolucja", implemented: false },
-      { id: "calc", icon: "🖩", label: "Catculator", implemented: false },
-      // Settings panel is implemented (modal)
-      { id: "settings", icon: "⚙️", label: "Ustawienia", implemented: true },
-    ],
-    []
-  );
-
-  const visibleShortcuts = shortcuts.filter((s) => s.implemented);
+  const visibleShortcuts = useMemo(() => getDesktopApps(), []);
 
   const [showSettings, setShowSettings] = useState(false);
 
   const handleOpenById = async (id: string): Promise<void> => {
-    if (id === "settings") {
-      setShowSettings(true);
+    const app = getAppRegistration(id);
+    if (!app?.implemented) return;
+
+    if (app.kind === "system") {
+      if (app.id === "settings") setShowSettings(true);
       return;
     }
+
     const def = getWindowDefaults(id);
-    if (!def) return; // not yet implemented or unknown
+    if (!def) return;
     // Lazy-load component
     const mod = await def.loader();
     const Content = mod.default as React.ComponentType;
@@ -209,20 +187,14 @@ export default function Desktop(): React.ReactElement {
             key={s.id}
             className="desktop-icon"
             data-icon={s.icon}
-            title={s.label}
-            onClick={() => {
-              if (s.id === "settings") {
-                setShowSettings(true);
-              } else {
-                handleOpenById(s.id);
-              }
-            }}
+            title={s.title}
+            onClick={() => handleOpenById(s.id)}
             role="gridcell"
-            aria-label={s.label}
+            aria-label={s.title}
             tabIndex={i === activeIndex ? 0 : -1}
             onKeyDown={(e) => onIconKeyDown(e, i, s.id)}
           >
-            <div className="icon-label">{s.label}</div>
+            <div className="icon-label">{s.title}</div>
           </button>
         ))}
       </div>
