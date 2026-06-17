@@ -7,6 +7,7 @@ import type { LocalMultiplayerPlayer, RemotePlayer } from "./gameSession.types";
 import {
   type AnyMultiplayerMessage,
   type BaseMultiplayerMessage,
+  type OutgoingMultiplayerMessage,
   type PlayerHelloMessage,
   type PlayerProfile,
   isPlayerHelloMessage,
@@ -31,7 +32,7 @@ export type UseMultiplayerLobbyResult<TGameMessage extends BaseMultiplayerMessag
   host: () => Promise<PeerRoomSnapshot>;
   join: (roomCode: string) => Promise<PeerRoomSnapshot>;
   close: () => void;
-  sendMessage: (message: Omit<TGameMessage, "sentAt" | "senderId"> & Partial<Pick<TGameMessage, "sentAt" | "senderId">>) => boolean;
+  sendMessage: (message: OutgoingMultiplayerMessage<TGameMessage>) => boolean;
 };
 
 export function useMultiplayerLobby<TGameMessage extends BaseMultiplayerMessage = BaseMultiplayerMessage>(
@@ -115,7 +116,7 @@ export function useMultiplayerLobby<TGameMessage extends BaseMultiplayerMessage 
   }, [room]);
 
   const sendMessage = useCallback(
-    (message: Omit<TGameMessage, "sentAt" | "senderId"> & Partial<Pick<TGameMessage, "sentAt" | "senderId">>) => {
+    (message: OutgoingMultiplayerMessage<TGameMessage>) => {
       return sendTypedMessage(room.send as (value: TGameMessage) => boolean, {
         ...message,
         senderId: message.senderId ?? localPlayer.id,
