@@ -7,6 +7,7 @@ import type { LocalMultiplayerPlayer, RemotePlayer } from "./gameSession.types";
 import {
   type AnyMultiplayerMessage,
   type BaseMultiplayerMessage,
+  type PlayerHelloMessage,
   type PlayerProfile,
   isPlayerHelloMessage,
   sendMessage as sendTypedMessage,
@@ -74,11 +75,14 @@ export function useMultiplayerLobby<TGameMessage extends BaseMultiplayerMessage 
   );
 
   const sendHello = useCallback(() => {
-    return sendTypedMessage(room.send, {
+    const helloMessage: PlayerHelloMessage = {
       type: "player:hello",
       senderId: localPlayer.id,
+      sentAt: Date.now(),
       player: toPlayerProfile(localPlayer),
-    });
+    };
+
+    return room.send(helloMessage);
   }, [localPlayer, room.send]);
 
   useEffect(() => {
@@ -170,4 +174,4 @@ function createLocalPlayerId(): string {
   return `player-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export type LobbyGameMessage<TType extends string, TPayload extends JsonObject = JsonObject> = BaseMultiplayerMessage<TType> & TPayload;
+export type LobbyGameMessage<TType extends string, TPayload = JsonObject> = BaseMultiplayerMessage<TType> & TPayload;
