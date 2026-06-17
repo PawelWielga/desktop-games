@@ -11,6 +11,10 @@ export type BaseMultiplayerMessage<TType extends string = string> = JsonObject &
     type: TType;
   };
 
+export type OutgoingMultiplayerMessage<TMessage extends BaseMultiplayerMessage> = TMessage extends BaseMultiplayerMessage
+  ? Omit<TMessage, "sentAt" | "senderId"> & Partial<Pick<TMessage, "sentAt" | "senderId">>
+  : never;
+
 export type PlayerProfile = JsonObject & {
   id: string;
   name: string;
