@@ -8,6 +8,9 @@ export type MultiplayerPanelProps<TGameMessage extends BaseMultiplayerMessage = 
   title?: string;
 };
 
+type MultiplayerPanelStatus = UseMultiplayerLobbyResult<BaseMultiplayerMessage>["status"];
+type MultiplayerPanelRole = UseMultiplayerLobbyResult<BaseMultiplayerMessage>["role"];
+
 export function MultiplayerPanel<TGameMessage extends BaseMultiplayerMessage = BaseMultiplayerMessage>({
   lobby,
   title = "Multiplayer",
@@ -17,7 +20,7 @@ export function MultiplayerPanel<TGameMessage extends BaseMultiplayerMessage = B
   const connected = lobby.status === "connected";
   const canJoin = joinCode.trim().length > 0 && !busy && !connected;
 
-  const statusText = useMemo(() => getStatusText(lobby), [lobby]);
+  const statusText = useMemo(() => getStatusText(lobby.status), [lobby.status]);
 
   return (
     <section className="mp-panel" aria-label={title}>
@@ -93,8 +96,8 @@ export function MultiplayerPanel<TGameMessage extends BaseMultiplayerMessage = B
   );
 }
 
-function getStatusText(lobby: UseMultiplayerLobbyResult): string {
-  switch (lobby.status) {
+function getStatusText(status: MultiplayerPanelStatus): string {
+  switch (status) {
     case "idle":
       return "Utwórz pokój albo wpisz kod od hosta.";
     case "hosting":
@@ -112,7 +115,7 @@ function getStatusText(lobby: UseMultiplayerLobbyResult): string {
   }
 }
 
-function roleLabel(role: UseMultiplayerLobbyResult["role"]): string {
+function roleLabel(role: MultiplayerPanelRole): string {
   if (role === "host") return "host";
   if (role === "guest") return "gość";
   return "brak roli";
