@@ -57,3 +57,9 @@ Run all merge checks:
 ```sh
 npm run verify
 ```
+
+## Pull request checks
+
+GitHub Actions runs the `CI / build-and-test` check for pull requests targeting `main`. The workflow installs dependencies with `npm ci` and then runs `npm run verify`.
+
+To block merging broken pull requests, configure branch protection or a repository ruleset for `main` and require the `build-and-test` status check to pass before merging.
