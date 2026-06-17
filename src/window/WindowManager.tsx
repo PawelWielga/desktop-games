@@ -78,14 +78,29 @@ export function useWindowManager(): Ctx {
   return ctx;
 }
 
+function hasPositionPatch(patch: Partial<WindowState>): boolean {
+  return "x" in patch || "y" in patch;
+}
+
+function persistWindowPosition(id: string, x: number, y: number): void {
+  try {
+    localStorage.setItem(`wm:pos:${id}`, JSON.stringify({ x, y }));
+  } catch {}
+}
+
 /**
  * Provider component for window management.
  * Keep as a stable named function export for Fast Refresh.
  */
 export function WindowManager({ children }: { children: React.ReactNode }): React.ReactElement {
   const [windows, setWindows] = useState<WindowState[]>([]);
+  const windowsRef = useRef<WindowState[]>([]);
   const zCounter = useRef(1500);
   const { settings } = useSettings();
+
+  useEffect(() => {
+    windowsRef.current = windows;
+  }, [windows]);
 
   const open = useCallback((spec: WindowSpec) => {
     setWindows((prev) => {
@@ -206,6 +221,21 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
     );
   }, []);
 
+  const patchWindow = useCallback((id: string, patch: Partial<WindowState>) => {
+    if (settings.windowDrag.persistPositions && hasPositionPatch(patch)) {
+      const current = windowsRef.current.find((w) => w.id === id);
+      const nextX = typeof patch.x === "number" ? patch.x : current?.x;
+      const nextY = typeof patch.y === "number" ? patch.y : current?.y;
+      if (typeof nextX === "number" && typeof nextY === "number") {
+        persistWindowPosition(id, nextX, nextY);
+      }
+    }
+
+    setWindows((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, ...patch } : w))
+    );
+  }, [settings.windowDrag.persistPositions]);
+
   const ctx = useMemo<Ctx>(
     () => ({
       windows,
@@ -281,35 +311,7 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
             onMinimize={minimize}
             onMaximize={maximizeToggle}
             onFocus={focus}
-            onPatch={(patch) => {
-              // DIAG: log every position patch
-              if ("x" in patch || "y" in patch) {
-                // eslint-disable-next-line no-console
-                console.debug("[WM][patch] id=%s ->", w.id, { x: patch.x, y: patch.y });
-              }
-              setWindows((prev) =>
-                prev.map((x) => (x.id === w.id ? { ...x, ...patch } : x))
-              );
-
-              // Persist position if enabled (always attempt; storage errors ignored)
-              try {
-                if (("x" in patch || "y" in patch)) {
-                  const key = `wm:pos:${w.id}`;
-                  const nx = ("x" in patch && typeof patch.x === "number") ? patch.x : w.x;
-                  const ny = ("y" in patch && typeof patch.y === "number") ? patch.y : w.y;
-                  localStorage.setItem(key, JSON.stringify({ x: nx, y: ny }));
-                }
-              } catch {}
-
-              // Force immediate style sync for the active window to bypass any render delay
-              if (("x" in patch || "y" in patch)) {
-                const el = document.querySelector<HTMLElement>(`.window[aria-label="${w.title}"]`);
-                if (el) {
-                  if (typeof patch.x === "number") el.style.left = `${patch.x}px`;
-                  if (typeof patch.y === "number") el.style.top = `${patch.y}px`;
-                }
-              }
-            }}
+            onPatch={(patch) => patchWindow(w.id, patch)}
           />
         ))}
       </div>
@@ -399,8 +401,8 @@ function WindowFrame(props: {
         tabIndex={0}
         aria-roledescription="Window title bar. Drag to move, double click to maximize."
         title="Drag to move, double click to maximize"
-        onPointerDown={(e) => {
-          // Ensure window is focused before drag so z-index and style sync apply to the active window
+        onPointerDown={() => {
+          // Ensure window is focused before drag so z-index applies to the active window
           props.onFocus(w.id);
         }}
       >
