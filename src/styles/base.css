@@ -15,25 +15,36 @@
   --color-accent-dark: #60a5fa;
 
   /* Spacing scale */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
 
   /* Radius */
-  --radius-1: 6px;
-  --radius-2: 8px;
-  --radius-3: 12px;
+  --radius-1: 0.375rem;
+  --radius-2: 0.5rem;
+  --radius-3: 0.75rem;
+
+  /* Responsive shell sizing */
+  --taskbar-height: clamp(2.75rem, 7dvh, 3rem);
+  --desktop-icon-size: clamp(3rem, 8vmin, 4rem);
+  --desktop-icon-font-size: clamp(1.5rem, 4vmin, 2rem);
+  --desktop-icon-column: calc(var(--desktop-icon-size) + var(--space-4));
+  --desktop-icon-row: calc(var(--desktop-icon-size) + 2rem);
+  --window-header-height: clamp(2rem, 5dvh, 2.25rem);
+  --window-control-size: clamp(1.625rem, 4.5vmin, 1.75rem);
+  --window-viewport-gap: clamp(0.5rem, 2vmin, 1rem);
 
   /* Shadows */
-  --shadow-1: 0 2px 8px rgba(0,0,0,0.10);
-  --shadow-2: 0 12px 28px rgba(0,0,0,0.22);
-  --shadow-3: 0 14px 30px rgba(0,0,0,0.55), 0 2px 10px rgba(0,0,0,0.25);
+  --shadow-1: 0 0.125rem 0.5rem rgba(0,0,0,0.10);
+  --shadow-2: 0 0.75rem 1.75rem rgba(0,0,0,0.22);
+  --shadow-3: 0 0.875rem 1.875rem rgba(0,0,0,0.55), 0 0.125rem 0.625rem rgba(0,0,0,0.25);
 
   /* Z-index layers */
   --z-desktop: 0;
+  --z-window: 1500;
   --z-windows: 1500;
   --z-overlay: 3000;
 
@@ -66,37 +77,28 @@ body {
 /* Watermark: bottom-right, subtle, persistent, non-interactive */
 .watermark {
   position: fixed;
-  right: 10px;
-  bottom: 8px;
+  right: var(--space-3);
+  bottom: var(--space-2);
   z-index: 2147483647;
   color: #B0B0B0;
   font-family: "Segoe UI", Segoe UI, Roboto, system-ui, -apple-system, sans-serif;
+  font-size: clamp(0.75rem, 1.8vmin, 0.8125rem);
   line-height: 1.2;
   text-align: right;
   pointer-events: none; /* never intercept clicks */
   user-select: none;
   opacity: 0.9; /* semi-transparent, but readable */
   text-shadow:
-    0 1px 1px rgba(0,0,0,0.35),
-    0 0 1px rgba(0,0,0,0.25); /* soft shadow for varied backgrounds */
+    0 0.0625rem 0.0625rem rgba(0,0,0,0.35),
+    0 0 0.0625rem rgba(0,0,0,0.25); /* soft shadow for varied backgrounds */
   white-space: nowrap;
-}
-
-/* Desktop default size ~13px */
-@media (min-width: 768px) {
-  .watermark { font-size: 13px; }
-}
-
-/* Small screens: downscale slightly to avoid overlap */
-@media (max-width: 767.98px) {
-  .watermark { font-size: 12px; right: 8px; bottom: 6px; }
 }
 
 /* Focus ring for keyboard users */
 :where(button, [role="button"], a, [tabindex]) :focus-visible,
 :where(button, [role="button"], a, [tabindex]):focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--color-accent) 70%, #ffffff 30%);
-  outline-offset: 2px;
+  outline: 0.125rem solid color-mix(in srgb, var(--color-accent) 70%, #ffffff 30%);
+  outline-offset: 0.125rem;
   border-radius: var(--radius-1);
 }
 

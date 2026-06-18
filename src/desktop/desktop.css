@@ -11,22 +11,22 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
 
 /* Desktop grid like Windows */
 .desktop-grid {
-  height: calc(100vh - 48px);
+  height: calc(100dvh - var(--taskbar-height));
   position: relative;
-  padding: var(--space-5);
+  padding: clamp(var(--space-3), 3vmin, var(--space-5));
   display: grid;
   /* Strict single column so next icon is directly under the previous one. */
-  grid-template-columns: 80px;
-  grid-auto-rows: 100px;
-  gap: var(--space-5);
+  grid-template-columns: var(--desktop-icon-column);
+  grid-auto-rows: var(--desktop-icon-row);
+  gap: clamp(var(--space-3), 3vmin, var(--space-5));
   align-content: start;
   justify-content: start;
 }
 
 /* Icons */
 .desktop-icon {
-  width: 64px;
-  height: 64px;
+  width: var(--desktop-icon-size);
+  height: var(--desktop-icon-size);
   background: rgba(255,255,255,0.1);
   border-radius: var(--radius-2);
   border: 1px solid rgba(255,255,255,0.12);
@@ -36,8 +36,8 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   cursor: pointer;
   position: relative;
   transition: transform .15s ease, background .2s ease;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(1.25rem);
+  -webkit-backdrop-filter: blur(1.25rem);
   text-decoration: none;
   outline: none;
   color: #fff;
@@ -45,20 +45,20 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
 .desktop-icon:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
 .desktop-icon::before {
   content: attr(data-icon);
-  font-size: 32px;
+  font-size: var(--desktop-icon-font-size);
   color: #fff;
 }
 .icon-label {
   position: absolute;
-  top: 70px;
+  top: calc(var(--desktop-icon-size) + var(--space-1));
   left: 50%;
   transform: translateX(-50%);
   color: #fff;
-  font-size: 11px;
+  font-size: clamp(0.6875rem, 1.8vmin, 0.75rem);
   text-align: center;
   white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(0,0,0,.5);
-  max-width: 80px;
+  text-shadow: 0 0.0625rem 0.125rem rgba(0,0,0,.5);
+  max-width: var(--desktop-icon-column);
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -67,67 +67,87 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
 .taskbar {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: 48px;
+  height: var(--taskbar-height);
   background: rgba(0,0,0,0.8);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
+  backdrop-filter: blur(2.5rem);
+  -webkit-backdrop-filter: blur(2.5rem);
   display: flex; align-items: center; justify-content: center;
   border-top: 1px solid rgba(255,255,255,0.1);
   z-index: var(--z-windows);
 }
 .start-button {
-  width: 48px; height: 48px;
+  width: var(--taskbar-height);
+  height: var(--taskbar-height);
   background: transparent; border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 20px; color: #fff;
+  font-size: clamp(1.125rem, 3vmin, 1.25rem); color: #fff;
   position: absolute; left: var(--space-2);
 }
 .start-button:hover { background: rgba(255,255,255,0.1); }
-.taskbar-apps { display: flex; align-items: center; gap: 6px; margin-left: 64px; }
+.taskbar-apps {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: calc(var(--taskbar-height) + var(--space-4));
+  max-width: min(55vw, 42rem);
+  overflow: auto hidden;
+  scrollbar-width: none;
+}
+.taskbar-apps::-webkit-scrollbar { display: none; }
 .taskbar-btn {
-  height: 32px;
+  min-height: min(2rem, calc(var(--taskbar-height) - var(--space-3)));
   padding: 0 var(--space-3);
   border-radius: var(--radius-1);
   border: 1px solid rgba(255,255,255,0.12);
   background: rgba(255,255,255,0.08);
   color: #fff;
   cursor: pointer;
+  white-space: nowrap;
 }
 .taskbar-btn:hover {
   background: rgba(255,255,255,0.18);
 }
-.system-tray { position: absolute; right: var(--space-2); display: flex; gap: var(--space-2); color: #fff; font-size: 13px; }
+.system-tray {
+  position: absolute;
+  right: var(--space-2);
+  display: flex;
+  gap: var(--space-2);
+  color: #fff;
+  font-size: clamp(0.75rem, 2vmin, 0.8125rem);
+  align-items: center;
+}
 
-.clock { min-width: 40px; text-align: right; }
+.clock { min-width: 3em; text-align: right; }
 
 /* Keyboard focus visibility for desktop icons and taskbar items */
 .desktop-icon:focus-visible,
 .taskbar-btn:focus-visible,
 .start-button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--color-accent) 70%, #ffffff 30%);
-  outline-offset: 2px;
+  outline: 0.125rem solid color-mix(in srgb, var(--color-accent) 70%, #ffffff 30%);
+  outline-offset: 0.125rem;
   border-radius: var(--radius-1);
 }
 
 /* Trial banner: sits directly above the taskbar with consistent spacing */
 .trial-banner {
   position: fixed;
-  left: env(safe-area-inset-left, 0);
-  right: env(safe-area-inset-right, 0);
-  bottom: calc(48px + var(--space-2)); /* 48px taskbar + spacing */
+  left: max(env(safe-area-inset-left, 0px), var(--space-2));
+  right: max(env(safe-area-inset-right, 0px), var(--space-2));
+  bottom: calc(var(--taskbar-height) + var(--space-2));
   z-index: calc(var(--z-windows) + 1); /* above desktop content, below overlays */
   display: flex;
   align-items: center;
   justify-content: center;
   padding: var(--space-2) var(--space-4);
   margin: 0 auto;
-  max-width: min(960px, calc(100vw - 32px));
+  max-width: min(60rem, calc(100dvw - var(--space-4)));
   border-radius: var(--radius-2);
   border: 1px solid rgba(255,255,255,0.22);
   background: color-mix(in srgb, #0b0f19 80%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(0.625rem);
+  -webkit-backdrop-filter: blur(0.625rem);
   color: #ffffff;
+  font-size: clamp(0.8125rem, 2vmin, 0.875rem);
   font-weight: 700; /* bold for prominence and accessibility */
   line-height: 1.2;
   text-align: center;
@@ -140,19 +160,6 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   font-weight: 800;
 }
 
-/* Responsive typography */
-@media (min-width: 768px) {
-  .trial-banner { font-size: 14px; }
-}
-@media (max-width: 767.98px) {
-  .trial-banner {
-    font-size: 13px;
-    bottom: calc(48px + var(--space-2)); /* keep same spacing above taskbar */
-    left: var(--space-2);
-    right: var(--space-2);
-  }
-}
-
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .trial-banner {
@@ -162,12 +169,17 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
 }
 
 /* Mobile tweaks */
-@media (max-width: 768px) {
+@media (max-width: 48rem) {
   .desktop-grid {
     padding: var(--space-3);
-    /* Keep single column on mobile as well */
-    grid-template-columns: 72px;
-    grid-auto-rows: 92px;
     gap: var(--space-3);
+  }
+
+  .taskbar-apps {
+    max-width: 48vw;
+  }
+
+  .system-tray span:not(.clock) {
+    display: none;
   }
 }

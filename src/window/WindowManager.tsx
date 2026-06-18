@@ -63,6 +63,35 @@ type Ctx = {
 const MIN_WIDTH_DEFAULT = 520;
 const MIN_HEIGHT_DEFAULT = 640;
 const KEY_NUDGE_STEP = 10;
+const FALLBACK_VIEWPORT_WIDTH = 960;
+const FALLBACK_VIEWPORT_HEIGHT = 720;
+const MIN_USABLE_VIEWPORT_SIZE = 280;
+
+type UsableViewportBounds = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  margin: number;
+};
+
+type ResponsiveRectInput = {
+  width: number;
+  height: number;
+  minWidth: number;
+  minHeight: number;
+  maxWidth?: number;
+  maxHeight?: number;
+  x: number;
+  y: number;
+};
+
+type ResponsiveRect = SavedRect & {
+  minWidth: number;
+  minHeight: number;
+  maxWidth: number;
+  maxHeight: number;
+};
 
 // Stable context for devtools; avoid redundant redefinition
 const WindowCtx = createContext<Ctx | undefined>(undefined);
@@ -76,6 +105,56 @@ export function useWindowManager(): Ctx {
   const ctx = useContext(WindowCtx);
   if (!ctx) throw new Error("useWindowManager must be used within WindowManager");
   return ctx;
+}
+
+function readCssNumber(name: string, fallback: number): number {
+  if (typeof window === "undefined") return fallback;
+
+  const raw = window.getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const parsed = Number.parseFloat(raw);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function getUsableViewportBounds(): UsableViewportBounds {
+  if (typeof window === "undefined") {
+    return {
+      x: 0,
+      y: 0,
+      width: FALLBACK_VIEWPORT_WIDTH,
+      height: FALLBACK_VIEWPORT_HEIGHT,
+      margin: 0,
+    };
+  }
+
+  const margin = Math.round(readCssNumber("--window-viewport-gap", 12));
+  const taskbarHeight = Math.round(readCssNumber("--taskbar-height", 48));
+
+  return {
+    x: margin,
+    y: margin,
+    width: Math.max(MIN_USABLE_VIEWPORT_SIZE, window.innerWidth - margin * 2),
+    height: Math.max(MIN_USABLE_VIEWPORT_SIZE, window.innerHeight - taskbarHeight - margin * 2),
+    margin,
+  };
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  if (max < min) return min;
+  return Math.min(Math.max(value, min), max);
+}
+
+function fitWindowToViewport(input: ResponsiveRectInput): ResponsiveRect {
+  const bounds = getUsableViewportBounds();
+  const maxWidth = Math.max(1, Math.min(input.maxWidth ?? bounds.width, bounds.width));
+  const maxHeight = Math.max(1, Math.min(input.maxHeight ?? bounds.height, bounds.height));
+  const minWidth = Math.min(input.minWidth, maxWidth);
+  const minHeight = Math.min(input.minHeight, maxHeight);
+  const width = Math.round(clampNumber(input.width, minWidth, maxWidth));
+  const height = Math.round(clampNumber(input.height, minHeight, maxHeight));
+  const x = Math.round(clampNumber(input.x, bounds.x, bounds.x + bounds.width - width));
+  const y = Math.round(clampNumber(input.y, bounds.y, bounds.y + bounds.height - height));
+
+  return { x, y, width, height, minWidth, minHeight, maxWidth, maxHeight };
 }
 
 function hasPositionPatch(patch: Partial<WindowState>): boolean {
@@ -120,37 +199,40 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
       const minWidth = spec.minWidth ?? defaults?.minWidth ?? MIN_WIDTH_DEFAULT;
       const minHeight = spec.minHeight ?? defaults?.minHeight ?? MIN_HEIGHT_DEFAULT;
 
+      const readPersistedPosition = (axis: "x" | "y"): number | undefined => {
+        if (!settings.windowDrag.persistPositions) return undefined;
+
+        try {
+          const raw = localStorage.getItem(`wm:pos:${spec.id}`);
+          if (!raw) return undefined;
+          const parsed = JSON.parse(raw);
+          return typeof parsed?.[axis] === "number" ? (parsed[axis] as number) : undefined;
+        } catch {
+          return undefined;
+        }
+      };
+
+      const x = readPersistedPosition("x") ?? spec.x ?? defaults?.x ?? 100 + Math.floor(Math.random() * 80);
+      const y = readPersistedPosition("y") ?? spec.y ?? defaults?.y ?? 60 + Math.floor(Math.random() * 60);
+      const rect = fitWindowToViewport({
+        width,
+        height,
+        minWidth,
+        minHeight,
+        maxWidth: spec.maxWidth ?? defaults?.maxWidth,
+        maxHeight: spec.maxHeight ?? defaults?.maxHeight,
+        x,
+        y,
+      });
+
       const next: WindowState = {
         id: spec.id,
         content: spec.content,
         title: spec.title ?? defaults?.title ?? spec.id,
-        x: (() => {
-          // Load persisted position if enabled
-          if (settings.windowDrag.persistPositions) {
-            try {
-              const raw = localStorage.getItem(`wm:pos:${spec.id}`);
-              if (raw) {
-                const parsed = JSON.parse(raw);
-                if (typeof parsed?.x === "number") return parsed.x as number;
-              }
-            } catch {}
-          }
-          return spec.x ?? defaults?.x ?? 100 + Math.floor(Math.random() * 80);
-        })(),
-        y: (() => {
-          if (settings.windowDrag.persistPositions) {
-            try {
-              const raw = localStorage.getItem(`wm:pos:${spec.id}`);
-              if (raw) {
-                const parsed = JSON.parse(raw);
-                if (typeof parsed?.y === "number") return parsed.y as number;
-              }
-            } catch {}
-          }
-          return spec.y ?? defaults?.y ?? 60 + Math.floor(Math.random() * 60);
-        })(),
-        width,
-        height,
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
         minWidth,
         minHeight,
         maxWidth: spec.maxWidth ?? defaults?.maxWidth ?? undefined,
@@ -180,12 +262,20 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
         if (w.maximized) {
           const saved = w.savedRect;
           if (saved) {
+            const rect = fitWindowToViewport({
+              ...saved,
+              minWidth: w.minWidth ?? MIN_WIDTH_DEFAULT,
+              minHeight: w.minHeight ?? MIN_HEIGHT_DEFAULT,
+              maxWidth: w.maxWidth,
+              maxHeight: w.maxHeight,
+            });
+
             return {
               ...w,
-              x: saved.x,
-              y: saved.y,
-              width: saved.width,
-              height: saved.height,
+              x: rect.x,
+              y: rect.y,
+              width: rect.width,
+              height: rect.height,
               maximized: false,
               savedRect: undefined,
             };
@@ -198,13 +288,13 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
             width: w.width,
             height: w.height,
           };
-          // Full viewport
+          const bounds = getUsableViewportBounds();
           return {
             ...w,
-            x: 0,
-            y: 0,
-            width: window.innerWidth,
-            height: window.innerHeight,
+            x: bounds.x,
+            y: bounds.y,
+            width: bounds.width,
+            height: bounds.height,
             maximized: true,
             savedRect,
           };
@@ -235,6 +325,35 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
       prev.map((w) => (w.id === id ? { ...w, ...patch } : w))
     );
   }, [settings.windowDrag.persistPositions]);
+
+  useEffect(() => {
+    const onResize = () => {
+      setWindows((prev) =>
+        prev.map((w) => {
+          if (w.maximized) {
+            const bounds = getUsableViewportBounds();
+            return { ...w, x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
+          }
+
+          const rect = fitWindowToViewport({
+            x: w.x,
+            y: w.y,
+            width: w.width,
+            height: w.height,
+            minWidth: w.minWidth ?? MIN_WIDTH_DEFAULT,
+            minHeight: w.minHeight ?? MIN_HEIGHT_DEFAULT,
+            maxWidth: w.maxWidth,
+            maxHeight: w.maxHeight,
+          });
+
+          return { ...w, x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+        })
+      );
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const ctx = useMemo<Ctx>(
     () => ({
@@ -281,14 +400,9 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
               e.key === "ArrowRight" ? KEY_NUDGE_STEP : e.key === "ArrowLeft" ? -KEY_NUDGE_STEP : 0;
             const dy =
               e.key === "ArrowDown" ? KEY_NUDGE_STEP : e.key === "ArrowUp" ? -KEY_NUDGE_STEP : 0;
-            const nx = Math.max(
-              0,
-              Math.min(w.x + dx, Math.max(0, window.innerWidth - w.width)) // remove redundant nullish checks
-            );
-            const ny = Math.max(
-              0,
-              Math.min(w.y + dy, Math.max(0, window.innerHeight - w.height))
-            );
+            const bounds = getUsableViewportBounds();
+            const nx = clampNumber(w.x + dx, bounds.x, bounds.x + bounds.width - w.width);
+            const ny = clampNumber(w.y + dy, bounds.y, bounds.y + bounds.height - w.height);
             return { ...w, x: nx, y: ny };
           })
         );
@@ -334,14 +448,17 @@ function WindowFrame(props: {
 }): React.ReactElement | null {
   const { state: w } = props;
 
-  // Derive constraints
-  const minWidth = w.minWidth ?? MIN_WIDTH_DEFAULT;
-  const minHeight = w.minHeight ?? MIN_HEIGHT_DEFAULT;
+  // Derive viewport-aware constraints
+  const bounds = getUsableViewportBounds();
+  const minWidth = Math.min(w.minWidth ?? MIN_WIDTH_DEFAULT, bounds.width);
+  const minHeight = Math.min(w.minHeight ?? MIN_HEIGHT_DEFAULT, bounds.height);
+  const maxWidth = Math.min(w.maxWidth ?? bounds.width, Math.max(minWidth, bounds.x + bounds.width - w.x));
+  const maxHeight = Math.min(w.maxHeight ?? bounds.height, Math.max(minHeight, bounds.y + bounds.height - w.y));
 
   // Resize hook (kept)
   const resize = useWindowResize(
     (patch) => props.onPatch(patch),
-    { minWidth, minHeight, maxWidth: w.maxWidth, maxHeight: w.maxHeight }
+    { minWidth, minHeight, maxWidth, maxHeight }
   );
 
   useEffect(() => () => resize.onCleanup(), [resize]);
