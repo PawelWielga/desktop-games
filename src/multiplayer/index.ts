@@ -38,6 +38,7 @@ export type {
   GameReadyMessage,
   GameResetMessage,
   GameSpecificMessage,
+  GameStartMessage,
   MessageMetadata,
   MessageSend,
   OutgoingMultiplayerMessage,
