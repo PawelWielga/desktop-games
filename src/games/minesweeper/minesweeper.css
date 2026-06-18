@@ -1,4 +1,5 @@
 .ms-root {
+  --ms-cell-size: clamp(1.25rem, 6.5vmin, 1.75rem);
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -13,45 +14,46 @@
   align-items: center;
   background: #e9ecef;
   border-bottom: 1px solid rgba(0,0,0,0.08);
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
+  gap: var(--space-2);
 }
 
 .ms-counter, .ms-timer {
   background: #000;
   color: #ff0000;
-  padding: 4px 8px;
+  padding: var(--space-1) var(--space-2);
   font-family: "Courier New", monospace;
-  font-size: 16px;
+  font-size: clamp(0.875rem, 2.3vmin, 1rem);
   border: 1px inset #c0c0c0;
-  min-width: 48px;
+  min-width: 3em;
   text-align: center;
-  border-radius: 2px;
+  border-radius: 0.125rem;
 }
 
 .ms-reset {
-  width: 36px;
-  height: 36px;
+  width: clamp(2rem, 5.5vmin, 2.25rem);
+  height: clamp(2rem, 5.5vmin, 2.25rem);
   background: #c0c0c0;
-  border: 2px outset #c0c0c0;
+  border: 0.125rem outset #c0c0c0;
   cursor: pointer;
-  font-size: 16px;
+  font-size: clamp(0.875rem, 2.3vmin, 1rem);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: var(--radius-1);
   transition: transform .08s ease;
 }
 .ms-reset:active {
-  border: 2px inset #c0c0c0;
-  transform: translateY(1px);
+  border: 0.125rem inset #c0c0c0;
+  transform: translateY(0.0625rem);
 }
 
 
 .ms-difficulty {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
   background: #f7f7f7;
   border-bottom: 1px solid rgba(0,0,0,0.08);
 }
@@ -59,12 +61,12 @@
 .ms-difficulty-option {
   display: inline-flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
   align-items: flex-start;
-  min-width: 128px;
-  padding: 6px 10px;
+  min-width: min(8rem, 100%);
+  padding: clamp(0.375rem, 1.5vmin, var(--space-2)) clamp(var(--space-2), 2vmin, 0.625rem);
   border: 1px solid #b8b8b8;
-  border-radius: 4px;
+  border-radius: var(--radius-1);
   background: #efefef;
   color: #222;
   cursor: pointer;
@@ -83,38 +85,38 @@
 
 .ms-difficulty-option small {
   color: #555;
-  font-size: 11px;
+  font-size: clamp(0.625rem, 1.7vmin, 0.6875rem);
 }
 
 .ms-grid-wrap {
   flex: 1 1 auto;
   overflow: auto;
-  padding: 12px;
+  padding: clamp(var(--space-2), 2vmin, var(--space-3));
 }
 
 /* Remove gray background below the grid and mirror legacy chrome */
 .ms-grid {
   display: grid;
-  gap: 1px;                /* legacy gap between tiles */
+  gap: max(1px, 0.0625rem); /* legacy gap between tiles */
   background: transparent; /* requested: no gray panel behind board */
   width: fit-content;
   margin: 0 auto;
   border: none;            /* no top/bottom inset bars */
-  perspective: 700px;      /* enable 3D feel for flip ripple */
+  perspective: 44rem;      /* enable 3D feel for flip ripple */
 }
 
 /* Tile look + subtle hover/press animation like legacy feel */
 .ms-cell {
-  width: 28px;
-  height: 28px;
+  width: var(--ms-cell-size);
+  height: var(--ms-cell-size);
   background: #c0c0c0;           /* legacy base */
-  border: 2px outset #c0c0c0;    /* bevel */
+  border: 0.125rem outset #c0c0c0;    /* bevel */
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-weight: 700;
-  font-size: 14px;
+  font-size: clamp(0.75rem, 2.2vmin, 0.875rem);
   user-select: none;
   color: #1b1f23;
   line-height: 1;
@@ -123,11 +125,11 @@
   transform-style: preserve-3d;
 }
 .ms-cell:hover:not(.revealed) {
-  transform: translateY(-1px);
+  transform: translateY(-0.0625rem);
 }
 .ms-cell:active:not(.revealed) {
   transform: translateY(0);         /* press back */
-  border: 2px inset #c0c0c0;        /* pressed look */
+  border: 0.125rem inset #c0c0c0;        /* pressed look */
 }
 
 /* Flip reveal animation (legacy-like) */
@@ -195,8 +197,8 @@
 .ms-cell.revealed.n8 { color: #7f7f7f; }
 
 .ms-footer {
-  padding: 8px 12px;
+  padding: var(--space-2) var(--space-3);
   background: #f7f7f7;
-  font-size: 12px;
+  font-size: clamp(0.6875rem, 1.8vmin, 0.75rem);
   color: #444;
 }
