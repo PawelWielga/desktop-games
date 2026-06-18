@@ -6,8 +6,6 @@
   padding: clamp(var(--space-2), 2vmin, var(--space-3));
   box-sizing: border-box;
   overflow: auto;
-  background: #101418;
-  color: #f8fafc;
 }
 
 .ttt-game {
@@ -18,9 +16,6 @@
   justify-items: center;
   align-content: center;
   padding: clamp(var(--space-2), 2vmin, var(--space-3));
-  background: rgba(0,0,0,0.25);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: var(--radius-1);
   box-sizing: border-box;
 }
 
@@ -38,9 +33,9 @@
 .ttt-status span,
 .ttt-status strong {
   padding: var(--space-1) var(--space-2);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: var(--radius-1);
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.08);
 }
 
 .ttt-status strong {
@@ -53,9 +48,9 @@
   gap: clamp(0.35rem, 1.3vmin, 0.5rem);
   width: min(100%, 21rem, 62vmin);
   padding: clamp(var(--space-2), 1.6vmin, var(--space-3));
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
   border-radius: var(--radius-1);
-  background: rgba(16,20,24,0.72);
+  background: rgba(0,0,0,0.25);
   box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.35);
 }
 
@@ -64,7 +59,7 @@
   min-width: 0;
   border: 1px solid rgba(255,255,255,0.18);
   border-radius: var(--radius-1);
-  background: rgba(255,255,255,0.08);
+  background: rgba(16,20,24,0.72);
   color: #81c784;
   font-size: clamp(2rem, 11vmin, 3.5rem);
   font-weight: 800;
