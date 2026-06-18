@@ -11,7 +11,7 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
 
 /* Desktop grid like Windows */
 .desktop-grid {
-  height: calc(100dvh - var(--taskbar-height));
+  height: calc(100dvh - var(--taskbar-height) - var(--trial-banner-reserved-height));
   position: relative;
   padding: clamp(var(--space-3), 3vmin, var(--space-5));
   display: grid;
@@ -138,7 +138,9 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-2) var(--space-4);
+  box-sizing: border-box;
+  min-height: calc(var(--trial-banner-reserved-height) - var(--space-2));
+  padding: clamp(var(--space-1), 1.6dvh, var(--space-2)) var(--space-4);
   margin: 0 auto;
   max-width: min(60rem, calc(100dvw - var(--space-4)));
   border-radius: var(--radius-2);
@@ -147,7 +149,7 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   backdrop-filter: blur(0.625rem);
   -webkit-backdrop-filter: blur(0.625rem);
   color: #ffffff;
-  font-size: clamp(0.8125rem, 2vmin, 0.875rem);
+  font-size: clamp(0.75rem, 1.8vmin, 0.875rem);
   font-weight: 700; /* bold for prominence and accessibility */
   line-height: 1.2;
   text-align: center;
@@ -169,6 +171,12 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
 }
 
 /* Mobile tweaks */
+@media (max-height: 42rem) {
+  .trial-banner {
+    padding-inline: var(--space-3);
+  }
+}
+
 @media (max-width: 48rem) {
   .desktop-grid {
     padding: var(--space-3);

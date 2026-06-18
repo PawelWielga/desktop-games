@@ -6,6 +6,7 @@
   padding: clamp(var(--space-2), 2vmin, var(--space-3));
   box-sizing: border-box;
   overflow: auto;
+  scrollbar-gutter: stable;
 }
 
 .ttt-game {
@@ -46,7 +47,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(0.35rem, 1.3vmin, 0.5rem);
-  width: min(100%, 21rem, 62vmin);
+  width: min(100%, 21rem, 62vmin, 52dvh);
   padding: clamp(var(--space-2), 1.6vmin, var(--space-3));
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: var(--radius-1);
@@ -93,4 +94,42 @@
 
 .ttt-reset:hover {
   background: rgba(255,255,255,0.16);
+}
+
+@media (max-height: 44rem) {
+  .ttt-root {
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .ttt-game {
+    gap: var(--space-2);
+    align-content: start;
+    padding: var(--space-2);
+  }
+
+  .ttt-status {
+    gap: var(--space-1);
+    font-size: 0.75rem;
+  }
+
+  .ttt-status span,
+  .ttt-status strong {
+    padding: 0.1875rem var(--space-2);
+  }
+
+  .ttt-board {
+    width: min(100%, 17rem, 58vmin, 42dvh);
+    gap: var(--space-1);
+    padding: var(--space-2);
+    box-shadow: none;
+  }
+
+  .ttt-cell {
+    font-size: clamp(1.5rem, 8vmin, 2.75rem);
+  }
+
+  .ttt-reset {
+    min-height: 1.875rem;
+  }
 }

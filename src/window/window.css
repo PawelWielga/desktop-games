@@ -25,10 +25,10 @@
   -webkit-backdrop-filter: blur(0.375rem) saturate(120%);
   backdrop-filter: blur(0.375rem) saturate(120%);
   min-width: min(32rem, calc(100dvw - (var(--window-viewport-gap) * 2)));
-  min-height: min(40rem, calc(100dvh - (var(--window-viewport-gap) * 2)));
-  /* Allow window to grow up to viewport so tall game boards are fully visible */
+  min-height: min(20rem, calc(100dvh - var(--taskbar-height) - var(--trial-banner-reserved-height) - (var(--window-viewport-gap) * 2)));
+  /* Allow window to grow up to the safe desktop area without sliding under overlays. */
   max-width: calc(100dvw - (var(--window-viewport-gap) * 2));
-  max-height: calc(100dvh - (var(--window-viewport-gap) * 2));
+  max-height: calc(100dvh - var(--taskbar-height) - var(--trial-banner-reserved-height) - (var(--window-viewport-gap) * 2));
   z-index: var(--z-window);
   /* Enable smooth visual feedback during drag */
   will-change: left, top;
