@@ -1,5 +1,6 @@
 export type CellValue = "X" | "O" | null;
 export type PlayerSymbol = Exclude<CellValue, null>;
+export type OnlinePlayerRole = "host" | "guest";
 
 export const WIN_LINES = [
   [0, 1, 2],
@@ -20,22 +21,61 @@ export type MoveResult = {
   moved: boolean;
 };
 
+export type OnlineMoveValidationInput = {
+  board: CellValue[];
+  cell: unknown;
+  symbol: unknown;
+  turn: PlayerSymbol;
+  senderRole: OnlinePlayerRole;
+  senderId?: string;
+  expectedSenderId?: string | null;
+};
+
 const BOARD_SIZE = 9;
 
 export function emptyBoard(): CellValue[] {
   return Array<CellValue>(BOARD_SIZE).fill(null);
 }
 
-export function isValidCellIndex(cell: number): boolean {
-  return Number.isInteger(cell) && cell >= 0 && cell < BOARD_SIZE;
+export function isPlayerSymbol(value: unknown): value is PlayerSymbol {
+  return value === "X" || value === "O";
 }
 
-export function isLegalMove(board: CellValue[], cell: number): boolean {
+export function isValidCellIndex(cell: unknown): cell is number {
+  return Number.isInteger(cell) && Number(cell) >= 0 && Number(cell) < BOARD_SIZE;
+}
+
+export function isLegalMove(board: CellValue[], cell: unknown): cell is number {
   return isValidCellIndex(cell) && board[cell] === null;
 }
 
 export function getNextTurn(symbol: PlayerSymbol): PlayerSymbol {
   return symbol === "X" ? "O" : "X";
+}
+
+export function getOnlineRoleSymbol(role: OnlinePlayerRole): PlayerSymbol {
+  return role === "host" ? "X" : "O";
+}
+
+export function getOpponentRole(role: OnlinePlayerRole): OnlinePlayerRole {
+  return role === "host" ? "guest" : "host";
+}
+
+export function isLegalOnlineMove({
+  board,
+  cell,
+  symbol,
+  turn,
+  senderRole,
+  senderId,
+  expectedSenderId,
+}: OnlineMoveValidationInput): boolean {
+  if (!isPlayerSymbol(symbol)) return false;
+  if (symbol !== turn) return false;
+  if (symbol !== getOnlineRoleSymbol(senderRole)) return false;
+  if (expectedSenderId && senderId !== expectedSenderId) return false;
+  if (getWinResult(board) || isDraw(board)) return false;
+  return isLegalMove(board, cell);
 }
 
 export function applyMove(board: CellValue[], cell: number, symbol: PlayerSymbol): MoveResult {
