@@ -7,6 +7,13 @@
   box-sizing: border-box;
   overflow: auto;
   scrollbar-gutter: stable;
+  container: ttt-layout / size;
+}
+
+.ttt-root > .online-setup {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: hidden;
 }
 
 .ttt-game {
@@ -131,5 +138,140 @@
 
   .ttt-reset {
     min-height: 1.875rem;
+  }
+}
+
+@container ttt-layout (max-height: 36rem) {
+  .online-setup {
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .online-setup__hero {
+    gap: var(--space-2);
+  }
+
+  .online-setup__badge {
+    width: 2.125rem;
+    height: 2.125rem;
+    font-size: 1rem;
+  }
+
+  .online-setup__heading h2 {
+    font-size: 0.9375rem;
+  }
+
+  .online-setup__heading p,
+  .online-setup__eyebrow,
+  .online-setup__player-card small,
+  .online-setup__player-chip small {
+    display: none;
+  }
+
+  .online-setup__player-card {
+    min-width: auto;
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .online-setup__avatar {
+    font-size: 1.125rem;
+  }
+
+  .online-setup__status-row {
+    gap: var(--space-1);
+  }
+
+  .online-setup__status-pill,
+  .online-setup__capacity,
+  .online-setup__player-chip,
+  .online-setup__waiting-chip {
+    padding: 0.25rem var(--space-2);
+    font-size: 0.75rem;
+  }
+
+  .online-setup__player-meter,
+  .online-setup__players {
+    display: none;
+  }
+
+  .online-setup__actions {
+    gap: var(--space-2);
+  }
+
+  .online-setup__primary,
+  .online-setup__join button,
+  .online-setup__join input,
+  .online-setup__disconnect {
+    min-height: 2rem;
+  }
+
+  .online-setup__primary,
+  .online-setup__join button {
+    padding-inline: var(--space-3);
+  }
+
+  .online-setup__join {
+    gap: 0.125rem;
+  }
+
+  .online-setup__join label {
+    font-size: 0.6875rem;
+  }
+
+  .online-setup__room {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .online-setup__room strong {
+    font-size: 1rem;
+  }
+
+  .ttt-game {
+    gap: var(--space-2);
+    align-content: start;
+    padding: var(--space-2);
+  }
+
+  .ttt-status {
+    gap: var(--space-1);
+    font-size: 0.75rem;
+  }
+
+  .ttt-status span,
+  .ttt-status strong {
+    padding: 0.1875rem var(--space-2);
+  }
+
+  .ttt-board {
+    width: min(100%, 17rem, 58vmin, 42dvh);
+    gap: var(--space-1);
+    padding: var(--space-2);
+    box-shadow: none;
+  }
+
+  .ttt-cell {
+    font-size: clamp(1.5rem, 8vmin, 2.75rem);
+  }
+
+  .ttt-reset {
+    min-height: 1.875rem;
+  }
+}
+
+@container ttt-layout (max-height: 36rem) and (min-width: 34rem) {
+  .online-setup__hero {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .online-setup__actions {
+    grid-template-columns: minmax(9rem, 0.8fr) minmax(11rem, 1.2fr);
+  }
+
+  .online-setup__player-card,
+  .online-setup__primary {
+    width: auto;
   }
 }
