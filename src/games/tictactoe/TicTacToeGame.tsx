@@ -2,26 +2,21 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { GameStartMenu, type GameStartMenuAction } from "@/components/GameStartMenu";
 import { InGameMultiplayerOverlay, MultiplayerPanel, useMultiplayerLobby } from "@/multiplayer";
 import type { GameResetMessage, GameSpecificMessage, GameStartMessage, MultiplayerRole } from "@/multiplayer";
+import {
+  applyMove as applyTicTacToeMove,
+  chooseAiMove,
+  emptyBoard,
+  getWinResult,
+  isDraw,
+  type CellValue,
+  type PlayerSymbol,
+  type WinningLine,
+} from "./tictactoe.logic";
 import "./tictactoe.css";
 
-type CellValue = "X" | "O" | null;
-type PlayerSymbol = Exclude<CellValue, null>;
 type GameMode = "menu" | "local" | "ai" | "onlineLobby" | "online";
 type TicTacToeMoveMessage = GameSpecificMessage<"tictactoe:move", { cell: number; symbol: PlayerSymbol }>;
 type TicTacToeMessage = TicTacToeMoveMessage | GameResetMessage | GameStartMessage;
-type WinningLine = (typeof WIN_LINES)[number];
-type WinResult = { symbol: PlayerSymbol; line: WinningLine };
-
-const WIN_LINES = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6],
-] as const;
 
 export default function TicTacToeGame(): React.ReactElement {
   const [mode, setMode] = useState<GameMode>("menu");
@@ -35,14 +30,10 @@ export default function TicTacToeGame(): React.ReactElement {
   }, []);
 
   const applyMove = useCallback((cell: number, symbol: PlayerSymbol) => {
-    if (!Number.isInteger(cell) || cell < 0 || cell >= 9) return;
-
     setBoard((current) => {
-      if (current[cell] !== null) return current;
-      const next = current.slice();
-      next[cell] = symbol;
-      setTurn(symbol === "X" ? "O" : "X");
-      return next;
+      const result = applyTicTacToeMove(current, cell, symbol);
+      if (result.moved) setTurn(result.nextTurn);
+      return result.board;
     });
   }, []);
 
@@ -74,7 +65,7 @@ export default function TicTacToeGame(): React.ReactElement {
   const winResult = useMemo(() => getWinResult(board), [board]);
   const winner = winResult?.symbol ?? null;
   const winningLineClass = winResult ? getWinningLineClass(winResult.line) : null;
-  const draw = !winner && board.every(Boolean);
+  const draw = useMemo(() => isDraw(board), [board]);
   const onlinePlayers = 1 + lobby.remotePlayers.length;
   const onlineReady = lobby.status === "connected" && onlinePlayers >= 2;
   const myOnlineSymbol: PlayerSymbol | null = lobby.role === "host" ? "X" : lobby.role === "guest" ? "O" : null;
@@ -261,21 +252,6 @@ export default function TicTacToeGame(): React.ReactElement {
   );
 }
 
-function emptyBoard(): CellValue[] {
-  return Array<CellValue>(9).fill(null);
-}
-
-function getWinResult(board: CellValue[]): WinResult | null {
-  for (const line of WIN_LINES) {
-    const [a, b, c] = line;
-    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      return { symbol: board[a], line };
-    }
-  }
-
-  return null;
-}
-
 function getWinningLineClass(line: WinningLine): string {
   const key = line.join("-");
 
@@ -309,21 +285,4 @@ function getPlayerLabel(mode: GameMode, turn: PlayerSymbol, myOnlineSymbol: Play
   if (mode === "ai") return turn === "X" ? "Twój ruch" : "Ruch komputera";
   if (mode === "online") return `Twój znak: ${myOnlineSymbol ?? "brak"}`;
   return "Wybierz tryb gry";
-}
-
-function chooseAiMove(board: CellValue[], ai: PlayerSymbol, human: PlayerSymbol): number | null {
-  const firstEmptyCell = board.findIndex((value) => value === null);
-  return findWinningMove(board, ai) ?? findWinningMove(board, human) ?? (firstEmptyCell >= 0 ? firstEmptyCell : null);
-}
-
-function findWinningMove(board: CellValue[], symbol: PlayerSymbol): number | null {
-  for (const [a, b, c] of WIN_LINES) {
-    const line = [a, b, c];
-    const values = line.map((index) => board[index]);
-    if (values.filter((value) => value === symbol).length === 2 && values.includes(null)) {
-      return line[values.findIndex((value) => value === null)];
-    }
-  }
-
-  return null;
 }
