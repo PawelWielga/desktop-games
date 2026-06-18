@@ -4,9 +4,12 @@ import {
   chooseAiMove,
   emptyBoard,
   findWinningMove,
+  getOnlineRoleSymbol,
+  getOpponentRole,
   getWinResult,
   isDraw,
   isLegalMove,
+  isLegalOnlineMove,
   type CellValue,
 } from "./tictactoe.logic";
 
@@ -81,5 +84,78 @@ describe("tictactoe logic", () => {
     const board: CellValue[] = ["X", "O", "X", "O", null, null, null, null, null];
 
     expect(chooseAiMove(board, "O", "X")).toBe(4);
+  });
+
+  it("maps online roles to fixed symbols", () => {
+    expect(getOnlineRoleSymbol("host")).toBe("X");
+    expect(getOnlineRoleSymbol("guest")).toBe("O");
+    expect(getOpponentRole("host")).toBe("guest");
+    expect(getOpponentRole("guest")).toBe("host");
+  });
+
+  it("accepts a legal online move from the expected role and sender", () => {
+    expect(
+      isLegalOnlineMove({
+        board: emptyBoard(),
+        cell: 0,
+        symbol: "X",
+        turn: "X",
+        senderRole: "host",
+        senderId: "host-player",
+        expectedSenderId: "host-player",
+      })
+    ).toBe(true);
+  });
+
+  it("rejects online moves when symbol does not match the current turn", () => {
+    expect(
+      isLegalOnlineMove({
+        board: emptyBoard(),
+        cell: 0,
+        symbol: "X",
+        turn: "O",
+        senderRole: "host",
+      })
+    ).toBe(false);
+  });
+
+  it("rejects online moves when symbol does not match sender role", () => {
+    expect(
+      isLegalOnlineMove({
+        board: emptyBoard(),
+        cell: 0,
+        symbol: "X",
+        turn: "X",
+        senderRole: "guest",
+      })
+    ).toBe(false);
+  });
+
+  it("rejects online moves from a different sender", () => {
+    expect(
+      isLegalOnlineMove({
+        board: emptyBoard(),
+        cell: 0,
+        symbol: "O",
+        turn: "O",
+        senderRole: "guest",
+        senderId: "other-player",
+        expectedSenderId: "guest-player",
+      })
+    ).toBe(false);
+  });
+
+  it("rejects online moves after the game is finished", () => {
+    const board: CellValue[] = ["X", "X", "X", null, null, null, null, null, null];
+
+    expect(
+      isLegalOnlineMove({
+        board,
+        cell: 4,
+        symbol: "O",
+        turn: "O",
+        senderRole: "guest",
+      })
+    ).toBe(false);
   });
 });
