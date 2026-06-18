@@ -6,8 +6,10 @@ import {
   applyMove as applyTicTacToeMove,
   chooseAiMove,
   emptyBoard,
+  getOpponentRole,
   getWinResult,
   isDraw,
+  isLegalOnlineMove,
   type CellValue,
   type PlayerSymbol,
   type WinningLine,
@@ -22,19 +24,29 @@ export default function TicTacToeGame(): React.ReactElement {
   const [mode, setMode] = useState<GameMode>("menu");
   const [board, setBoard] = useState<CellValue[]>(() => emptyBoard());
   const [turn, setTurn] = useState<PlayerSymbol>("X");
+  const boardRef = useRef<CellValue[]>(emptyBoard());
+  const turnRef = useRef<PlayerSymbol>("X");
   const lobbyRoleRef = useRef<MultiplayerRole | null>(null);
+  const localPlayerIdRef = useRef<string | null>(null);
+  const opponentPlayerIdRef = useRef<string | null>(null);
 
   const resetBoard = useCallback(() => {
-    setBoard(emptyBoard());
+    const nextBoard = emptyBoard();
+    boardRef.current = nextBoard;
+    turnRef.current = "X";
+    setBoard(nextBoard);
     setTurn("X");
   }, []);
 
   const applyMove = useCallback((cell: number, symbol: PlayerSymbol) => {
-    setBoard((current) => {
-      const result = applyTicTacToeMove(current, cell, symbol);
-      if (result.moved) setTurn(result.nextTurn);
-      return result.board;
-    });
+    const result = applyTicTacToeMove(boardRef.current, cell, symbol);
+    if (!result.moved) return false;
+
+    boardRef.current = result.board;
+    turnRef.current = result.nextTurn;
+    setBoard(result.board);
+    setTurn(result.nextTurn);
+    return true;
   }, []);
 
   const handleRemoteMessage = useCallback(
@@ -55,7 +67,21 @@ export default function TicTacToeGame(): React.ReactElement {
       }
 
       if (message.type === "tictactoe:move") {
-        applyMove(message.cell, message.symbol);
+        const localRole = lobbyRoleRef.current;
+        if (!localRole) return;
+
+        const senderRole = getOpponentRole(localRole);
+        const isLegalRemoteMove = isLegalOnlineMove({
+          board: boardRef.current,
+          cell: message.cell,
+          symbol: message.symbol,
+          turn: turnRef.current,
+          senderRole,
+          senderId: message.senderId,
+          expectedSenderId: opponentPlayerIdRef.current,
+        });
+
+        if (isLegalRemoteMove) applyMove(message.cell, message.symbol);
       }
     },
     [applyMove, resetBoard]
@@ -76,9 +102,17 @@ export default function TicTacToeGame(): React.ReactElement {
   }, [lobby.role]);
 
   useEffect(() => {
+    localPlayerIdRef.current = lobby.localPlayer.id;
+  }, [lobby.localPlayer.id]);
+
+  useEffect(() => {
+    opponentPlayerIdRef.current = lobby.opponent?.id ?? null;
+  }, [lobby.opponent?.id]);
+
+  useEffect(() => {
     if (mode === "ai" && turn === "O" && !winner && !draw) {
       const timeoutId = window.setTimeout(() => {
-        const aiCell = chooseAiMove(board, "O", "X");
+        const aiCell = chooseAiMove(boardRef.current, "O", "X");
         if (aiCell !== null) applyMove(aiCell, "O");
       }, 320);
 
@@ -86,7 +120,7 @@ export default function TicTacToeGame(): React.ReactElement {
     }
 
     return undefined;
-  }, [applyMove, board, draw, mode, turn, winner]);
+  }, [applyMove, draw, mode, turn, winner]);
 
   const startMode = (nextMode: GameMode) => {
     resetBoard();
@@ -131,7 +165,19 @@ export default function TicTacToeGame(): React.ReactElement {
       return;
     }
 
-    if (mode === "online" && myOnlineSymbol === turn && lobby.status === "connected") {
+    if (mode === "online" && myOnlineSymbol === turn && lobby.status === "connected" && lobby.role) {
+      const isLegalLocalMove = isLegalOnlineMove({
+        board: boardRef.current,
+        cell,
+        symbol: myOnlineSymbol,
+        turn: turnRef.current,
+        senderRole: lobby.role,
+        senderId: localPlayerIdRef.current ?? undefined,
+        expectedSenderId: localPlayerIdRef.current,
+      });
+
+      if (!isLegalLocalMove) return;
+
       const sent = lobby.sendMessage({ type: "tictactoe:move", cell, symbol: myOnlineSymbol });
       if (sent) applyMove(cell, myOnlineSymbol);
     }
