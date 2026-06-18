@@ -1,43 +1,73 @@
 .ttt-root {
-  display: grid;
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   height: 100%;
-  padding: 14px;
+  padding: 8px;
   box-sizing: border-box;
   overflow: auto;
-  background: #0f172a;
+  background: #101418;
   color: #f8fafc;
 }
 
 .ttt-game {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
   gap: 12px;
   justify-items: center;
+  align-content: center;
+  padding: 12px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  box-sizing: border-box;
 }
 
 .ttt-status {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  align-items: center;
   justify-content: center;
+  gap: 12px;
+  width: 100%;
   font-size: 14px;
+}
+
+.ttt-status span,
+.ttt-status strong {
+  padding: 4px 8px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+}
+
+.ttt-status strong {
+  color: #81c784;
 }
 
 .ttt-board {
   display: grid;
   grid-template-columns: repeat(3, minmax(72px, 112px));
   gap: 8px;
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  background: rgba(16,20,24,0.72);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
 }
 
 .ttt-cell {
   aspect-ratio: 1;
-  border: 1px solid rgba(125, 211, 252, 0.5);
-  border-radius: 8px;
-  background: rgba(15, 23, 42, 0.76);
-  color: #f8fafc;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.08);
+  color: #81c784;
   font-size: clamp(32px, 10vw, 56px);
   font-weight: 800;
   cursor: pointer;
+  text-shadow: 0 0 14px rgba(129,199,132,0.28);
+  transition: background-color .12s ease, border-color .12s ease, transform .08s ease;
 }
 
 .ttt-cell:disabled {
@@ -46,16 +76,21 @@
 }
 
 .ttt-cell:not(:disabled):hover {
-  background: rgba(14, 165, 233, 0.28);
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(129,199,132,0.42);
+  transform: translateY(-1px);
 }
 
 .ttt-reset {
-  min-height: 36px;
-  border: 1px solid rgba(125, 211, 252, 0.55);
-  border-radius: 6px;
-  background: #0ea5e9;
-  color: #082f49;
-  font-weight: 700;
+  padding: 6px 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.08);
+  color: inherit;
+  font: inherit;
   cursor: pointer;
-  padding: 0 14px;
+}
+
+.ttt-reset:hover {
+  background: rgba(255,255,255,0.16);
 }
