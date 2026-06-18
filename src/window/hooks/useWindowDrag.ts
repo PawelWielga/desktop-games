@@ -18,12 +18,17 @@ export function useWindowDrag(
   opts?: { headerEl?: HTMLElement | null; contentEl?: HTMLElement | null }
 ): void {
   const { settings } = useSettings();
+  const patchRef = useRef(patch);
+  const getStateRef = useRef(getState);
   const dragActive = useRef(false);
   const holdTimer = useRef<number | null>(null);
   const startPoint = useRef({ x: 0, y: 0 });
   const startPos = useRef({ x: 0, y: 0 });
   const lastFrame = useRef(0);
   const pendingPos = useRef<{ x: number; y: number } | null>(null);
+
+  patchRef.current = patch;
+  getStateRef.current = getState;
 
   const threshold = Math.max(0, settings.windowDrag.startThresholdPx);
   const holdMs = Math.max(0, settings.windowDrag.holdToDragMs);
@@ -111,14 +116,14 @@ export function useWindowDrag(
         lastFrame.current = 0;
         const p = pendingPos.current;
         if (p) {
-          patch({ x: p.x, y: p.y });
+          patchRef.current({ x: p.x, y: p.y });
         }
       });
     }
   }
 
   function startDrag(e: PointerEvent) {
-    const st = getState();
+    const st = getStateRef.current();
     if (st.maximized || !settings.windowDrag.enabled || isFullscreen()) return;
 
     // Prevent text selection and focus flicker
@@ -152,7 +157,7 @@ export function useWindowDrag(
     // Prevent text selection/scroll during drag
     if (typeof (e as any).preventDefault === "function") (e as any).preventDefault();
 
-    const st = getState();
+    const st = getStateRef.current();
     if (st.maximized) return;
 
     const dx = e.clientX - startPoint.current.x;
