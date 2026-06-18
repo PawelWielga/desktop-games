@@ -1,59 +1,63 @@
 .ms-root {
   display: flex;
   flex-direction: column;
+  gap: 8px;
   height: 100%;
-  background: #ffffff;
-  color: #222;
-  font-family: Segoe UI, Tahoma, sans-serif;
+  padding: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #101418;
+  color: #f8fafc;
 }
 
 .ms-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #e9ecef;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
-  padding: 8px 12px;
+  gap: 12px;
+  font-size: 14px;
 }
 
 .ms-counter, .ms-timer {
-  background: #000;
-  color: #ff0000;
-  padding: 4px 8px;
+  min-width: 48px;
+  padding: 5px 8px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 4px;
+  background: rgba(0,0,0,0.35);
+  color: #81c784;
   font-family: "Courier New", monospace;
   font-size: 16px;
-  border: 1px inset #c0c0c0;
-  min-width: 48px;
   text-align: center;
-  border-radius: 2px;
+  box-shadow: inset 0 0 12px rgba(0,0,0,0.22);
 }
 
 .ms-reset {
-  width: 36px;
-  height: 36px;
-  background: #c0c0c0;
-  border: 2px outset #c0c0c0;
-  cursor: pointer;
-  font-size: 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 4px;
-  transition: transform .08s ease;
-}
-.ms-reset:active {
-  border: 2px inset #c0c0c0;
-  transform: translateY(1px);
+  background: rgba(255,255,255,0.08);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color .12s ease, transform .08s ease;
 }
 
+.ms-reset:hover {
+  background: rgba(255,255,255,0.16);
+}
+
+.ms-reset:active {
+  transform: translateY(1px);
+}
 
 .ms-difficulty {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 8px 12px;
-  background: #f7f7f7;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
 }
 
 .ms-difficulty-option {
@@ -63,74 +67,84 @@
   align-items: flex-start;
   min-width: 128px;
   padding: 6px 10px;
-  border: 1px solid #b8b8b8;
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: 4px;
-  background: #efefef;
-  color: #222;
+  background: rgba(255,255,255,0.08);
+  color: inherit;
   cursor: pointer;
   font: inherit;
+  transition: background-color .12s ease, border-color .12s ease;
 }
 
 .ms-difficulty-option:hover {
-  background: #ffffff;
+  background: rgba(255,255,255,0.16);
 }
 
 .ms-difficulty-option[data-active="true"] {
-  background: #dceeff;
-  border-color: #6aa6d8;
-  box-shadow: inset 0 0 0 1px #6aa6d8;
+  background: rgba(129,199,132,0.18);
+  border-color: rgba(129,199,132,0.42);
 }
 
 .ms-difficulty-option small {
-  color: #555;
+  color: rgba(248,250,252,0.68);
   font-size: 11px;
 }
 
 .ms-grid-wrap {
   flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: center;
   overflow: auto;
   padding: 12px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
 }
 
-/* Remove gray background below the grid and mirror legacy chrome */
 .ms-grid {
   display: grid;
-  gap: 1px;                /* legacy gap between tiles */
-  background: transparent; /* requested: no gray panel behind board */
+  gap: 1px;
   width: fit-content;
   margin: 0 auto;
-  border: none;            /* no top/bottom inset bars */
-  perspective: 700px;      /* enable 3D feel for flip ripple */
+  padding: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 6px;
+  background: rgba(16,20,24,0.72);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  perspective: 700px;
 }
 
-/* Tile look + subtle hover/press animation like legacy feel */
 .ms-cell {
-  width: 28px;
-  height: 28px;
-  background: #c0c0c0;           /* legacy base */
-  border: 2px outset #c0c0c0;    /* bevel */
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  color: #f8fafc;
   cursor: pointer;
   font-weight: 700;
   font-size: 14px;
-  user-select: none;
-  color: #1b1f23;
   line-height: 1;
+  user-select: none;
   transition: transform .08s ease, background-color .12s ease, border-color .12s ease;
   backface-visibility: hidden;
   transform-style: preserve-3d;
 }
+
 .ms-cell:hover:not(.revealed) {
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(129,199,132,0.42);
   transform: translateY(-1px);
 }
+
 .ms-cell:active:not(.revealed) {
-  transform: translateY(0);         /* press back */
-  border: 2px inset #c0c0c0;        /* pressed look */
+  transform: translateY(0);
 }
 
-/* Flip reveal animation (legacy-like) */
 @keyframes ms-flip {
   0%   { transform: rotateX(0deg) scale(1); }
   49%  { transform: rotateX(90deg) scale(0.98); }
@@ -138,24 +152,21 @@
   100% { transform: rotateX(0deg) scale(1); }
 }
 
-/* Subtle pulse to enhance ripple feel */
 @keyframes ms-pulse {
   0% { opacity: .85; }
   60% { opacity: 1; }
   100% { opacity: 1; }
 }
 
-/* Revealed tile */
 .ms-cell.revealed {
-  border: 1px solid #808080;
-  background: #f0f0f0;
+  border-color: rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.14);
   transform: none;
   animation: ms-flip .22s ease-out both;
   backface-visibility: hidden;
   transform-style: preserve-3d;
 }
 
-/* Wave ripple: these attributes are set from TS per click like legacy revealWave() */
 .ms-cell[data-wave] {
   will-change: transform, opacity;
   animation-name: ms-flip, ms-pulse;
@@ -164,7 +175,6 @@
   animation-fill-mode: both, both;
 }
 
-/* distance-based stagger (60ms step as in legacy) */
 .ms-cell[data-wave][data-dist="0"] { animation-delay:   0ms,   0ms; }
 .ms-cell[data-wave][data-dist="1"] { animation-delay:  60ms,  60ms; }
 .ms-cell[data-wave][data-dist="2"] { animation-delay: 120ms, 120ms; }
@@ -179,24 +189,24 @@
 .ms-cell[data-wave][data-dist="11"] { animation-delay: 660ms, 660ms; }
 .ms-cell[data-wave][data-dist="12"] { animation-delay: 720ms, 720ms; }
 
-/* Flagged tile */
 .ms-cell.flagged {
-  background: #ffff00;
+  background: rgba(234,179,8,0.24);
+  border-color: rgba(234,179,8,0.48);
 }
 
-/* number coloring similar to classic minesweeper */
-.ms-cell.revealed.n1 { color: #0000ff; }
-.ms-cell.revealed.n2 { color: #008000; }
-.ms-cell.revealed.n3 { color: #ff0000; }
-.ms-cell.revealed.n4 { color: #000080; }
-.ms-cell.revealed.n5 { color: #800000; }
-.ms-cell.revealed.n6 { color: #008080; }
-.ms-cell.revealed.n7 { color: #000000; }
-.ms-cell.revealed.n8 { color: #7f7f7f; }
+.ms-cell.revealed.n1 { color: #7dd3fc; }
+.ms-cell.revealed.n2 { color: #81c784; }
+.ms-cell.revealed.n3 { color: #ff6b6b; }
+.ms-cell.revealed.n4 { color: #a78bfa; }
+.ms-cell.revealed.n5 { color: #f59e0b; }
+.ms-cell.revealed.n6 { color: #2dd4bf; }
+.ms-cell.revealed.n7 { color: #f8fafc; }
+.ms-cell.revealed.n8 { color: #cbd5e1; }
 
 .ms-footer {
-  padding: 8px 12px;
-  background: #f7f7f7;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.8;
   font-size: 12px;
-  color: #444;
 }
