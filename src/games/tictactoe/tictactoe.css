@@ -29,6 +29,10 @@
   justify-content: center;
 }
 
+.ttt-root--lobby {
+  gap: clamp(1rem, 2.6vmin, 1.4rem);
+}
+
 .ttt-root--play {
   justify-content: flex-start;
 }
@@ -126,8 +130,20 @@
 }
 
 .ttt-start-online {
-  width: min(100%, 38rem);
+  width: min(100%, 44rem);
+  min-height: clamp(3rem, 7vmin, 3.55rem);
   margin-inline: auto;
+  border-color: rgba(36, 121, 54, 0.34);
+  border-radius: 0.65rem;
+  background: linear-gradient(180deg, #57b461, #25813c);
+  color: #f7fff7;
+  font-size: clamp(1rem, 2.7vmin, 1.25rem);
+  text-transform: none;
+  box-shadow: 0 0.75rem 1.25rem rgba(31, 36, 48, 0.16), inset 0 0.0625rem 0 rgba(255, 255, 255, 0.3);
+}
+
+.ttt-start-online:hover {
+  background: linear-gradient(180deg, #61bf6b, #2b8b43);
 }
 
 .ttt-online-note {
@@ -144,8 +160,19 @@
 }
 
 .ttt-link-button {
-  min-height: 2rem;
-  padding-inline: 0.75rem;
+  min-height: clamp(2.4rem, 5.6vmin, 2.85rem);
+  padding-inline: clamp(0.9rem, 2.5vmin, 1.15rem);
+  border-radius: 999rem;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: clamp(0.9rem, 2.4vmin, 1.05rem);
+  text-transform: uppercase;
+}
+
+.ttt-link-button::before {
+  content: "←";
+  margin-right: 0.55rem;
+  font-size: 1.2em;
+  line-height: 1;
 }
 
 .ttt-game {
