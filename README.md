@@ -2,6 +2,10 @@
 
 React + Vite + TypeScript desktop-style collection of small browser games.
 
+## Play online
+
+https://pawelwielga.github.io/desktop-games/
+
 ## Development
 
 Install dependencies:
