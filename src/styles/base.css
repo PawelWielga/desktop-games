@@ -29,6 +29,7 @@
 
   /* Responsive shell sizing */
   --taskbar-height: clamp(2.75rem, 7dvh, 3rem);
+  --trial-banner-reserved-height: clamp(2.75rem, 7dvh, 3.25rem);
   --desktop-icon-size: clamp(3rem, 8vmin, 4rem);
   --desktop-icon-font-size: clamp(1.5rem, 4vmin, 2rem);
   --desktop-icon-column: calc(var(--desktop-icon-size) + var(--space-4));
