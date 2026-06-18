@@ -13,6 +13,11 @@ export type OnlineGameSetupProps<TGameMessage extends BaseMultiplayerMessage = B
   joinLabel?: string;
 };
 
+export type InGameMultiplayerOverlayProps<TGameMessage extends BaseMultiplayerMessage = BaseMultiplayerMessage> = {
+  lobby: UseMultiplayerLobbyResult<TGameMessage>;
+  maxPlayers: number;
+};
+
 type OnlineGameSetupStatus = UseMultiplayerLobbyResult<BaseMultiplayerMessage>["status"];
 type OnlineGameSetupRole = UseMultiplayerLobbyResult<BaseMultiplayerMessage>["role"];
 
@@ -22,63 +27,72 @@ export function OnlineGameSetup<TGameMessage extends BaseMultiplayerMessage = Ba
   subtitle = "Utwórz pokój albo dołącz kodem od hosta.",
   minPlayers,
   maxPlayers,
-  createLabel = "Utwórz grę online",
+  createLabel = "Utwórz pokój",
   joinLabel = "Dołącz",
 }: OnlineGameSetupProps<TGameMessage>): React.ReactElement {
-  const [joinCode, setJoinCode] = useState("");
-  const busy = lobby.status === "hosting" || lobby.status === "joining";
+  const currentPlayers = getCurrentPlayers(lobby);
   const connected = lobby.status === "connected";
-  const currentPlayers = 1 + lobby.remotePlayers.length;
+  const busy = lobby.status === "hosting" || lobby.status === "joining";
   const canStart = currentPlayers >= minPlayers && currentPlayers <= maxPlayers;
-  const canCreate = !busy && !connected;
-  const canJoin = joinCode.trim().length > 0 && !busy && !connected;
   const statusText = useMemo(() => getStatusText(lobby.status, canStart), [lobby.status, canStart]);
 
+  if (connected || lobby.roomCode) {
+    return (
+      <MultiplayerLobbyScreen
+        lobby={lobby}
+        title={title}
+        minPlayers={minPlayers}
+        maxPlayers={maxPlayers}
+        currentPlayers={currentPlayers}
+        statusText={statusText}
+      />
+    );
+  }
+
   return (
-    <section className="online-setup" aria-label={title} data-status={lobby.status}>
-      <header className="online-setup__hero">
-        <div className="online-setup__badge" aria-hidden>
-          ✨
-        </div>
-        <div className="online-setup__heading">
+    <MultiplayerConnectScreen
+      lobby={lobby}
+      title={title}
+      subtitle={subtitle}
+      busy={busy}
+      createLabel={createLabel}
+      joinLabel={joinLabel}
+    />
+  );
+}
+
+type MultiplayerConnectScreenProps<TGameMessage extends BaseMultiplayerMessage> = Pick<
+  OnlineGameSetupProps<TGameMessage>,
+  "lobby" | "title" | "subtitle" | "createLabel" | "joinLabel"
+> & {
+  busy: boolean;
+};
+
+function MultiplayerConnectScreen<TGameMessage extends BaseMultiplayerMessage>({
+  lobby,
+  title,
+  subtitle,
+  busy,
+  createLabel,
+  joinLabel,
+}: MultiplayerConnectScreenProps<TGameMessage>): React.ReactElement {
+  const [joinCode, setJoinCode] = useState("");
+  const canCreate = !busy;
+  const canJoin = joinCode.trim().length > 0 && !busy;
+
+  return (
+    <section className="online-setup online-setup--connect" aria-label={title} data-status={lobby.status}>
+      <header className="online-setup__header">
+        <div>
           <span className="online-setup__eyebrow">Multiplayer</span>
           <h2>{title}</h2>
           <p>{subtitle}</p>
         </div>
-        <div className="online-setup__player-card" title={lobby.localPlayer.name}>
-          <span className="online-setup__avatar" style={{ color: lobby.localPlayer.color }} aria-hidden>
-            {lobby.localPlayer.emoji}
-          </span>
-          <span>
-            <small>Grasz jako</small>
-            <strong>{lobby.localPlayer.name}</strong>
-          </span>
-        </div>
+        <PlayerIdentity lobby={lobby} />
       </header>
-
-      <div className="online-setup__status-row">
-        <div className="online-setup__status-pill">
-          <span className="online-setup__dot" aria-hidden />
-          {statusText}
-        </div>
-        <div className="online-setup__capacity" aria-label={`Gracze ${currentPlayers} z ${maxPlayers}`}>
-          <strong>{currentPlayers}</strong>/<span>{maxPlayers}</span> graczy
-        </div>
-      </div>
-
-      <div className="online-setup__player-meter" aria-hidden>
-        {Array.from({ length: maxPlayers }, (_, index) => (
-          <span
-            key={index}
-            data-active={index < currentPlayers ? "true" : undefined}
-            data-required={index < minPlayers ? "true" : undefined}
-          />
-        ))}
-      </div>
 
       <div className="online-setup__actions">
         <button type="button" className="online-setup__primary" onClick={() => void lobby.host()} disabled={!canCreate}>
-          <span aria-hidden>🚀</span>
           {createLabel}
         </button>
 
@@ -97,7 +111,7 @@ export function OnlineGameSetup<TGameMessage extends BaseMultiplayerMessage = Ba
               value={joinCode}
               onChange={(event) => setJoinCode(event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))}
               placeholder="ABC12"
-              disabled={busy || connected}
+              disabled={busy}
               autoComplete="off"
             />
             <button type="submit" disabled={!canJoin}>
@@ -107,33 +121,115 @@ export function OnlineGameSetup<TGameMessage extends BaseMultiplayerMessage = Ba
         </form>
       </div>
 
-      {lobby.roomCode && (
-        <div className="online-setup__room" role="status">
-          <span>Udostępnij kod pokoju</span>
-          <strong>{lobby.roomCode}</strong>
-        </div>
-      )}
-
       {lobby.error && <p className="online-setup__error">{lobby.error.message}</p>}
+    </section>
+  );
+}
+
+type MultiplayerLobbyScreenProps<TGameMessage extends BaseMultiplayerMessage> = Pick<
+  OnlineGameSetupProps<TGameMessage>,
+  "lobby" | "title" | "minPlayers" | "maxPlayers"
+> & {
+  currentPlayers: number;
+  statusText: string;
+};
+
+function MultiplayerLobbyScreen<TGameMessage extends BaseMultiplayerMessage>({
+  lobby,
+  title,
+  minPlayers,
+  maxPlayers,
+  currentPlayers,
+  statusText,
+}: MultiplayerLobbyScreenProps<TGameMessage>): React.ReactElement {
+  const waitingForPlayers = Math.max(0, minPlayers - currentPlayers);
+  const roomTitle = lobby.roomCode ? `Pokój ${lobby.roomCode}` : title;
+
+  return (
+    <section className="online-setup online-setup--lobby" aria-label={roomTitle} data-status={lobby.status}>
+      <header className="online-setup__header online-setup__header--compact">
+        <div>
+          <span className="online-setup__eyebrow">Lobby</span>
+          <h2>{roomTitle}</h2>
+          <p>{statusText}</p>
+        </div>
+        <div className="online-setup__capacity" aria-label={`Gracze ${currentPlayers} z ${maxPlayers}`}>
+          <strong>{currentPlayers}</strong>/<span>{maxPlayers}</span> graczy
+        </div>
+      </header>
 
       <div className="online-setup__players" aria-label="Lista graczy">
-        <PlayerChip label="Ty" emoji={lobby.localPlayer.emoji} color={lobby.localPlayer.color} role={roleLabel(lobby.role)} />
+        <PlayerChip label={lobby.localPlayer.name} emoji={lobby.localPlayer.emoji} color={lobby.localPlayer.color} role={roleLabel(lobby.role)} />
         {lobby.remotePlayers.map((player) => (
           <PlayerChip key={player.id} label={player.name} emoji={player.emoji} color={player.color} role="połączony" />
         ))}
-        {Array.from({ length: Math.max(0, minPlayers - currentPlayers) }, (_, index) => (
-          <span key={`waiting-${index}`} className="online-setup__waiting-chip">
-            Czekamy na gracza
-          </span>
-        ))}
       </div>
 
-      {connected && (
-        <button type="button" className="online-setup__disconnect" onClick={lobby.close}>
-          Rozłącz
-        </button>
-      )}
+      <p className="online-setup__hint">
+        {waitingForPlayers > 0 ? `Czekamy jeszcze na ${waitingForPlayers} gracza.` : "Gracze są gotowi do rozpoczęcia rozgrywki."}
+      </p>
+
+      {lobby.error && <p className="online-setup__error">{lobby.error.message}</p>}
+
+      <button type="button" className="online-setup__disconnect" onClick={lobby.close}>
+        Rozłącz
+      </button>
     </section>
+  );
+}
+
+export function InGameMultiplayerOverlay<TGameMessage extends BaseMultiplayerMessage = BaseMultiplayerMessage>({
+  lobby,
+  maxPlayers,
+}: InGameMultiplayerOverlayProps<TGameMessage>): React.ReactElement | null {
+  const [open, setOpen] = useState(false);
+
+  if (lobby.status !== "connected") return null;
+
+  const currentPlayers = getCurrentPlayers(lobby);
+
+  return (
+    <div className="multiplayer-overlay">
+      <button
+        type="button"
+        className="multiplayer-overlay__badge"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+      >
+        👥 {currentPlayers}/{maxPlayers}
+      </button>
+
+      {open && (
+        <div className="multiplayer-overlay__popup" role="dialog" aria-label="Gracze">
+          <strong>Gracze</strong>
+          <ul>
+            <li>{lobby.localPlayer.name}</li>
+            {lobby.remotePlayers.map((player) => (
+              <li key={player.id}>{player.name}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+type PlayerIdentityProps<TGameMessage extends BaseMultiplayerMessage> = {
+  lobby: UseMultiplayerLobbyResult<TGameMessage>;
+};
+
+function PlayerIdentity<TGameMessage extends BaseMultiplayerMessage>({ lobby }: PlayerIdentityProps<TGameMessage>): React.ReactElement {
+  return (
+    <div className="online-setup__player-card" title={lobby.localPlayer.name}>
+      <span className="online-setup__avatar" style={{ color: lobby.localPlayer.color }} aria-hidden>
+        {lobby.localPlayer.emoji}
+      </span>
+      <span>
+        <small>Grasz jako</small>
+        <strong>{lobby.localPlayer.name}</strong>
+      </span>
+    </div>
   );
 }
 
@@ -158,6 +254,10 @@ function PlayerChip({ label, emoji, color, role }: PlayerChipProps): React.React
   );
 }
 
+function getCurrentPlayers<TGameMessage extends BaseMultiplayerMessage>(lobby: UseMultiplayerLobbyResult<TGameMessage>): number {
+  return 1 + lobby.remotePlayers.length;
+}
+
 function getStatusText(status: OnlineGameSetupStatus, canStart: boolean): string {
   switch (status) {
     case "idle":
@@ -178,9 +278,9 @@ function getStatusText(status: OnlineGameSetupStatus, canStart: boolean): string
 }
 
 function roleLabel(role: OnlineGameSetupRole): string {
-  if (role === "host") return "host";
-  if (role === "guest") return "gość";
-  return "lokalny";
+  if (role === "host") return "Host";
+  if (role === "guest") return "Gość";
+  return "Lokalny";
 }
 
 export default OnlineGameSetup;

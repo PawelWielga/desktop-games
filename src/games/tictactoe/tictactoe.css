@@ -1,29 +1,101 @@
 .ttt-root {
   display: flex;
   flex-direction: column;
-  gap: clamp(var(--space-2), 2vmin, var(--space-3));
+  gap: clamp(0.75rem, 2vmin, 1rem);
+  min-height: 100%;
   height: 100%;
-  padding: clamp(var(--space-2), 2vmin, var(--space-3));
+  padding: clamp(0.75rem, 2vmin, 1.25rem);
   box-sizing: border-box;
   overflow: auto;
   scrollbar-gutter: stable;
-  container: ttt-layout / size;
 }
 
-.ttt-root > .online-setup {
-  flex: 0 0 auto;
-  min-height: auto;
-  overflow: hidden;
+.ttt-root--menu {
+  align-items: center;
+  justify-content: center;
+}
+
+.ttt-menu {
+  display: grid;
+  gap: clamp(0.9rem, 2.6vmin, 1.25rem);
+  width: min(100%, 28rem);
+  padding: clamp(1rem, 4vmin, 1.6rem);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-1);
+  background: rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.ttt-menu h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 8vmin, 3rem);
+  line-height: 1;
+}
+
+.ttt-menu__eyebrow {
+  color: #81c784;
+  font-size: clamp(0.72rem, 2vmin, 0.8rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ttt-menu__actions {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.ttt-menu__actions button,
+.ttt-start-online,
+.ttt-link-button,
+.ttt-reset {
+  min-height: clamp(2.2rem, 5.5vmin, 2.6rem);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--radius-1);
+  background: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ttt-menu__actions button:hover,
+.ttt-start-online:hover,
+.ttt-link-button:hover,
+.ttt-reset:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.ttt-screen-actions,
+.ttt-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  width: min(100%, 34rem);
+  margin-inline: auto;
+}
+
+.ttt-start-online {
+  width: min(100%, 34rem);
+  margin-inline: auto;
+}
+
+.ttt-link-button {
+  min-height: 2rem;
+  padding-inline: 0.75rem;
+  font-size: clamp(0.78rem, 2vmin, 0.9rem);
 }
 
 .ttt-game {
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  gap: clamp(var(--space-2), 1.6vmin, var(--space-3));
+  gap: clamp(0.75rem, 1.8vmin, 1rem);
   justify-items: center;
   align-content: center;
-  padding: clamp(var(--space-2), 2vmin, var(--space-3));
+  padding: clamp(0.5rem, 2vmin, 1rem);
   box-sizing: border-box;
 }
 
@@ -32,18 +104,18 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: clamp(var(--space-1), 1.4vmin, var(--space-2));
-  width: 100%;
-  font-size: clamp(0.8125rem, 2vmin, 0.875rem);
+  gap: clamp(0.35rem, 1.4vmin, 0.65rem);
+  width: min(100%, 34rem);
+  font-size: clamp(0.8rem, 2vmin, 0.95rem);
   text-align: center;
 }
 
 .ttt-status span,
 .ttt-status strong {
-  padding: var(--space-1) var(--space-2);
-  border: 1px solid rgba(255,255,255,0.18);
+  padding: 0.3rem 0.55rem;
+  border: 0.0625rem solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-1);
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .ttt-status strong {
@@ -55,25 +127,25 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(0.35rem, 1.3vmin, 0.5rem);
   width: min(100%, 21rem, 62vmin, 52dvh);
-  padding: clamp(var(--space-2), 1.6vmin, var(--space-3));
-  border: 1px solid rgba(255,255,255,0.12);
+  padding: clamp(0.5rem, 1.6vmin, 0.75rem);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-1);
-  background: rgba(0,0,0,0.25);
-  box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.35);
+  background: rgba(0, 0, 0, 0.25);
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.35);
 }
 
 .ttt-cell {
   aspect-ratio: 1;
   min-width: 0;
-  border: 1px solid rgba(255,255,255,0.18);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.18);
   border-radius: var(--radius-1);
-  background: rgba(16,20,24,0.72);
+  background: rgba(16, 20, 24, 0.72);
   color: #81c784;
   font-size: clamp(2rem, 11vmin, 3.5rem);
   font-weight: 800;
   cursor: pointer;
-  text-shadow: 0 0 0.875rem rgba(129,199,132,0.28);
-  transition: background-color .12s ease, border-color .12s ease, transform .08s ease;
+  text-shadow: 0 0 0.875rem rgba(129, 199, 132, 0.28);
+  transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
 }
 
 .ttt-cell:disabled {
@@ -82,53 +154,65 @@
 }
 
 .ttt-cell:not(:disabled):hover {
-  background: rgba(255,255,255,0.16);
-  border-color: rgba(129,199,132,0.42);
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(129, 199, 132, 0.42);
   transform: translateY(-0.0625rem);
 }
 
 .ttt-reset {
-  min-height: clamp(2rem, 5vmin, 2.25rem);
-  padding: 0 clamp(var(--space-3), 3vmin, var(--space-4));
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: var(--radius-1);
-  background: rgba(255,255,255,0.08);
-  color: inherit;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
+  padding-inline: clamp(0.85rem, 2.5vmin, 1.15rem);
 }
 
-.ttt-reset:hover {
-  background: rgba(255,255,255,0.16);
-}
-
-@media (max-height: 44rem) {
+@media (max-width: 32rem) {
   .ttt-root {
-    gap: var(--space-2);
-    padding: var(--space-2);
+    padding: 0.65rem;
+  }
+
+  .ttt-menu,
+  .ttt-game {
+    padding: 0.75rem;
+  }
+
+  .ttt-board {
+    width: min(100%, 18rem, 72vmin, 48dvh);
+  }
+}
+
+@media (max-height: 42rem) {
+  .ttt-root {
+    gap: 0.5rem;
+    padding: 0.6rem;
+  }
+
+  .ttt-menu {
+    gap: 0.55rem;
+    padding: 0.75rem;
+  }
+
+  .ttt-menu h1 {
+    font-size: clamp(1.4rem, 7vmin, 2.2rem);
   }
 
   .ttt-game {
-    gap: var(--space-2);
+    gap: 0.5rem;
     align-content: start;
-    padding: var(--space-2);
+    padding: 0.4rem;
   }
 
   .ttt-status {
-    gap: var(--space-1);
+    gap: 0.3rem;
     font-size: 0.75rem;
   }
 
   .ttt-status span,
   .ttt-status strong {
-    padding: 0.1875rem var(--space-2);
+    padding: 0.2rem 0.45rem;
   }
 
   .ttt-board {
     width: min(100%, 17rem, 58vmin, 42dvh);
-    gap: var(--space-1);
-    padding: var(--space-2);
+    gap: 0.3rem;
+    padding: 0.45rem;
     box-shadow: none;
   }
 
@@ -136,142 +220,10 @@
     font-size: clamp(1.5rem, 8vmin, 2.75rem);
   }
 
+  .ttt-menu__actions button,
+  .ttt-start-online,
+  .ttt-link-button,
   .ttt-reset {
-    min-height: 1.875rem;
-  }
-}
-
-@container ttt-layout (max-height: 36rem) {
-  .online-setup {
-    gap: var(--space-2);
-    padding: var(--space-2);
-  }
-
-  .online-setup__hero {
-    gap: var(--space-2);
-  }
-
-  .online-setup__badge {
-    width: 2.125rem;
-    height: 2.125rem;
-    font-size: 1rem;
-  }
-
-  .online-setup__heading h2 {
-    font-size: 0.9375rem;
-  }
-
-  .online-setup__heading p,
-  .online-setup__eyebrow,
-  .online-setup__player-card small,
-  .online-setup__player-chip small {
-    display: none;
-  }
-
-  .online-setup__player-card {
-    min-width: auto;
-    padding: var(--space-1) var(--space-2);
-  }
-
-  .online-setup__avatar {
-    font-size: 1.125rem;
-  }
-
-  .online-setup__status-row {
-    gap: var(--space-1);
-  }
-
-  .online-setup__status-pill,
-  .online-setup__capacity,
-  .online-setup__player-chip,
-  .online-setup__waiting-chip {
-    padding: 0.25rem var(--space-2);
-    font-size: 0.75rem;
-  }
-
-  .online-setup__player-meter,
-  .online-setup__players {
-    display: none;
-  }
-
-  .online-setup__actions {
-    gap: var(--space-2);
-  }
-
-  .online-setup__primary,
-  .online-setup__join button,
-  .online-setup__join input,
-  .online-setup__disconnect {
     min-height: 2rem;
-  }
-
-  .online-setup__primary,
-  .online-setup__join button {
-    padding-inline: var(--space-3);
-  }
-
-  .online-setup__join {
-    gap: 0.125rem;
-  }
-
-  .online-setup__join label {
-    font-size: 0.6875rem;
-  }
-
-  .online-setup__room {
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-1) var(--space-2);
-  }
-
-  .online-setup__room strong {
-    font-size: 1rem;
-  }
-
-  .ttt-game {
-    gap: var(--space-2);
-    align-content: start;
-    padding: var(--space-2);
-  }
-
-  .ttt-status {
-    gap: var(--space-1);
-    font-size: 0.75rem;
-  }
-
-  .ttt-status span,
-  .ttt-status strong {
-    padding: 0.1875rem var(--space-2);
-  }
-
-  .ttt-board {
-    width: min(100%, 17rem, 58vmin, 42dvh);
-    gap: var(--space-1);
-    padding: var(--space-2);
-    box-shadow: none;
-  }
-
-  .ttt-cell {
-    font-size: clamp(1.5rem, 8vmin, 2.75rem);
-  }
-
-  .ttt-reset {
-    min-height: 1.875rem;
-  }
-}
-
-@container ttt-layout (max-height: 36rem) and (min-width: 34rem) {
-  .online-setup__hero {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-  }
-
-  .online-setup__actions {
-    grid-template-columns: minmax(9rem, 0.8fr) minmax(11rem, 1.2fr);
-  }
-
-  .online-setup__player-card,
-  .online-setup__primary {
-    width: auto;
   }
 }
