@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./minesweeper.css";
 import {
   DEFAULT_DIFFICULTY,
@@ -49,9 +49,27 @@ export default function MinesweeperGame(): React.ReactElement {
   const [flags, setFlags] = useState(0);
   const [time, setTime] = useState(0);
   const timerRef = useRef<number | null>(null);
+  const revealTimeoutsRef = useRef<number[]>([]);
+  const revealSessionRef = useRef(0);
 
   const [waveMeta, setWaveMeta] = useState<WaveMeta[]>(() => Array(cols * rows).fill(null));
   const waveIdRef = useRef(0);
+
+  const clearRevealTimeouts = useCallback((): void => {
+    for (const timeoutId of revealTimeoutsRef.current) {
+      window.clearTimeout(timeoutId);
+    }
+    revealTimeoutsRef.current = [];
+  }, []);
+
+  const scheduleRevealTimeout = useCallback((callback: () => void, delay: number): void => {
+    const timeoutId = window.setTimeout(() => {
+      revealTimeoutsRef.current = revealTimeoutsRef.current.filter((item) => item !== timeoutId);
+      callback();
+    }, delay);
+
+    revealTimeoutsRef.current.push(timeoutId);
+  }, []);
 
   const remaining = useMemo(() => Math.max(0, mines - flags), [mines, flags]);
 
@@ -59,6 +77,14 @@ export default function MinesweeperGame(): React.ReactElement {
     // build RNG once on mount
     rebuildRng();
   }, []);
+
+  useEffect(() => {
+    return () => {
+      clearRevealTimeouts();
+      revealSessionRef.current += 1;
+    };
+  }, [clearRevealTimeouts]);
+
   useEffect(() => {
     if (started && !dead && !won) {
       timerRef.current = window.setInterval(
@@ -75,7 +101,13 @@ export default function MinesweeperGame(): React.ReactElement {
   }, [started, dead, won]);
 
   const reset = (nextDifficulty = difficulty): void => {
-    if (timerRef.current) window.clearInterval(timerRef.current);
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    clearRevealTimeouts();
+    revealSessionRef.current += 1;
 
     // advance seed and rebuild RNG from that seed
     seedRef.current = (seedRef.current * 1664525 + 1013904223) >>> 0;
@@ -97,9 +129,13 @@ export default function MinesweeperGame(): React.ReactElement {
     reset(nextDifficulty);
   };
 
-  const checkWin = (next: Cell[]) => {
+  const checkWin = (next: Cell[]): void => {
     if (hasWon(next, cols, rows, mines)) {
-      if (timerRef.current) window.clearInterval(timerRef.current);
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      clearRevealTimeouts();
       setWon(true);
     }
   };
@@ -111,6 +147,10 @@ export default function MinesweeperGame(): React.ReactElement {
       const next = prev.map((c) => ({ ...c }));
       const cell = next[idx];
       if (cell.revealed || cell.flagged) return prev;
+
+      clearRevealTimeouts();
+      const revealSession = revealSessionRef.current + 1;
+      revealSessionRef.current = revealSession;
 
       if (!started) {
         // place mines on first reveal (safe first click) using deterministic RNG
@@ -125,7 +165,10 @@ export default function MinesweeperGame(): React.ReactElement {
           if (next[i].mine) next[i].revealed = true;
         }
         setDead(true);
-        if (timerRef.current) window.clearInterval(timerRef.current);
+        if (timerRef.current) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
         // Clear wave meta since we don't need delayed animation now
         setWaveMeta(Array(cols * rows).fill(null));
         return next;
@@ -156,14 +199,20 @@ export default function MinesweeperGame(): React.ReactElement {
       // Compute BFS distances like legacy revealWave()
       const distances = computeWaveDistances(revealedNow, idx, cols, rows);
       const thisWaveId = ++waveIdRef.current;
+      const isCurrentRevealSession = (): boolean =>
+        revealSession === revealSessionRef.current && thisWaveId === waveIdRef.current;
 
       // Ensure only this wave animates
       setWaveMeta(Array(cols * rows).fill(null));
 
       // Schedule the actual revealing with setTimeout per distance step, similar to legacy d*60ms
       distances.forEach((d, iCell) => {
-        window.setTimeout(() => {
+        scheduleRevealTimeout(() => {
+          if (!isCurrentRevealSession()) return;
+
           setBoard((curr) => {
+            if (!isCurrentRevealSession()) return curr;
+
             const clone = curr.map((c) => ({ ...c }));
             // Reveal SAFE cells only, never flip bombs during empty-click ripple
             if (!clone[iCell].mine && !clone[iCell].revealed && !clone[iCell].flagged) {
@@ -173,6 +222,8 @@ export default function MinesweeperGame(): React.ReactElement {
           });
           // Update waveMeta for animation attributes of this specific cell
           setWaveMeta((curr) => {
+            if (!isCurrentRevealSession()) return curr;
+
             const m = curr.slice();
             m[iCell] = { waveId: thisWaveId, dist: d };
             return m;
@@ -182,7 +233,11 @@ export default function MinesweeperGame(): React.ReactElement {
 
       // Run win check once after the longest scheduled delay
       const maxD = Math.max(0, ...distances.values());
-      window.setTimeout(() => checkWin(sim), maxD * RIPPLE_STEP_MS + 5);
+      scheduleRevealTimeout(() => {
+        if (isCurrentRevealSession()) {
+          checkWin(sim);
+        }
+      }, maxD * RIPPLE_STEP_MS + 5);
 
       return next; // return immediately; timeouts will progressively reveal
     });
