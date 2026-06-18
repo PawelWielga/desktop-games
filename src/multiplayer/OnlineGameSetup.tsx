@@ -82,13 +82,18 @@ function MultiplayerConnectScreen<TGameMessage extends BaseMultiplayerMessage>({
 
   return (
     <section className="online-setup online-setup--connect" aria-label={title} data-status={lobby.status}>
+      <span className="online-setup__emblem" aria-hidden="true">
+        <span>×</span>
+        <span>○</span>
+      </span>
+
       <header className="online-setup__header">
-        <div>
+        <PlayerIdentity lobby={lobby} />
+        <div className="online-setup__heading">
           <span className="online-setup__eyebrow">Multiplayer</span>
           <h2>{title}</h2>
           <p>{subtitle}</p>
         </div>
-        <PlayerIdentity lobby={lobby} />
       </header>
 
       <div className="online-setup__actions">
@@ -143,18 +148,44 @@ function MultiplayerLobbyScreen<TGameMessage extends BaseMultiplayerMessage>({
   statusText,
 }: MultiplayerLobbyScreenProps<TGameMessage>): React.ReactElement {
   const waitingForPlayers = Math.max(0, minPlayers - currentPlayers);
-  const roomTitle = lobby.roomCode ? `Pokój ${lobby.roomCode}` : title;
+  const roomCode = lobby.roomCode ?? "";
+  const roomTitle = roomCode ? `Pokój ${roomCode}` : title;
 
   return (
     <section className="online-setup online-setup--lobby" aria-label={roomTitle} data-status={lobby.status}>
       <header className="online-setup__header online-setup__header--compact">
-        <div>
+        <div className="online-setup__lobby-title">
           <span className="online-setup__eyebrow">Lobby</span>
-          <h2>{roomTitle}</h2>
+          <div className="online-setup__room-heading">
+            <h2>Pokój</h2>
+            {roomCode && (
+              <button
+                type="button"
+                className="online-setup__room-code"
+                onClick={() => void navigator.clipboard?.writeText(roomCode)}
+                aria-label={`Skopiuj kod pokoju ${roomCode}`}
+              >
+                <span>{roomCode}</span>
+                <span aria-hidden="true">⧉</span>
+              </button>
+            )}
+          </div>
           <p>{statusText}</p>
         </div>
+
         <div className="online-setup__capacity" aria-label={`Gracze ${currentPlayers} z ${maxPlayers}`}>
-          <strong>{currentPlayers}</strong>/<span>{maxPlayers}</span> graczy
+          <span className="online-setup__capacity-count">
+            <strong>{currentPlayers}</strong>/<span>{maxPlayers}</span> graczy
+          </span>
+          <span
+            className="online-setup__capacity-meter"
+            style={{ "--online-capacity-columns": maxPlayers } as React.CSSProperties}
+            aria-hidden="true"
+          >
+            {Array.from({ length: maxPlayers }, (_, index) => (
+              <span key={index} className={index < currentPlayers ? "is-filled" : undefined} />
+            ))}
+          </span>
         </div>
       </header>
 
