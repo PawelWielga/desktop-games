@@ -82,13 +82,18 @@ function MultiplayerConnectScreen<TGameMessage extends BaseMultiplayerMessage>({
 
   return (
     <section className="online-setup online-setup--connect" aria-label={title} data-status={lobby.status}>
+      <span className="online-setup__emblem" aria-hidden="true">
+        <span>×</span>
+        <span>○</span>
+      </span>
+
       <header className="online-setup__header">
-        <div>
+        <PlayerIdentity lobby={lobby} />
+        <div className="online-setup__heading">
           <span className="online-setup__eyebrow">Multiplayer</span>
           <h2>{title}</h2>
           <p>{subtitle}</p>
         </div>
-        <PlayerIdentity lobby={lobby} />
       </header>
 
       <div className="online-setup__actions">
@@ -147,8 +152,13 @@ function MultiplayerLobbyScreen<TGameMessage extends BaseMultiplayerMessage>({
 
   return (
     <section className="online-setup online-setup--lobby" aria-label={roomTitle} data-status={lobby.status}>
+      <span className="online-setup__emblem" aria-hidden="true">
+        <span>×</span>
+        <span>○</span>
+      </span>
+
       <header className="online-setup__header online-setup__header--compact">
-        <div>
+        <div className="online-setup__heading">
           <span className="online-setup__eyebrow">Lobby</span>
           <h2>{roomTitle}</h2>
           <p>{statusText}</p>
