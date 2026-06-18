@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { GameStartMenu, type GameStartMenuAction } from "@/components/GameStartMenu";
 import { InGameMultiplayerOverlay, MultiplayerPanel, useMultiplayerLobby } from "@/multiplayer";
 import type { GameResetMessage, GameSpecificMessage, GameStartMessage, MultiplayerRole } from "@/multiplayer";
 import "./tictactoe.css";
@@ -141,24 +142,43 @@ export default function TicTacToeGame(): React.ReactElement {
     }
   };
 
+  const menuActions: GameStartMenuAction[] = [
+    {
+      id: "local",
+      title: "Gra lokalna",
+      description: "Zagraj ze znajomym na tym samym ekranie.",
+      icon: "♟",
+      variant: "mint",
+      onSelect: () => startMode("local"),
+    },
+    {
+      id: "ai",
+      title: "Gra z komputerem",
+      description: "Zmierz się z komputerem w szybkiej partii.",
+      icon: "▣",
+      variant: "green",
+      onSelect: () => startMode("ai"),
+    },
+    {
+      id: "online",
+      title: "Gra online",
+      description: "Rywalizuj z graczem z innego ekranu.",
+      icon: "◎",
+      actionLabel: "Dołącz do gry",
+      featured: true,
+      variant: "blue",
+      onSelect: () => startMode("onlineLobby"),
+    },
+  ];
+
   if (mode === "menu") {
     return (
       <div className="ttt-root ttt-root--menu">
-        <section className="ttt-menu" aria-label="Menu gry Kółko i Krzyżyk">
-          <span className="ttt-menu__eyebrow">Gra</span>
-          <h1>Kółko i Krzyżyk</h1>
-          <div className="ttt-menu__actions">
-            <button type="button" onClick={() => startMode("local")}>
-              Gra lokalna
-            </button>
-            <button type="button" onClick={() => startMode("ai")}>
-              Gra z komputerem
-            </button>
-            <button type="button" onClick={() => startMode("onlineLobby")}>
-              Gra online
-            </button>
-          </div>
-        </section>
+        <GameStartMenu
+          title="Kółko i Krzyżyk"
+          subtitle="Wybierz tryb i rozpocznij krótką partię w klasycznym stylu."
+          actions={menuActions}
+        />
       </div>
     );
   }
