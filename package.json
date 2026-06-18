@@ -16,7 +16,7 @@
   "license": "ISC",
   "description": "",
   "type": "module",
-  "private": "true",
+  "private": true,
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.2",
     "eslint": "^9.39.4",
