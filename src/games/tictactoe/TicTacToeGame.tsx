@@ -185,7 +185,7 @@ export default function TicTacToeGame(): React.ReactElement {
 
   if (mode === "onlineLobby") {
     return (
-      <div className="ttt-root ttt-root--menu">
+      <div className="ttt-root ttt-root--lobby">
         <div className="ttt-screen-actions">
           <button type="button" className="ttt-link-button" onClick={backToMenu}>
             Wróć do menu
@@ -209,7 +209,7 @@ export default function TicTacToeGame(): React.ReactElement {
   const canPlay = canPlayInMode(mode, turn, myOnlineSymbol, lobby.status, winner, draw);
 
   return (
-    <div className="ttt-root">
+    <div className="ttt-root ttt-root--play">
       <div className="ttt-topbar">
         <button type="button" className="ttt-link-button" onClick={backToMenu}>
           Wróć do menu
