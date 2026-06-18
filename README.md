@@ -28,6 +28,10 @@ Preview the production build:
 npm run preview
 ```
 
+## Project docs
+
+- [Adding a new game](docs/adding-a-game.md)
+
 ## Verification
 
 Run TypeScript checks:
