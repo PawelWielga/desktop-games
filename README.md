@@ -50,7 +50,7 @@ Run the current lint baseline:
 npm run lint
 ```
 
-`lint` runs ESLint for JavaScript/config files and TypeScript checking for TS/TSX sources. A fuller type-aware ESLint setup can be added separately when the ESLint TypeScript parser is introduced.
+`lint` runs ESLint for JavaScript, TypeScript, TSX and config files. The ESLint setup uses the TypeScript parser for TS/TSX sources and also runs `npm run typecheck`, so linting catches both style/rule issues and TypeScript compilation problems.
 
 Run automated tests:
 
@@ -58,13 +58,15 @@ Run automated tests:
 npm test
 ```
 
-The project currently uses Node's built-in test runner. With no test files present, this command exits successfully and reports zero tests instead of failing as a placeholder.
+The project uses Vitest (`vitest run`) for automated tests. Current coverage includes game logic tests for Snake and Minesweeper, and new reusable game logic should be covered with matching `*.test.ts` files.
 
 Run all merge checks:
 
 ```sh
 npm run verify
 ```
+
+`verify` runs TypeScript checks, linting, Vitest tests and a production build. This is the same command used by CI before merging.
 
 ## Pull request checks
 
