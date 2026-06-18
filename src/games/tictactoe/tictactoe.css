@@ -1,28 +1,50 @@
 .ttt-root {
-  display: grid;
-  gap: clamp(var(--space-2), 2vmin, var(--space-4));
+  display: flex;
+  flex-direction: column;
+  gap: clamp(var(--space-2), 2vmin, var(--space-3));
   height: 100%;
-  padding: clamp(var(--space-2), 2vmin, var(--space-4));
+  padding: clamp(var(--space-2), 2vmin, var(--space-3));
   box-sizing: border-box;
   overflow: auto;
-  background: #0f172a;
+  background: #101418;
   color: #f8fafc;
 }
 
 .ttt-game {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
   gap: clamp(var(--space-2), 1.6vmin, var(--space-3));
   justify-items: center;
-  min-height: 0;
+  align-content: center;
+  padding: clamp(var(--space-2), 2vmin, var(--space-3));
+  background: rgba(0,0,0,0.25);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-1);
+  box-sizing: border-box;
 }
 
 .ttt-status {
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(var(--space-1), 1.4vmin, var(--space-2));
+  align-items: center;
   justify-content: center;
+  gap: clamp(var(--space-1), 1.4vmin, var(--space-2));
+  width: 100%;
   font-size: clamp(0.8125rem, 2vmin, 0.875rem);
   text-align: center;
+}
+
+.ttt-status span,
+.ttt-status strong {
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-1);
+  background: rgba(255,255,255,0.06);
+}
+
+.ttt-status strong {
+  color: #81c784;
 }
 
 .ttt-board {
@@ -30,18 +52,25 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(0.35rem, 1.3vmin, 0.5rem);
   width: min(100%, 21rem, 62vmin);
+  padding: clamp(var(--space-2), 1.6vmin, var(--space-3));
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-1);
+  background: rgba(16,20,24,0.72);
+  box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.35);
 }
 
 .ttt-cell {
   aspect-ratio: 1;
-  border: 1px solid rgba(125, 211, 252, 0.5);
-  border-radius: var(--radius-2);
-  background: rgba(15, 23, 42, 0.76);
-  color: #f8fafc;
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: var(--radius-1);
+  background: rgba(255,255,255,0.08);
+  color: #81c784;
   font-size: clamp(2rem, 11vmin, 3.5rem);
   font-weight: 800;
   cursor: pointer;
-  min-width: 0;
+  text-shadow: 0 0 0.875rem rgba(129,199,132,0.28);
+  transition: background-color .12s ease, border-color .12s ease, transform .08s ease;
 }
 
 .ttt-cell:disabled {
@@ -50,16 +79,23 @@
 }
 
 .ttt-cell:not(:disabled):hover {
-  background: rgba(14, 165, 233, 0.28);
+  background: rgba(255,255,255,0.16);
+  border-color: rgba(129,199,132,0.42);
+  transform: translateY(-0.0625rem);
 }
 
 .ttt-reset {
   min-height: clamp(2rem, 5vmin, 2.25rem);
-  border: 1px solid rgba(125, 211, 252, 0.55);
+  padding: 0 clamp(var(--space-3), 3vmin, var(--space-4));
+  border: 1px solid rgba(255,255,255,0.18);
   border-radius: var(--radius-1);
-  background: #0ea5e9;
-  color: #082f49;
+  background: rgba(255,255,255,0.08);
+  color: inherit;
+  font: inherit;
   font-weight: 700;
   cursor: pointer;
-  padding: 0 clamp(var(--space-3), 3vmin, var(--space-4));
+}
+
+.ttt-reset:hover {
+  background: rgba(255,255,255,0.16);
 }
