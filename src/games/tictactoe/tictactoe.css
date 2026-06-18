@@ -192,6 +192,7 @@
 }
 
 .ttt-board {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(0.4rem, 1.4vmin, 0.6rem);
@@ -204,6 +205,8 @@
 }
 
 .ttt-cell {
+  position: relative;
+  z-index: 1;
   aspect-ratio: 1;
   min-width: 0;
   border: 0.0625rem solid rgba(47, 111, 104, 0.2);
@@ -228,6 +231,73 @@
   border-color: rgba(47, 111, 104, 0.36);
   box-shadow: 0 0.55rem 0.95rem rgba(31, 36, 48, 0.12);
   transform: translateY(-0.08rem);
+}
+
+.ttt-winning-line {
+  position: absolute;
+  z-index: 2;
+  display: block;
+  height: clamp(0.35rem, 1.4vmin, 0.55rem);
+  border-radius: 999rem;
+  background: linear-gradient(90deg, #25544f, #2f6f68 48%, #173f3b);
+  box-shadow: 0 0.2rem 0.65rem rgba(23, 63, 59, 0.28);
+  pointer-events: none;
+  transform: translateY(-50%);
+  transform-origin: center;
+}
+
+.ttt-board--win-row-0 .ttt-winning-line,
+.ttt-board--win-row-1 .ttt-winning-line,
+.ttt-board--win-row-2 .ttt-winning-line {
+  left: 9%;
+  width: 82%;
+}
+
+.ttt-board--win-row-0 .ttt-winning-line {
+  top: 16.666%;
+}
+
+.ttt-board--win-row-1 .ttt-winning-line {
+  top: 50%;
+}
+
+.ttt-board--win-row-2 .ttt-winning-line {
+  top: 83.333%;
+}
+
+.ttt-board--win-col-0 .ttt-winning-line,
+.ttt-board--win-col-1 .ttt-winning-line,
+.ttt-board--win-col-2 .ttt-winning-line {
+  top: 50%;
+  width: 82%;
+  transform: translateY(-50%) rotate(90deg);
+}
+
+.ttt-board--win-col-0 .ttt-winning-line {
+  left: -24.333%;
+}
+
+.ttt-board--win-col-1 .ttt-winning-line {
+  left: 9%;
+}
+
+.ttt-board--win-col-2 .ttt-winning-line {
+  left: 42.333%;
+}
+
+.ttt-board--win-diagonal-down .ttt-winning-line,
+.ttt-board--win-diagonal-up .ttt-winning-line {
+  left: -8%;
+  top: 50%;
+  width: 116%;
+}
+
+.ttt-board--win-diagonal-down .ttt-winning-line {
+  transform: translateY(-50%) rotate(45deg);
+}
+
+.ttt-board--win-diagonal-up .ttt-winning-line {
+  transform: translateY(-50%) rotate(-45deg);
 }
 
 .ttt-reset {
