@@ -1,8 +1,8 @@
 .ttt-root {
   display: grid;
-  gap: 14px;
+  gap: clamp(var(--space-2), 2vmin, var(--space-4));
   height: 100%;
-  padding: 14px;
+  padding: clamp(var(--space-2), 2vmin, var(--space-4));
   box-sizing: border-box;
   overflow: auto;
   background: #0f172a;
@@ -11,33 +11,37 @@
 
 .ttt-game {
   display: grid;
-  gap: 12px;
+  gap: clamp(var(--space-2), 1.6vmin, var(--space-3));
   justify-items: center;
+  min-height: 0;
 }
 
 .ttt-status {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: clamp(var(--space-1), 1.4vmin, var(--space-2));
   justify-content: center;
-  font-size: 14px;
+  font-size: clamp(0.8125rem, 2vmin, 0.875rem);
+  text-align: center;
 }
 
 .ttt-board {
   display: grid;
-  grid-template-columns: repeat(3, minmax(72px, 112px));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.35rem, 1.3vmin, 0.5rem);
+  width: min(100%, 21rem, 62vmin);
 }
 
 .ttt-cell {
   aspect-ratio: 1;
   border: 1px solid rgba(125, 211, 252, 0.5);
-  border-radius: 8px;
+  border-radius: var(--radius-2);
   background: rgba(15, 23, 42, 0.76);
   color: #f8fafc;
-  font-size: clamp(32px, 10vw, 56px);
+  font-size: clamp(2rem, 11vmin, 3.5rem);
   font-weight: 800;
   cursor: pointer;
+  min-width: 0;
 }
 
 .ttt-cell:disabled {
@@ -50,12 +54,12 @@
 }
 
 .ttt-reset {
-  min-height: 36px;
+  min-height: clamp(2rem, 5vmin, 2.25rem);
   border: 1px solid rgba(125, 211, 252, 0.55);
-  border-radius: 6px;
+  border-radius: var(--radius-1);
   background: #0ea5e9;
   color: #082f49;
   font-weight: 700;
   cursor: pointer;
-  padding: 0 14px;
+  padding: 0 clamp(var(--space-3), 3vmin, var(--space-4));
 }
