@@ -121,7 +121,7 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
 
 /* Keyboard focus visibility for desktop icons and taskbar items */
 .desktop-icon:focus-visible,
-taskbar-btn:focus-visible,
+.taskbar-btn:focus-visible,
 .start-button:focus-visible {
   outline: 0.125rem solid color-mix(in srgb, var(--color-accent) 70%, #ffffff 30%);
   outline-offset: 0.125rem;
