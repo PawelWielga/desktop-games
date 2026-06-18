@@ -1,6 +1,7 @@
 export { createRoomCode, isValidRoomCode, normalizeRoomCode, PeerRoomConnection } from "./peerConnection";
 export { usePeerRoom } from "./usePeerRoom";
 export { MultiplayerPanel } from "./MultiplayerPanel";
+export { OnlineGameSetup } from "./OnlineGameSetup";
 export { useMultiplayerLobby } from "./useMultiplayerLobby";
 export { usePeerHostRoom } from "./usePeerHostRoom";
 export { usePeerClientRoom } from "./usePeerClientRoom";
@@ -61,3 +62,4 @@ export type {
 } from "./hostClientRoom.types";
 export type { UsePeerHostRoomResult } from "./usePeerHostRoom";
 export type { UsePeerClientRoomResult } from "./usePeerClientRoom";
+export type { OnlineGameSetupProps } from "./OnlineGameSetup";

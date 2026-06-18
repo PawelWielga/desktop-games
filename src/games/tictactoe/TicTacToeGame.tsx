@@ -76,7 +76,7 @@ export default function TicTacToeGame(): React.ReactElement {
 
   return (
     <div className="ttt-root">
-      <MultiplayerPanel lobby={lobby} title="Kółko i Krzyżyk online" />
+      <MultiplayerPanel lobby={lobby} title="Kółko i Krzyżyk online" minPlayers={2} maxPlayers={2} />
 
       <section className="ttt-game" aria-label="Plansza Kółko i Krzyżyk">
         <div className="ttt-status">
