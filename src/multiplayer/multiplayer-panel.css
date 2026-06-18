@@ -1,9 +1,9 @@
 .mp-panel {
   display: grid;
-  gap: 12px;
-  padding: 12px;
+  gap: clamp(var(--space-2), 2vmin, var(--space-3));
+  padding: clamp(var(--space-2), 2vmin, var(--space-3));
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 8px;
+  border-radius: var(--radius-2);
   background: rgba(15, 23, 42, 0.76);
   color: #f8fafc;
 }
@@ -12,7 +12,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: clamp(var(--space-2), 2vmin, var(--space-3));
 }
 
 .mp-panel h2,
@@ -21,58 +21,60 @@
 }
 
 .mp-panel h2 {
-  font-size: 16px;
+  font-size: clamp(0.9375rem, 2.4vmin, 1rem);
 }
 
 .mp-panel p,
 .mp-players,
 .mp-room-code {
-  font-size: 13px;
+  font-size: clamp(0.75rem, 2vmin, 0.8125rem);
 }
 
 .mp-local-player,
 .mp-players {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   flex-wrap: wrap;
 }
 
 .mp-actions {
   display: grid;
-  gap: 10px;
+  gap: clamp(var(--space-2), 1.6vmin, var(--space-3));
 }
 
 .mp-actions form {
   display: grid;
-  grid-template-columns: minmax(96px, auto) minmax(120px, 1fr) auto;
+  grid-template-columns: minmax(6rem, auto) minmax(7.5rem, 1fr) auto;
   align-items: end;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .mp-actions label {
-  font-size: 12px;
+  font-size: clamp(0.6875rem, 1.8vmin, 0.75rem);
   color: #cbd5e1;
 }
 
 .mp-actions input {
-  min-height: 34px;
-  border-radius: 6px;
+  min-height: clamp(2rem, 5vmin, 2.125rem);
+  border-radius: var(--radius-1);
   border: 1px solid rgba(148, 163, 184, 0.45);
   background: rgba(15, 23, 42, 0.72);
   color: #f8fafc;
-  padding: 6px 8px;
+  padding: var(--space-1) var(--space-2);
   letter-spacing: 0.08em;
+  min-width: 0;
 }
 
 .mp-panel button {
-  min-height: 34px;
+  min-height: clamp(2rem, 5vmin, 2.125rem);
   border: 1px solid rgba(125, 211, 252, 0.55);
-  border-radius: 6px;
+  border-radius: var(--radius-1);
   background: #0ea5e9;
   color: #082f49;
   font-weight: 700;
   cursor: pointer;
+  padding: 0 var(--space-3);
 }
 
 .mp-panel button:disabled {
@@ -88,7 +90,7 @@
 
 .mp-room-code strong {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 18px;
+  font-size: clamp(1rem, 2.8vmin, 1.125rem);
   letter-spacing: 0.12em;
 }
 
@@ -96,10 +98,14 @@
   color: #fecaca;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 40rem) {
   .mp-panel-header,
   .mp-actions form {
     grid-template-columns: 1fr;
+  }
+
+  .mp-panel-header {
+    flex-direction: column;
   }
 
   .mp-actions form {
