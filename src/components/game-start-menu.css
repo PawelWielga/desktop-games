@@ -1,9 +1,7 @@
 .game-start-menu {
-  --game-start-surface: rgba(255, 255, 255, 0.78);
   --game-start-border: rgba(255, 255, 255, 0.72);
   --game-start-ink: #1f2430;
   --game-start-muted: rgba(31, 36, 48, 0.68);
-  --game-start-accent: #2f6f68;
   --game-start-shadow: 0 1rem 2.25rem rgba(31, 36, 48, 0.16);
   --game-start-card-shadow: 0 0.55rem 1.1rem rgba(31, 36, 48, 0.13);
 
