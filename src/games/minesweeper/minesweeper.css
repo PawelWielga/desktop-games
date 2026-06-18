@@ -7,8 +7,6 @@
   padding: clamp(var(--space-2), 2vmin, var(--space-3));
   box-sizing: border-box;
   overflow: hidden;
-  background: #101418;
-  color: #f8fafc;
 }
 
 .ms-header {
@@ -87,7 +85,7 @@
 }
 
 .ms-difficulty-option small {
-  color: rgba(248,250,252,0.68);
+  opacity: 0.72;
   font-size: clamp(0.625rem, 1.7vmin, 0.6875rem);
 }
 
