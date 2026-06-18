@@ -7,6 +7,7 @@ import reactHooks from "eslint-plugin-react-hooks";
 
 const browserGlobals = {
   AddEventListenerOptions: "readonly",
+  Audio: "readonly",
   Blob: "readonly",
   CanvasRenderingContext2D: "readonly",
   Document: "readonly",
@@ -17,6 +18,9 @@ const browserGlobals = {
   HTMLCanvasElement: "readonly",
   HTMLDivElement: "readonly",
   HTMLElement: "readonly",
+  HTMLInputElement: "readonly",
+  HTMLSelectElement: "readonly",
+  HTMLTextAreaElement: "readonly",
   Image: "readonly",
   KeyboardEvent: "readonly",
   MouseEvent: "readonly",
@@ -42,21 +46,36 @@ const browserGlobals = {
   window: "readonly",
 };
 
+const nodeGlobals = {
+  console: "readonly",
+  process: "readonly",
+};
+
+const vitestGlobals = {
+  afterEach: "readonly",
+  beforeEach: "readonly",
+  describe: "readonly",
+  expect: "readonly",
+  it: "readonly",
+  test: "readonly",
+  vi: "readonly",
+};
+
 export default [
   {
     ignores: [
-      "build/**",
-      "coverage/**",
-      "dist/**",
-      "legacy_backup/**",
-      "node_modules/**",
-      "playwright-report/**",
-      "public/**",
-      "storybook-static/**",
-      "test-results/**",
+      "**/dist/**",
+      "**/build/**",
+      "**/coverage/**",
+      "**/node_modules/**",
+      "**/playwright-report/**",
+      "**/storybook-static/**",
+      "**/test-results/**",
       ".cache/**",
       ".tmp/**",
       ".vite/**",
+      "legacy_backup/**",
+      "public/**",
       "temp/**",
     ],
   },
@@ -121,9 +140,24 @@ export default [
         {
           argsIgnorePattern: "^_",
           caughtErrorsIgnorePattern: "^_",
-          varsIgnorePattern: "^_"
-        }
+          varsIgnorePattern: "^_",
+        },
       ],
+    },
+  },
+  {
+    files: ["eslint.config.{js,mjs}", "vite.config.ts"],
+    languageOptions: {
+      globals: nodeGlobals,
+    },
+  },
+  {
+    files: ["**/*.{test,spec}.{ts,tsx,js,jsx}"],
+    languageOptions: {
+      globals: {
+        ...browserGlobals,
+        ...vitestGlobals,
+      },
     },
   },
   prettier,
