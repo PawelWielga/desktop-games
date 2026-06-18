@@ -13,39 +13,12 @@
 .ttt-root--menu {
   align-items: center;
   justify-content: center;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(211, 241, 224, 0.75), transparent 34%),
+    radial-gradient(circle at 88% 18%, rgba(198, 236, 207, 0.7), transparent 32%),
+    linear-gradient(180deg, rgba(244, 247, 248, 0.96), rgba(225, 231, 236, 0.96));
 }
 
-.ttt-menu {
-  display: grid;
-  gap: clamp(0.9rem, 2.6vmin, 1.25rem);
-  width: min(100%, 28rem);
-  padding: clamp(1rem, 4vmin, 1.6rem);
-  border: 0.0625rem solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--radius-1);
-  background: rgba(255, 255, 255, 0.08);
-  text-align: center;
-}
-
-.ttt-menu h1 {
-  margin: 0;
-  font-size: clamp(1.8rem, 8vmin, 3rem);
-  line-height: 1;
-}
-
-.ttt-menu__eyebrow {
-  color: #81c784;
-  font-size: clamp(0.72rem, 2vmin, 0.8rem);
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.ttt-menu__actions {
-  display: grid;
-  gap: 0.65rem;
-}
-
-.ttt-menu__actions button,
 .ttt-start-online,
 .ttt-link-button,
 .ttt-reset {
@@ -59,7 +32,6 @@
   cursor: pointer;
 }
 
-.ttt-menu__actions button:hover,
 .ttt-start-online:hover,
 .ttt-link-button:hover,
 .ttt-reset:hover {
@@ -180,7 +152,6 @@
     padding: 0.65rem;
   }
 
-  .ttt-menu,
   .ttt-game {
     padding: 0.75rem;
   }
@@ -194,15 +165,6 @@
   .ttt-root {
     gap: 0.5rem;
     padding: 0.6rem;
-  }
-
-  .ttt-menu {
-    gap: 0.55rem;
-    padding: 0.75rem;
-  }
-
-  .ttt-menu h1 {
-    font-size: clamp(1.4rem, 7vmin, 2.2rem);
   }
 
   .ttt-game {
@@ -232,7 +194,6 @@
     font-size: clamp(1.5rem, 8vmin, 2.75rem);
   }
 
-  .ttt-menu__actions button,
   .ttt-start-online,
   .ttt-link-button,
   .ttt-reset {
