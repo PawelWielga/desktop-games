@@ -6,6 +6,7 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 
 const browserGlobals = {
+  AddEventListenerOptions: "readonly",
   Audio: "readonly",
   Blob: "readonly",
   CanvasRenderingContext2D: "readonly",
@@ -23,6 +24,7 @@ const browserGlobals = {
   Image: "readonly",
   KeyboardEvent: "readonly",
   MouseEvent: "readonly",
+  Node: "readonly",
   PointerEvent: "readonly",
   ResizeObserver: "readonly",
   StorageEvent: "readonly",
@@ -106,6 +108,7 @@ export default [
     },
     rules: {
       ...reactPlugin.configs.recommended.rules,
+      "no-empty": "warn",
       "react/jsx-uses-react": "off",
       "react/prop-types": "off",
       "react/react-in-jsx-scope": "off",
