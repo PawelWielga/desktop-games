@@ -9,6 +9,8 @@ type PlayerSymbol = Exclude<CellValue, null>;
 type GameMode = "menu" | "local" | "ai" | "onlineLobby" | "online";
 type TicTacToeMoveMessage = GameSpecificMessage<"tictactoe:move", { cell: number; symbol: PlayerSymbol }>;
 type TicTacToeMessage = TicTacToeMoveMessage | GameResetMessage | GameStartMessage;
+type WinningLine = (typeof WIN_LINES)[number];
+type WinResult = { symbol: PlayerSymbol; line: WinningLine };
 
 const WIN_LINES = [
   [0, 1, 2],
@@ -69,7 +71,9 @@ export default function TicTacToeGame(): React.ReactElement {
   );
 
   const lobby = useMultiplayerLobby<TicTacToeMessage>({ onGameMessage: handleRemoteMessage });
-  const winner = useMemo(() => getWinner(board), [board]);
+  const winResult = useMemo(() => getWinResult(board), [board]);
+  const winner = winResult?.symbol ?? null;
+  const winningLineClass = winResult ? getWinningLineClass(winResult.line) : null;
   const draw = !winner && board.every(Boolean);
   const onlinePlayers = 1 + lobby.remotePlayers.length;
   const onlineReady = lobby.status === "connected" && onlinePlayers >= 2;
@@ -225,7 +229,11 @@ export default function TicTacToeGame(): React.ReactElement {
           {draw && <strong>Remis</strong>}
         </div>
 
-        <div className="ttt-board" role="grid" aria-label="Plansza 3 na 3">
+        <div
+          className={["ttt-board", winningLineClass ? "ttt-board--won" : "", winningLineClass].filter(Boolean).join(" ")}
+          role="grid"
+          aria-label="Plansza 3 na 3"
+        >
           {board.map((value, index) => (
             <button
               key={index}
@@ -238,6 +246,7 @@ export default function TicTacToeGame(): React.ReactElement {
               {value}
             </button>
           ))}
+          {winningLineClass && <span className="ttt-winning-line" aria-hidden="true" />}
         </div>
 
         {mode !== "online" || isOnlineHost ? (
@@ -256,14 +265,28 @@ function emptyBoard(): CellValue[] {
   return Array<CellValue>(9).fill(null);
 }
 
-function getWinner(board: CellValue[]): PlayerSymbol | null {
-  for (const [a, b, c] of WIN_LINES) {
+function getWinResult(board: CellValue[]): WinResult | null {
+  for (const line of WIN_LINES) {
+    const [a, b, c] = line;
     if (board[a] && board[a] === board[b] && board[a] === board[c]) {
-      return board[a];
+      return { symbol: board[a], line };
     }
   }
 
   return null;
+}
+
+function getWinningLineClass(line: WinningLine): string {
+  const key = line.join("-");
+
+  if (key === "0-1-2") return "ttt-board--win-row-0";
+  if (key === "3-4-5") return "ttt-board--win-row-1";
+  if (key === "6-7-8") return "ttt-board--win-row-2";
+  if (key === "0-3-6") return "ttt-board--win-col-0";
+  if (key === "1-4-7") return "ttt-board--win-col-1";
+  if (key === "2-5-8") return "ttt-board--win-col-2";
+  if (key === "0-4-8") return "ttt-board--win-diagonal-down";
+  return "ttt-board--win-diagonal-up";
 }
 
 function canPlayInMode(
