@@ -82,6 +82,18 @@
   margin-inline: auto;
 }
 
+.ttt-online-note {
+  width: min(100%, 34rem);
+  margin: 0 auto;
+  padding: 0.65rem 0.85rem;
+  border: 0.0625rem solid rgba(129, 199, 132, 0.28);
+  border-radius: var(--radius-1);
+  background: rgba(129, 199, 132, 0.1);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: clamp(0.8rem, 2vmin, 0.95rem);
+  text-align: center;
+}
+
 .ttt-link-button {
   min-height: 2rem;
   padding-inline: 0.75rem;

@@ -28,6 +28,8 @@ export type PlayerHelloMessage = BaseMultiplayerMessage<"player:hello"> & {
 
 export type GameResetMessage = BaseMultiplayerMessage<"game:reset">;
 
+export type GameStartMessage = BaseMultiplayerMessage<"game:start">;
+
 export type GameReadyMessage = BaseMultiplayerMessage<"game:ready"> & {
   ready?: boolean;
 };
@@ -37,7 +39,7 @@ export type GameErrorMessage = BaseMultiplayerMessage<"game:error"> & {
   code?: string;
 };
 
-export type CommonMultiplayerMessage = PlayerHelloMessage | GameResetMessage | GameReadyMessage | GameErrorMessage;
+export type CommonMultiplayerMessage = PlayerHelloMessage | GameResetMessage | GameStartMessage | GameReadyMessage | GameErrorMessage;
 
 export type GameSpecificMessage<TType extends string, TPayload = JsonObject> = BaseMultiplayerMessage<TType> & TPayload;
 

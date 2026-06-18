@@ -1,13 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { InGameMultiplayerOverlay, MultiplayerPanel, useMultiplayerLobby } from "@/multiplayer";
-import type { GameResetMessage, GameSpecificMessage } from "@/multiplayer";
+import type { GameResetMessage, GameSpecificMessage, GameStartMessage, MultiplayerRole } from "@/multiplayer";
 import "./tictactoe.css";
 
 type CellValue = "X" | "O" | null;
 type PlayerSymbol = Exclude<CellValue, null>;
 type GameMode = "menu" | "local" | "ai" | "onlineLobby" | "online";
 type TicTacToeMoveMessage = GameSpecificMessage<"tictactoe:move", { cell: number; symbol: PlayerSymbol }>;
-type TicTacToeMessage = TicTacToeMoveMessage | GameResetMessage;
+type TicTacToeMessage = TicTacToeMoveMessage | GameResetMessage | GameStartMessage;
 
 const WIN_LINES = [
   [0, 1, 2],
@@ -24,6 +24,7 @@ export default function TicTacToeGame(): React.ReactElement {
   const [mode, setMode] = useState<GameMode>("menu");
   const [board, setBoard] = useState<CellValue[]>(() => emptyBoard());
   const [turn, setTurn] = useState<PlayerSymbol>("X");
+  const lobbyRoleRef = useRef<MultiplayerRole | null>(null);
 
   const resetBoard = useCallback(() => {
     setBoard(emptyBoard());
@@ -44,8 +45,18 @@ export default function TicTacToeGame(): React.ReactElement {
 
   const handleRemoteMessage = useCallback(
     (message: TicTacToeMessage) => {
+      if (message.type === "game:start") {
+        if (lobbyRoleRef.current === "guest") {
+          resetBoard();
+          setMode("online");
+        }
+        return;
+      }
+
       if (message.type === "game:reset") {
-        resetBoard();
+        if (lobbyRoleRef.current === "guest") {
+          resetBoard();
+        }
         return;
       }
 
@@ -62,6 +73,11 @@ export default function TicTacToeGame(): React.ReactElement {
   const onlinePlayers = 1 + lobby.remotePlayers.length;
   const onlineReady = lobby.status === "connected" && onlinePlayers >= 2;
   const myOnlineSymbol: PlayerSymbol | null = lobby.role === "host" ? "X" : lobby.role === "guest" ? "O" : null;
+  const isOnlineHost = lobby.role === "host";
+
+  useEffect(() => {
+    lobbyRoleRef.current = lobby.role;
+  }, [lobby.role]);
 
   useEffect(() => {
     if (mode === "ai" && turn === "O" && !winner && !draw) {
@@ -81,6 +97,13 @@ export default function TicTacToeGame(): React.ReactElement {
     setMode(nextMode);
   };
 
+  const startOnlineGame = () => {
+    if (!onlineReady || !isOnlineHost) return;
+
+    const sent = lobby.sendMessage({ type: "game:start" });
+    if (sent) startMode("online");
+  };
+
   const backToMenu = () => {
     lobby.close();
     resetBoard();
@@ -88,10 +111,15 @@ export default function TicTacToeGame(): React.ReactElement {
   };
 
   const resetGame = () => {
-    resetBoard();
-    if (mode === "online" && lobby.status === "connected") {
-      lobby.sendMessage({ type: "game:reset" });
+    if (mode === "online") {
+      if (!isOnlineHost || lobby.status !== "connected") return;
+
+      const sent = lobby.sendMessage({ type: "game:reset" });
+      if (sent) resetBoard();
+      return;
     }
+
+    resetBoard();
   };
 
   const playCell = (cell: number) => {
@@ -146,11 +174,13 @@ export default function TicTacToeGame(): React.ReactElement {
 
         <MultiplayerPanel lobby={lobby} title="Gra online" minPlayers={2} maxPlayers={2} />
 
-        {onlineReady && (
-          <button type="button" className="ttt-start-online" onClick={() => startMode("online")}>
+        {onlineReady && isOnlineHost && (
+          <button type="button" className="ttt-start-online" onClick={startOnlineGame}>
             Rozpocznij grę
           </button>
         )}
+
+        {onlineReady && !isOnlineHost && <p className="ttt-online-note">Czekamy, aż host rozpocznie grę.</p>}
       </div>
     );
   }
@@ -190,9 +220,13 @@ export default function TicTacToeGame(): React.ReactElement {
           ))}
         </div>
 
-        <button type="button" className="ttt-reset" onClick={resetGame}>
-          Reset gry
-        </button>
+        {mode !== "online" || isOnlineHost ? (
+          <button type="button" className="ttt-reset" onClick={resetGame}>
+            Reset gry
+          </button>
+        ) : (
+          <p className="ttt-online-note">Reset gry może wykonać tylko host.</p>
+        )}
       </section>
     </div>
   );
