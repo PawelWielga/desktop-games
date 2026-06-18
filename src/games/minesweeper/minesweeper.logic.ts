@@ -5,9 +5,27 @@ export type Cell = {
   adj: number;
 };
 
-export type Difficulty = { cols: number; rows: number; mines: number };
+export type DifficultyId = "beginner" | "intermediate" | "expert";
 
-export const DEFAULT_DIFFICULTY: Difficulty = { cols: 9, rows: 9, mines: 10 };
+export type Difficulty = {
+  id: DifficultyId;
+  label: string;
+  cols: number;
+  rows: number;
+  mines: number;
+};
+
+export const DIFFICULTIES: readonly Difficulty[] = [
+  { id: "beginner", label: "Beginner", cols: 9, rows: 9, mines: 10 },
+  { id: "intermediate", label: "Intermediate", cols: 16, rows: 16, mines: 40 },
+  { id: "expert", label: "Expert", cols: 30, rows: 16, mines: 99 },
+] as const;
+
+export const DEFAULT_DIFFICULTY = DIFFICULTIES[0];
+
+export function getDifficulty(id: DifficultyId): Difficulty {
+  return DIFFICULTIES.find((difficulty) => difficulty.id === id) ?? DEFAULT_DIFFICULTY;
+}
 
 export function inBounds(c: number, r: number, cols: number, rows: number): boolean {
   return c >= 0 && c < cols && r >= 0 && r < rows;

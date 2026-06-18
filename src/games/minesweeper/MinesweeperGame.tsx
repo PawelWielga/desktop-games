@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./minesweeper.css";
 import {
   DEFAULT_DIFFICULTY,
+  DIFFICULTIES,
   type Cell,
+  type DifficultyId,
   computeWaveDistances,
   createBoard,
   hasWon,
@@ -23,7 +25,8 @@ type WaveMeta = {
 } | null;
 
 export default function MinesweeperGame(): React.ReactElement {
-  const { cols, rows, mines } = DEFAULT_DIFFICULTY;
+  const [difficulty, setDifficulty] = useState(DEFAULT_DIFFICULTY);
+  const { cols, rows, mines } = difficulty;
 
   // Deterministic RNG lifecycle (replaces broken seed/setSeed usage)
   const seedRef = useRef<number>(Date.now() >>> 0);
@@ -71,21 +74,27 @@ export default function MinesweeperGame(): React.ReactElement {
     };
   }, [started, dead, won]);
 
-  const reset = (): void => {
+  const reset = (nextDifficulty = difficulty): void => {
     if (timerRef.current) window.clearInterval(timerRef.current);
 
     // advance seed and rebuild RNG from that seed
     seedRef.current = (seedRef.current * 1664525 + 1013904223) >>> 0;
     rebuildRng();
 
-    setBoard(createBoard(cols, rows));
+    setBoard(createBoard(nextDifficulty.cols, nextDifficulty.rows));
     setStarted(false);
     setDead(false);
     setWon(false);
     setFlags(0);
     setTime(0);
-    setWaveMeta(Array(cols * rows).fill(null));
+    setWaveMeta(Array(nextDifficulty.cols * nextDifficulty.rows).fill(null));
     waveIdRef.current = 0;
+  };
+
+  const changeDifficulty = (nextId: DifficultyId): void => {
+    const nextDifficulty = DIFFICULTIES.find((item) => item.id === nextId) ?? DEFAULT_DIFFICULTY;
+    setDifficulty(nextDifficulty);
+    reset(nextDifficulty);
   };
 
   const checkWin = (next: Cell[]) => {
@@ -222,11 +231,29 @@ export default function MinesweeperGame(): React.ReactElement {
     <div className="ms-root">
       <div className="ms-header">
         <div className="ms-counter" aria-label="Mines remaining">{String(remaining).padStart(3, "0")}</div>
-        <button className="ms-reset" onClick={reset} title="Restart">{dead ? "😵" : won ? "😎" : "🙂"}</button>
+        <button className="ms-reset" onClick={() => reset()} title="Restart">{dead ? "😵" : won ? "😎" : "🙂"}</button>
         <div className="ms-timer" aria-label="Timer">{String(time).padStart(3, "0")}</div>
       </div>
 
-      <div className="ms-grid" style={gridStyle} onContextMenu={onContext} role="grid" aria-label="Minesweeper board">
+      <div className="ms-difficulty" aria-label="Difficulty">
+        {DIFFICULTIES.map((item) => (
+          <button
+            key={item.id}
+            className="ms-difficulty-option"
+            data-active={item.id === difficulty.id ? "true" : undefined}
+            onClick={() => changeDifficulty(item.id)}
+            type="button"
+          >
+            <span>{item.label}</span>
+            <small>
+              {item.cols}×{item.rows}, {item.mines} mines
+            </small>
+          </button>
+        ))}
+      </div>
+
+      <div className="ms-grid-wrap">
+        <div className="ms-grid" style={gridStyle} onContextMenu={onContext} role="grid" aria-label="Minesweeper board">
         {board.map((cell, i) => {
           const classes = ["ms-cell"];
           if (cell.revealed) classes.push("revealed");
@@ -260,6 +287,7 @@ export default function MinesweeperGame(): React.ReactElement {
             </button>
           );
         })}
+        </div>
       </div>
 
       <div className="ms-footer">

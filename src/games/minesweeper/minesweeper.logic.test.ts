@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  DIFFICULTIES,
   createBoard,
+  getDifficulty,
   hasWon,
   neighbors,
   placeMinesDeterministic,
@@ -53,5 +55,25 @@ describe("minesweeper logic", () => {
     board[2].revealed = true;
 
     expect(hasWon(board, 2, 2, 1)).toBe(false);
+  });
+});
+
+
+describe("minesweeper difficulty configuration", () => {
+  it("exposes classic beginner, intermediate, and expert board sizes", () => {
+    expect(DIFFICULTIES.map((difficulty) => difficulty.id)).toEqual([
+      "beginner",
+      "intermediate",
+      "expert",
+    ]);
+    expect(getDifficulty("beginner")).toMatchObject({ cols: 9, rows: 9, mines: 10 });
+    expect(getDifficulty("intermediate")).toMatchObject({ cols: 16, rows: 16, mines: 40 });
+    expect(getDifficulty("expert")).toMatchObject({ cols: 30, rows: 16, mines: 99 });
+  });
+
+  it("creates a board with the selected difficulty dimensions", () => {
+    const expert = getDifficulty("expert");
+
+    expect(createBoard(expert.cols, expert.rows)).toHaveLength(480);
   });
 });
