@@ -15,7 +15,7 @@ export type WindowDefaults = {
   loader: () => Promise<{ default: React.ComponentType<unknown> }>;
 };
 
-export type AppKind = "game" | "system";
+export type AppKind = "game" | "system" | "app";
 
 export type AppRegistration = {
   id: string;
@@ -69,6 +69,22 @@ export const AppRegistry: readonly AppRegistration[] = [
       x: 120,
       y: 80,
       loader: () => import("@/games/snake/SnakeGame"),
+    },
+  },
+  {
+    id: "youtube",
+    title: "YouTube",
+    icon: "▶️",
+    kind: "app",
+    implemented: true,
+    window: {
+      width: 920,
+      height: 620,
+      minWidth: 420,
+      minHeight: 360,
+      x: 180,
+      y: 90,
+      loader: () => import("@/apps/youtube/YouTubeApp"),
     },
   },
   {
