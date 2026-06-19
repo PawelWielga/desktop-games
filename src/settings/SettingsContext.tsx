@@ -9,6 +9,7 @@ type SettingsContextValue = {
   setDifficulty: (d: Settings["difficulty"]) => void;
   toggleSound: () => void;
   setTheme: (t: Settings["theme"]) => void;
+  setLanguage: (language: Settings["language"]) => void;
   reset: () => void;
 };
 
@@ -24,6 +25,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     saveSettings(settings);
     try {
       document.documentElement.dataset.theme = settings.theme;
+      document.documentElement.lang = settings.language;
     } catch {
       // Ignore DOM write issues (e.g., SSR or restricted environments)
     }
@@ -35,6 +37,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       setDifficulty: (d) => setSettings((s) => ({ ...s, difficulty: d })),
       toggleSound: () => setSettings((s) => ({ ...s, sound: !s.sound })),
       setTheme: (t) => setSettings((s) => ({ ...s, theme: t })),
+      setLanguage: (language) => setSettings((s) => ({ ...s, language })),
       reset: () => setSettings(defaultSettings),
     }),
     [settings]
