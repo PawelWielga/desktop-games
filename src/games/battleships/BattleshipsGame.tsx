@@ -14,12 +14,15 @@ import {
   FLEET,
   type BoardCell,
   type Orientation,
+  type ShipDefinition,
   type TargetCell,
+  canPlaceShip,
   chooseAiShot,
   createEmptyBoard,
   createEmptyTargetBoard,
   createRandomFleetBoard,
   getPlacedShipIds,
+  getProjectedShipCells,
   isFleetPlaced,
   isValidIndex,
   markTargetShot,
@@ -229,24 +232,49 @@ export default function BattleshipsGame(): React.ReactElement {
   useEffect(() => {
     if (mode !== "single" || turn !== "opponent" || winner) return undefined;
 
-    const timeoutId = window.setTimeout(() => {
-      const cell = chooseAiShot(ownBoardRef.current);
-      if (cell === null) return;
+    let cancelled = false;
+    const timeoutIds: number[] = [];
 
-      const shot = receiveShot(ownBoardRef.current, cell);
-      if (!shot.valid) return;
+    const scheduleAiShot = () => {
+      const timeoutId = window.setTimeout(() => {
+        if (cancelled) return;
 
-      syncOwnBoard(shot.board);
+        const cell = chooseAiShot(ownBoardRef.current);
+        if (cell === null) {
+          setTurn("player");
+          return;
+        }
 
-      if (shot.allSunk) {
-        setWinner("opponent");
-        return;
-      }
+        const shot = receiveShot(ownBoardRef.current, cell);
+        if (!shot.valid) {
+          scheduleAiShot();
+          return;
+        }
 
-      setTurn(shot.hit ? "opponent" : "player");
-    }, 520);
+        syncOwnBoard(shot.board);
 
-    return () => window.clearTimeout(timeoutId);
+        if (shot.allSunk) {
+          setWinner("opponent");
+          return;
+        }
+
+        if (shot.hit) {
+          scheduleAiShot();
+          return;
+        }
+
+        setTurn("player");
+      }, 520);
+
+      timeoutIds.push(timeoutId);
+    };
+
+    scheduleAiShot();
+
+    return () => {
+      cancelled = true;
+      timeoutIds.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    };
   }, [mode, syncOwnBoard, turn, winner]);
 
   const startSingleSetup = () => {
@@ -547,6 +575,8 @@ function PlacementPanel({
         revealShips
         setupMode
         onCellClick={onCellClick}
+        previewShip={nextShip}
+        previewOrientation={orientation}
         t={t}
       />
 
@@ -592,6 +622,8 @@ type BattleBoardProps = {
   setupMode?: boolean;
   disabled?: boolean;
   canShoot?: boolean;
+  previewShip?: ShipDefinition | null;
+  previewOrientation?: Orientation;
   onCellClick?: (cell: number) => void;
   t: TranslationFunction;
 };
@@ -605,9 +637,24 @@ function BattleBoard({
   setupMode = false,
   disabled = false,
   canShoot = false,
+  previewShip = null,
+  previewOrientation = "horizontal",
   onCellClick,
   t,
 }: BattleBoardProps): React.ReactElement {
+  const [hoveredCell, setHoveredCell] = useState<number | null>(null);
+
+  const placementPreview = useMemo(() => {
+    if (!setupMode || hoveredCell === null || !board || !previewShip) {
+      return { cells: [] as number[], valid: false };
+    }
+
+    return {
+      cells: getProjectedShipCells(hoveredCell, previewShip.length, previewOrientation),
+      valid: canPlaceShip(board, previewShip, hoveredCell, previewOrientation),
+    };
+  }, [board, hoveredCell, previewOrientation, previewShip, setupMode]);
+
   return (
     <section className="battleships-board-card">
       <header>
@@ -628,6 +675,7 @@ function BattleBoard({
           const hasShip = Boolean(cell?.shipId);
           const shot = Boolean(cell?.shot);
           const marker = getCellMarker(hasShip, shot, target, revealShips, t);
+          const isPreviewCell = placementPreview.cells.includes(index);
           const className = [
             "battleships-cell",
             hasShip && revealShips ? "battleships-cell--ship" : "",
@@ -635,6 +683,11 @@ function BattleBoard({
             shot && !hasShip ? "battleships-cell--miss" : "",
             target !== "unknown" ? `battleships-cell--${target}` : "",
             setupMode ? "battleships-cell--setup" : "",
+            isPreviewCell
+              ? placementPreview.valid
+                ? "battleships-cell--preview-valid"
+                : "battleships-cell--preview-invalid"
+              : "",
           ]
             .filter(Boolean)
             .join(" ");
@@ -646,6 +699,10 @@ function BattleBoard({
                 type="button"
                 className={className}
                 onClick={() => onCellClick?.(index)}
+                onMouseEnter={() => setupMode && setHoveredCell(index)}
+                onFocus={() => setupMode && setHoveredCell(index)}
+                onMouseLeave={() => setupMode && setHoveredCell(null)}
+                onBlur={() => setupMode && setHoveredCell(null)}
                 disabled={disabled || (!setupMode && !canShoot) || target !== "unknown"}
                 aria-label={getCellAriaLabel(index, marker, t)}
               >
