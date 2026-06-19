@@ -241,3 +241,20 @@
     font-size: 0.76rem;
   }
 }
+
+/* UI quality pass: flexible start cards for 320px and low windows */
+.game-start-menu { max-width: min(100%, 45rem); }
+.game-start-menu__actions { grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); }
+.game-start-card, .game-start-card--featured { min-width: 0; min-height: auto; }
+.game-start-card--featured { grid-column: 1 / -1; }
+.game-start-card__content, .game-start-card__cta { min-width: 0; }
+.game-start-card__content span { overflow-wrap: anywhere; }
+@media (max-width: 38rem), (max-height: 38rem) {
+  .game-start-menu { gap: var(--game-ui-gap); }
+  .game-start-card, .game-start-card--featured { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "icon content" "cta cta"; align-items: start; padding: var(--game-ui-padding); }
+  .game-start-card__cta { min-height: clamp(1.95rem, 5.5vmin, 2.35rem); }
+}
+@media (max-width: 22rem) {
+  .game-start-card, .game-start-card--featured { grid-template-columns: 1fr; grid-template-areas: "icon" "content" "cta"; }
+  .game-start-card__icon { justify-self: center; }
+}

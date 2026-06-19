@@ -209,3 +209,17 @@
   opacity: 0.8;
   font-size: clamp(0.6875rem, 1.8vmin, 0.75rem);
 }
+
+/* UI quality pass: light shell, compact responsive controls */
+.ms-root { background: radial-gradient(circle at 16% 14%, rgba(211, 241, 224, 0.7), transparent 34%), linear-gradient(180deg, rgba(248, 250, 249, 0.98), rgba(231, 238, 234, 0.98)); color: var(--game-ui-ink); }
+.ms-header { flex-wrap: wrap; padding: clamp(0.45rem, 1.4vmin, 0.75rem); border: 0.0625rem solid var(--game-ui-border); border-radius: var(--game-ui-radius); background: var(--game-ui-surface); box-shadow: var(--game-ui-shadow-soft); }
+.ms-counter, .ms-timer { border-color: rgba(31, 36, 48, 0.14); background: rgba(15, 23, 42, 0.92); }
+.ms-reset, .ms-difficulty-option { border-color: var(--game-ui-border-strong); background: var(--game-ui-surface-strong); color: var(--game-ui-ink); box-shadow: 0 0.25rem 0.65rem rgba(31, 36, 48, 0.08); }
+.ms-reset:hover, .ms-difficulty-option:hover { background: #ffffff; }
+.ms-difficulty { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(8.5rem, 100%), 1fr)); }
+.ms-difficulty-option { min-width: 0; }
+.ms-difficulty-option[data-active="true"] { background: linear-gradient(135deg, rgba(222, 248, 213, 0.95), rgba(143, 216, 151, 0.92)); border-color: rgba(36, 121, 54, 0.34); }
+.ms-grid-wrap { border-color: rgba(31, 36, 48, 0.14); border-radius: var(--game-ui-radius); background: linear-gradient(180deg, rgba(10, 15, 22, 0.94), rgba(15, 23, 42, 0.96)); box-shadow: var(--game-ui-shadow); }
+.ms-footer { color: var(--game-ui-muted); text-align: center; }
+@media (max-height: 38rem) { .ms-difficulty-option small, .ms-footer { display: none; } .ms-root, .ms-difficulty, .ms-header { gap: clamp(0.35rem, 1.4vmin, 0.55rem); } }
+@media (max-width: 22rem) { .ms-header { justify-content: center; } .ms-difficulty { grid-template-columns: 1fr; } }

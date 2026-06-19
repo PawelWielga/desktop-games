@@ -167,3 +167,12 @@
 :root[data-a11y-targets="high"] .window-header {
   min-height: clamp(2.5rem, 6dvh, 2.75rem);
 }
+
+/* UI quality pass: safer windows on 320px and low displays */
+.window { min-width: min(20rem, calc(100dvw - (var(--window-viewport-gap) * 2))); min-height: min(16rem, calc(100dvh - var(--taskbar-height) - var(--trial-banner-reserved-height) - (var(--window-viewport-gap) * 2))); }
+.window-content { overscroll-behavior: contain; }
+@media (max-width: 36rem), (max-height: 38rem) {
+  .window { border-radius: clamp(0.45rem, 1.5vmin, var(--radius-2)); }
+  .window-header { padding-inline: clamp(0.45rem, 2vmin, var(--space-3)); }
+  .window-controls { gap: clamp(0.25rem, 1.5vmin, var(--space-2)); }
+}

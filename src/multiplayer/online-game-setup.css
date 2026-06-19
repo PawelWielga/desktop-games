@@ -554,3 +554,30 @@
     min-height: 2rem;
   }
 }
+
+/* UI quality pass: prevent lobby overlap on small and low screens */
+.online-setup { max-width: min(100%, 38rem); }
+.online-setup--connect { margin-top: clamp(2.2rem, 8vmin, 3.6rem); }
+.online-setup--lobby { min-height: 0; max-width: min(100%, 44rem); }
+.online-setup__header, .online-setup__lobby-title, .online-setup__room-heading, .online-setup__actions, .online-setup__join, .online-setup__join-row, .online-setup__players, .online-setup__capacity { min-width: 0; }
+.online-setup__header h2 { overflow-wrap: anywhere; }
+.online-setup__room-code { max-width: 100%; overflow-wrap: anywhere; white-space: normal; }
+.online-setup__players { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr)); }
+.online-setup__player-chip, .online-setup__player-card { min-width: 0; }
+.online-setup__player-chip strong, .online-setup__player-card strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.online-setup__join-row { grid-template-columns: minmax(0, 1fr) auto; }
+.online-setup__join input { min-width: 0; }
+.multiplayer-overlay { max-width: calc(100dvw - 1rem); }
+.multiplayer-overlay__popup { max-width: min(18rem, calc(100dvw - 1rem)); overflow-wrap: anywhere; }
+@media (max-width: 40rem), (max-height: 38rem) {
+  .online-setup { gap: var(--game-ui-gap); padding: var(--game-ui-padding); }
+  .online-setup--connect { padding-top: clamp(3.35rem, 11vmin, 4.35rem); }
+  .online-setup--lobby .online-setup__header, .online-setup__join-row { grid-template-columns: 1fr; }
+  .online-setup__player-card { justify-self: stretch; width: 100%; }
+  .online-setup__join button, .online-setup__disconnect, .online-setup__primary { width: 100%; }
+}
+@media (max-height: 38rem) {
+  .online-setup__emblem { width: clamp(3.8rem, 12vmin, 5rem); }
+  .online-setup__header h2 { font-size: clamp(1.65rem, 5.4vmin, 2.35rem); }
+  .online-setup__header p { font-size: clamp(0.84rem, 2.2vmin, 1rem); }
+}

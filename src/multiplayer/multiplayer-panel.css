@@ -112,3 +112,14 @@
     align-items: stretch;
   }
 }
+
+/* UI quality pass: default multiplayer panel matches light game cards */
+.mp-panel { border-color: var(--game-ui-border); background: var(--game-ui-surface); color: var(--game-ui-ink); box-shadow: var(--game-ui-shadow-soft); min-width: 0; }
+.mp-panel h2 { line-height: 1.15; }
+.mp-panel p, .mp-players, .mp-room-code, .mp-actions label { color: var(--game-ui-muted); }
+.mp-actions form { grid-template-columns: minmax(0, 0.85fr) minmax(7rem, 1fr) auto; }
+.mp-actions input { border-color: var(--game-ui-border-strong); background: rgba(255, 255, 255, 0.72); color: var(--game-ui-ink); }
+.mp-panel button { border-color: rgba(47, 111, 104, 0.28); background: linear-gradient(135deg, rgba(206, 249, 242, 0.94), rgba(145, 224, 214, 0.9)); color: #20342f; }
+.mp-panel .mp-secondary { background: rgba(255, 255, 255, 0.76); color: #20342f; }
+.mp-error { color: var(--game-ui-danger); }
+@media (max-width: 42rem), (max-height: 38rem) { .mp-actions form { grid-template-columns: 1fr; align-items: stretch; } .mp-panel button, .mp-panel .mp-secondary { width: 100%; justify-self: stretch; } }
