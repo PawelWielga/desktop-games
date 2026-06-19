@@ -40,6 +40,7 @@ Desktop Games jest projektem hobbystycznym i rozwojowym. Każda gra jest traktow
 Dokumentacja dla osób dodających nowe gry znajduje się tutaj:
 
 - [Adding a new game](docs/adding-a-game.md)
+- [Multiplayer architecture](docs/multiplayer.md)
 - [Icons and visual assets](docs/icons.md)
 
 ## Ikony i zasoby graficzne
