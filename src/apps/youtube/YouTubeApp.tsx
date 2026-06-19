@@ -21,7 +21,6 @@ const DEFAULT_VIDEO_ID = "dQw4w9WgXcQ";
 type ViewMode = "player" | "search";
 
 type PlayerSource = {
-  type: "video";
   value: string;
   title: string;
 };
@@ -82,7 +81,6 @@ export default function YouTubeApp(): React.ReactElement {
   const [query, setQuery] = useState("");
   const [lastSearchUrl, setLastSearchUrl] = useState<string | null>(null);
   const [source, setSource] = useState<PlayerSource>({
-    type: "video",
     value: DEFAULT_VIDEO_ID,
     title: "YouTube",
   });
@@ -91,7 +89,6 @@ export default function YouTubeApp(): React.ReactElement {
   const embedSrc = useMemo(() => buildEmbedSrc(source), [source]);
   const shouldUsePreloadedPlayer =
     mode === "player" &&
-    source.type === "video" &&
     source.value === DEFAULT_VIDEO_ID &&
     canUsePreloadedYouTubePlayer();
 
@@ -114,7 +111,6 @@ export default function YouTubeApp(): React.ReactElement {
 
   const playDefaultVideo = (): void => {
     setSource({
-      type: "video",
       value: DEFAULT_VIDEO_ID,
       title: "YouTube",
     });
@@ -131,7 +127,6 @@ export default function YouTubeApp(): React.ReactElement {
     const videoId = getYouTubeVideoId(phrase);
     if (videoId) {
       setSource({
-        type: "video",
         value: videoId,
         title: "YouTube",
       });
