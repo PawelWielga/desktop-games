@@ -5,6 +5,7 @@ import cardsIcon from "@/assets/game-icons/cards.svg";
 import catculatorIcon from "@/assets/game-icons/catculator.svg";
 import connect4Icon from "@/assets/game-icons/connect4.svg";
 import memoIcon from "@/assets/game-icons/memo.svg";
+import foldedMonsterIcon from "@/assets/game-icons/folded-monster.svg";
 import minesweeperIcon from "@/assets/game-icons/minesweeper.svg";
 import paperSoccerIcon from "@/assets/game-icons/paper-soccer.svg";
 import pongIcon from "@/assets/game-icons/pong.svg";
@@ -105,6 +106,24 @@ export const AppRegistry: readonly AppRegistration[] = [
       x: 150,
       y: 90,
       loader: () => import("@/games/paper-soccer/PaperSoccerGame"),
+    },
+  },
+  {
+    id: "folded-monster",
+    title: "Składany Rysunek",
+    titleKey: "apps.foldedMonster",
+    icon: "👹",
+    iconAsset: foldedMonsterIcon,
+    kind: "game",
+    implemented: true,
+    window: {
+      width: 860,
+      height: 760,
+      minWidth: 520,
+      minHeight: 620,
+      x: 170,
+      y: 100,
+      loader: () => import("@/games/folded-monster/FoldedMonsterGame"),
     },
   },
   {
