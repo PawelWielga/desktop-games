@@ -133,7 +133,7 @@ export default function PaperSoccerGame(): React.ReactElement {
     }, 420);
 
     return () => window.clearTimeout(timeoutId);
-  }, [applyMove, mode, state.turn, state.winner]);
+  }, [applyMove, mode, state]);
 
   const startSingle = () => {
     resetMatch();
