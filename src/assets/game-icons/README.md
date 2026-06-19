@@ -2,7 +2,20 @@
 
 Use this folder for reusable game icons that are safe to ship with the public repository.
 
-Recommended source: Kenney game/board-game icon packs, because they are published as CC0/public domain assets. Own SVG icons created for this project are also fine.
+Current assets are original SVG icons created directly for this project:
+
+- `cards.svg`
+- `catculator.svg`
+- `connect4.svg`
+- `memo.svg`
+- `minesweeper.svg`
+- `pong.svg`
+- `rps.svg`
+- `snake.svg`
+- `tetris.svg`
+- `tictactoe.svg`
+
+Recommended external source for future additions: Kenney game/board-game icon packs, because they are published as CC0/public domain assets. Own SVG icons created for this project are also fine.
 
 When adding an icon:
 
