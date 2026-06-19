@@ -73,7 +73,7 @@ export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage
   async host(roomCode = createRoomCode(this.options.roomCodeLength)): Promise<PeerRoomSnapshot> {
     const normalizedCode = normalizeRoomCode(roomCode);
     if (!isValidRoomCode(normalizedCode)) {
-      return this.fail("Kod pokoju jest nieprawidłowy.");
+      return this.fail("Kod pokoju jest nieprawidłowy.", undefined, "multiplayer.errors.invalidRoomCode");
     }
 
     this.closeTransport();
@@ -86,14 +86,14 @@ export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage
       await this.waitForPeerOpen(peer);
       return this.snapshot;
     } catch (error) {
-      return this.fail("Nie udało się utworzyć pokoju multiplayer.", error);
+      return this.fail("Nie udało się utworzyć pokoju multiplayer.", error, "multiplayer.errors.createRoomFailed");
     }
   }
 
   async join(roomCode: string): Promise<PeerRoomSnapshot> {
     const normalizedCode = normalizeRoomCode(roomCode);
     if (!isValidRoomCode(normalizedCode)) {
-      return this.fail("Kod pokoju jest nieprawidłowy.");
+      return this.fail("Kod pokoju jest nieprawidłowy.", undefined, "multiplayer.errors.invalidRoomCode");
     }
 
     this.closeTransport();
@@ -109,13 +109,13 @@ export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage
       await this.waitForConnectionOpen(connection);
       return this.snapshot;
     } catch (error) {
-      return this.fail("Nie udało się dołączyć do pokoju multiplayer.", error);
+      return this.fail("Nie udało się dołączyć do pokoju multiplayer.", error, "multiplayer.errors.joinRoomFailed");
     }
   }
 
   send(message: TMessage): boolean {
     if (!this.connection || !this.connection.open || this.snapshot.status !== "connected") {
-      this.reportError("Połączenie multiplayer nie jest jeszcze gotowe.");
+      this.reportError("Połączenie multiplayer nie jest jeszcze gotowe.", undefined, "multiplayer.errors.notReady");
       return false;
     }
 
@@ -123,7 +123,7 @@ export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage
       this.connection.send(JSON.stringify(message));
       return true;
     } catch (error) {
-      this.reportError("Nie udało się wysłać wiadomości multiplayer.", error);
+      this.reportError("Nie udało się wysłać wiadomości multiplayer.", error, "multiplayer.errors.sendFailed");
       return false;
     }
   }
@@ -173,7 +173,7 @@ export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage
         handler(message);
       }
     } catch (error) {
-      this.reportError("Odebrano nieprawidłową wiadomość multiplayer.", error);
+      this.reportError("Odebrano nieprawidłową wiadomość multiplayer.", error, "multiplayer.errors.invalidMessage");
     }
   };
 
@@ -185,7 +185,7 @@ export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage
   };
 
   private readonly handleConnectionError = (error: unknown): void => {
-    this.fail("Wystąpił błąd połączenia multiplayer.", error);
+    this.fail("Wystąpił błąd połączenia multiplayer.", error, "multiplayer.errors.connectionFailed");
   };
 
   private readonly handlePeerClose = (): void => {
@@ -196,7 +196,8 @@ export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage
   };
 
   private readonly handlePeerError = (error: PeerError<`${PeerErrorType}`>): void => {
-    this.fail(this.mapPeerError(error), error);
+    const mapped = this.mapPeerError(error);
+    this.fail(mapped.message, error, mapped.i18nKey);
   };
 
   private parseMessage(data: unknown): TMessage {
@@ -283,15 +284,15 @@ export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage
     }
   }
 
-  private fail(message: string, cause?: unknown): PeerRoomSnapshot {
-    const error = this.reportError(message, cause);
+  private fail(message: string, cause?: unknown, i18nKey?: string): PeerRoomSnapshot {
+    const error = this.reportError(message, cause, i18nKey);
     this.closeTransport();
     this.setSnapshot({ status: "error", error });
     return this.snapshot;
   }
 
-  private reportError(message: string, cause?: unknown): MultiplayerConnectionError {
-    const error: MultiplayerConnectionError = { message, cause };
+  private reportError(message: string, cause?: unknown, i18nKey?: string): MultiplayerConnectionError {
+    const error: MultiplayerConnectionError = { message, i18nKey, cause };
     this.setSnapshot({ error });
 
     for (const handler of this.errorHandlers) {
@@ -337,20 +338,20 @@ export class PeerRoomConnection<TMessage extends JsonObject = MultiplayerMessage
     this.connection = null;
   }
 
-  private mapPeerError(error: PeerError<`${PeerErrorType}`>): string {
+  private mapPeerError(error: PeerError<`${PeerErrorType}`>): { message: string; i18nKey: string } {
     switch (error.type) {
       case "peer-unavailable":
-        return "Nie znaleziono pokoju o podanym kodzie.";
+        return { message: "Nie znaleziono pokoju o podanym kodzie.", i18nKey: "multiplayer.errors.peerUnavailable" };
       case "unavailable-id":
-        return "Ten kod pokoju jest już zajęty. Spróbuj utworzyć pokój ponownie.";
+        return { message: "Ten kod pokoju jest już zajęty. Spróbuj utworzyć pokój ponownie.", i18nKey: "multiplayer.errors.unavailableId" };
       case "browser-incompatible":
-        return "Ta przeglądarka nie obsługuje wymaganego połączenia WebRTC.";
+        return { message: "Ta przeglądarka nie obsługuje wymaganego połączenia WebRTC.", i18nKey: "multiplayer.errors.browserIncompatible" };
       case "network":
       case "server-error":
       case "socket-error":
-        return "Nie udało się połączyć z serwerem PeerJS.";
+        return { message: "Nie udało się połączyć z serwerem PeerJS.", i18nKey: "multiplayer.errors.peerServer" };
       default:
-        return "Wystąpił błąd PeerJS.";
+        return { message: "Wystąpił błąd PeerJS.", i18nKey: "multiplayer.errors.peerGeneric" };
     }
   }
 }
