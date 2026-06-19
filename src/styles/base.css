@@ -111,3 +111,67 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Shared game UI tokens and responsive defaults */
+:root {
+  --game-ui-bg: #f5f8f6;
+  --game-ui-surface: rgba(255, 255, 255, 0.82);
+  --game-ui-surface-strong: rgba(255, 255, 255, 0.94);
+  --game-ui-border: rgba(31, 36, 48, 0.12);
+  --game-ui-border-strong: rgba(47, 111, 104, 0.24);
+  --game-ui-ink: #1f2430;
+  --game-ui-muted: rgba(31, 36, 48, 0.68);
+  --game-ui-accent: #2f6f68;
+  --game-ui-danger: #b4233a;
+  --game-ui-radius: clamp(0.75rem, 2vmin, 1.1rem);
+  --game-ui-gap: clamp(0.55rem, 1.8vmin, 1rem);
+  --game-ui-padding: clamp(0.65rem, 2vmin, 1.15rem);
+  --game-ui-shadow: 0 0.85rem 1.9rem rgba(31, 36, 48, 0.14);
+  --game-ui-shadow-soft: 0 0.45rem 1rem rgba(31, 36, 48, 0.1);
+  --game-ui-control-height: clamp(2.2rem, 5.8vmin, 2.7rem);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { overflow-x: hidden; }
+button, input, select, textarea { font: inherit; }
+
+:where(.game-start-menu, .ttt-root, .online-setup, .mp-panel, .snake-root, .ms-root) {
+  color: var(--game-ui-ink);
+}
+
+:where(.ttt-root, .snake-root, .ms-root) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(.game-start-card, .ttt-start-online, .ttt-link-button, .ttt-reset, .online-setup button, .mp-panel button, .snake-hud button, .ms-reset, .ms-difficulty-option, .ps-primary, .ps-secondary) {
+  min-height: var(--game-ui-control-height);
+  border-radius: clamp(0.45rem, 1.5vmin, 0.75rem);
+  touch-action: manipulation;
+}
+
+:where(.game-start-card, .ttt-start-online, .ttt-link-button, .ttt-reset, .online-setup button, .mp-panel button, .snake-hud button, .ms-reset, .ms-difficulty-option):focus-visible {
+  outline: 0.15rem solid color-mix(in srgb, var(--game-ui-accent) 70%, white 30%);
+  outline-offset: 0.15rem;
+}
+
+:where(.ttt-root--menu, .ttt-root--lobby, .online-setup) {
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 22rem) {
+  :root {
+    --game-ui-gap: clamp(0.45rem, 2vmin, 0.75rem);
+    --game-ui-padding: clamp(0.5rem, 2vmin, 0.85rem);
+    --game-ui-control-height: clamp(2.05rem, 6.8vmin, 2.45rem);
+  }
+}
+
+@media (max-height: 38rem) {
+  :root {
+    --game-ui-gap: clamp(0.4rem, 1.4vmin, 0.7rem);
+    --game-ui-padding: clamp(0.45rem, 1.5vmin, 0.8rem);
+    --game-ui-control-height: clamp(2rem, 5.8vmin, 2.35rem);
+  }
+}
