@@ -1,4 +1,5 @@
 import React from "react";
+import youtubeIcon from "@/assets/brand-icons/youtube.svg";
 
 export type WindowDefaults = {
   id: string;
@@ -21,6 +22,7 @@ export type AppRegistration = {
   id: string;
   title: string;
   icon: string;
+  iconAsset?: string;
   kind: AppKind;
   implemented: boolean;
   showOnDesktop?: boolean;
@@ -75,6 +77,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "youtube",
     title: "YouTube",
     icon: "▶️",
+    iconAsset: youtubeIcon,
     kind: "app",
     implemented: true,
     window: {
