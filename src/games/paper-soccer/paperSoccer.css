@@ -1,0 +1,197 @@
+.paper-soccer-root {
+  min-height: 100%;
+  color: #12302a;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(120, 230, 190, 0.35), transparent 30%),
+    linear-gradient(135deg, #f8fff8 0%, #e9f7ef 48%, #d8ecff 100%);
+}
+
+.paper-soccer-root--menu,
+.paper-soccer-root--lobby {
+  display: grid;
+  align-content: center;
+  gap: clamp(1rem, 2.5vw, 1.5rem);
+  min-height: 100%;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.paper-soccer-root--play {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: clamp(0.75rem, 2vw, 1rem);
+  min-height: 100%;
+  padding: clamp(0.75rem, 2.5vw, 1.4rem);
+  overflow: auto;
+}
+
+.paper-soccer-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.paper-soccer-back,
+.paper-soccer-secondary,
+.paper-soccer-primary {
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.paper-soccer-back,
+.paper-soccer-secondary {
+  padding: 0.55rem 0.9rem;
+  color: #1f4a3d;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: inset 0 0 0 1px rgba(40, 100, 80, 0.18);
+}
+
+.paper-soccer-primary {
+  justify-self: center;
+  padding: 0.75rem 1.25rem;
+  color: #ffffff;
+  background: linear-gradient(135deg, #188b63, #2368c9);
+  box-shadow: 0 14px 28px rgba(24, 104, 130, 0.22);
+}
+
+.paper-soccer-back:hover,
+.paper-soccer-secondary:hover,
+.paper-soccer-primary:hover {
+  transform: translateY(-1px);
+}
+
+.paper-soccer-secondary:disabled,
+.paper-soccer-primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none;
+}
+
+.paper-soccer-status,
+.paper-soccer-board-card {
+  border: 1px solid rgba(35, 104, 78, 0.16);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 18px 42px rgba(49, 94, 88, 0.16);
+  backdrop-filter: blur(12px);
+}
+
+.paper-soccer-status {
+  display: grid;
+  gap: 0.25rem;
+  padding: clamp(0.8rem, 2vw, 1rem);
+}
+
+.paper-soccer-status strong {
+  color: #123c35;
+  font-size: clamp(1rem, 2.4vw, 1.25rem);
+}
+
+.paper-soccer-status span,
+.paper-soccer-note {
+  color: rgba(18, 48, 42, 0.76);
+}
+
+.paper-soccer-board-card {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: center;
+  min-height: 0;
+  padding: clamp(0.75rem, 2vw, 1rem);
+}
+
+.paper-soccer-scoreboard {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  color: rgba(18, 48, 42, 0.82);
+  font-weight: 800;
+}
+
+.paper-soccer-scoreboard span {
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(35, 104, 78, 0.14);
+}
+
+.paper-soccer-board {
+  width: min(100%, 560px);
+  max-height: min(68vh, 720px);
+  overflow: visible;
+}
+
+.paper-soccer-grid line {
+  stroke: rgba(42, 102, 86, 0.16);
+  stroke-width: 1;
+}
+
+.paper-soccer-outline {
+  fill: rgba(255, 255, 255, 0.36);
+  stroke: rgba(18, 74, 58, 0.76);
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.paper-soccer-segment {
+  stroke-linecap: round;
+  stroke-width: 5;
+}
+
+.paper-soccer-segment--home {
+  stroke: #1f8f61;
+}
+
+.paper-soccer-segment--away {
+  stroke: #2368c9;
+}
+
+.paper-soccer-point {
+  fill: rgba(30, 75, 62, 0.42);
+  pointer-events: none;
+}
+
+.paper-soccer-point--visited {
+  fill: rgba(18, 74, 58, 0.82);
+}
+
+.paper-soccer-point--legal {
+  fill: #ffffff;
+  stroke: #ffb02e;
+  stroke-width: 4;
+  cursor: pointer;
+  filter: drop-shadow(0 6px 10px rgba(255, 176, 46, 0.28));
+  pointer-events: auto;
+}
+
+.paper-soccer-point--legal:focus {
+  outline: none;
+  stroke: #ff7b00;
+}
+
+.paper-soccer-ball {
+  fill: #ffffff;
+  stroke: #123c35;
+  stroke-width: 4;
+  filter: drop-shadow(0 8px 12px rgba(18, 60, 53, 0.22));
+}
+
+@media (max-height: 680px) {
+  .paper-soccer-root--play {
+    gap: 0.55rem;
+    padding: 0.65rem;
+  }
+
+  .paper-soccer-board {
+    max-height: 62vh;
+  }
+}
