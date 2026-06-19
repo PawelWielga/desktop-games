@@ -199,13 +199,10 @@ export default function Desktop(): React.ReactElement {
         ))}
       </div>
 
-      {/* Trial banner placed directly above taskbar with consistent spacing */}
-      <div
-        className="trial-banner"
-        role="status"
-        aria-live="polite"
-      >
-        <strong>Trial Mode:</strong> Construction Workers on Coffee Break
+      {/* License watermark styled like an inactive Windows notice. */}
+      <div className="license-watermark" aria-hidden="true">
+        <div>Dors XD isn't activated</div>
+        <div>Go to Settings to activate Dors XD.</div>
       </div>
 
       <div className="taskbar" role="toolbar" aria-label="Taskbar">

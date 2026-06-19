@@ -11,7 +11,7 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
 
 /* Desktop grid like Windows */
 .desktop-grid {
-  height: calc(100dvh - var(--taskbar-height) - var(--trial-banner-reserved-height));
+  height: calc(100dvh - var(--taskbar-height));
   position: relative;
   padding: clamp(var(--space-3), 3vmin, var(--space-5));
   display: grid;
@@ -128,56 +128,30 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   border-radius: var(--radius-1);
 }
 
-/* Trial banner: sits directly above the taskbar with consistent spacing */
-.trial-banner {
+/* License watermark: subtle inactive-system notice in the bottom-right corner. */
+.license-watermark {
   position: fixed;
-  left: max(env(safe-area-inset-left, 0px), var(--space-2));
-  right: max(env(safe-area-inset-right, 0px), var(--space-2));
-  bottom: calc(var(--taskbar-height) + var(--space-2));
-  z-index: calc(var(--z-windows) + 1); /* above desktop content, below overlays */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  min-height: calc(var(--trial-banner-reserved-height) - var(--space-2));
-  padding: clamp(var(--space-1), 1.6dvh, var(--space-2)) var(--space-4);
-  margin: 0 auto;
-  max-width: min(60rem, calc(100dvw - var(--space-4)));
-  border-radius: var(--radius-2);
-  border: 1px solid rgba(255,255,255,0.22);
-  background: color-mix(in srgb, #0b0f19 80%, transparent);
-  backdrop-filter: blur(0.625rem);
-  -webkit-backdrop-filter: blur(0.625rem);
-  color: #ffffff;
-  font-size: clamp(0.75rem, 1.8vmin, 0.875rem);
-  font-weight: 700; /* bold for prominence and accessibility */
-  line-height: 1.2;
-  text-align: center;
-  box-shadow: var(--shadow-1);
-  pointer-events: none; /* never obstruct taskbar interactions */
-}
-
-/* Ensure strong contrast and readable size */
-.trial-banner strong {
-  font-weight: 800;
-}
-
-/* Respect reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .trial-banner {
-    transition: none !important;
-    animation: none !important;
-  }
+  right: max(env(safe-area-inset-right, 0px), var(--space-5));
+  bottom: calc(var(--taskbar-height) + max(env(safe-area-inset-bottom, 0px), var(--space-4)));
+  z-index: calc(var(--z-windows) + 1);
+  color: rgba(255, 255, 255, 0.42);
+  font-size: clamp(0.75rem, 1.6vmin, 0.875rem);
+  line-height: 1.35;
+  text-align: right;
+  text-shadow: 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.5);
+  user-select: none;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 /* Mobile tweaks */
-@media (max-height: 42rem) {
-  .trial-banner {
-    padding-inline: var(--space-3);
-  }
-}
-
 @media (max-width: 48rem) {
+  .license-watermark {
+    right: max(env(safe-area-inset-right, 0px), var(--space-3));
+    bottom: calc(var(--taskbar-height) + max(env(safe-area-inset-bottom, 0px), var(--space-3)));
+    font-size: clamp(0.6875rem, 2.4vmin, 0.75rem);
+  }
+
   .desktop-grid {
     padding: var(--space-3);
     gap: var(--space-3);
