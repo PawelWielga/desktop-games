@@ -1,4 +1,18 @@
-import React, { FormEvent, useMemo, useState } from "react";
+import React, {
+  FormEvent,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import {
+  attachDefaultYouTubePlayer,
+  buildDefaultYouTubeSrc,
+  canUsePreloadedYouTubePlayer,
+  detachDefaultYouTubePlayer,
+  startDefaultYouTubePreload,
+} from "./youtubePreloader";
 import "./youtube.css";
 
 const DEFAULT_VIDEO_ID = "dQw4w9WgXcQ";
@@ -49,8 +63,13 @@ const getYouTubeVideoId = (value: string): string | null => {
 };
 
 const buildEmbedSrc = (source: PlayerSource): string => {
+  if (source.type === "video" && source.value === DEFAULT_VIDEO_ID) {
+    return buildDefaultYouTubeSrc(false);
+  }
+
   const params = new URLSearchParams({
     autoplay: "1",
+    playsinline: "1",
     rel: "0",
     modestbranding: "1",
   });
@@ -72,8 +91,31 @@ export default function YouTubeApp(): React.ReactElement {
     value: DEFAULT_VIDEO_ID,
     title: "YouTube",
   });
+  const playerRef = useRef<HTMLElement | null>(null);
 
   const embedSrc = useMemo(() => buildEmbedSrc(source), [source]);
+  const shouldUsePreloadedPlayer =
+    mode === "player" &&
+    source.type === "video" &&
+    source.value === DEFAULT_VIDEO_ID &&
+    canUsePreloadedYouTubePlayer();
+
+  useEffect(() => {
+    startDefaultYouTubePreload();
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!shouldUsePreloadedPlayer) {
+      detachDefaultYouTubePlayer();
+      return;
+    }
+
+    attachDefaultYouTubePlayer(playerRef.current);
+
+    return () => {
+      detachDefaultYouTubePlayer();
+    };
+  }, [shouldUsePreloadedPlayer]);
 
   const playDefaultVideo = (): void => {
     setSource({
@@ -153,14 +195,20 @@ export default function YouTubeApp(): React.ReactElement {
           </div>
         </main>
       ) : (
-        <main className="youtube-app__player" aria-label="Odtwarzacz YouTube">
-          <iframe
-            key={embedSrc}
-            src={embedSrc}
-            title={source.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-          />
+        <main
+          ref={playerRef}
+          className="youtube-app__player"
+          aria-label="Odtwarzacz YouTube"
+        >
+          {!shouldUsePreloadedPlayer && (
+            <iframe
+              key={embedSrc}
+              src={embedSrc}
+              title={source.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          )}
         </main>
       )}
     </div>
