@@ -12,6 +12,9 @@ type ReviewVote = "ok" | "duplicate" | "wrong";
 type Submission = { playerId: string; playerName: string; answers: Record<string, string> };
 type VoteMap = Record<string, Record<string, ReviewVote>>;
 type DuplicateOverrides = Record<string, string>;
+type AnswerResult = { winner: ReviewVote; points: number };
+type FinalResults = Record<string, AnswerResult>;
+type FinalScores = Record<string, number>;
 type ReviewReady = Record<number, string[]>;
 
 type SettingsMessage = GameSpecificMessage<"countries-cities:settings", { categories: string[]; endMode: EndMode }>;
@@ -22,8 +25,8 @@ type ReviewMessage = GameSpecificMessage<"countries-cities:review", { submission
 type VoteMessage = GameSpecificMessage<"countries-cities:vote", { answerId: string; vote: ReviewVote }>;
 type DuplicateMessage = GameSpecificMessage<"countries-cities:duplicate", { answerId: string; groupKey: string | null }>;
 type ReviewReadyMessage = GameSpecificMessage<"countries-cities:review-ready", { categoryIndex: number; playerId: string }>;
-type RevealMessage = GameSpecificMessage<"countries-cities:reveal", { categoryIndex: number }>;
-type ResultsMessage = GameSpecificMessage<"countries-cities:results", { votes: VoteMap; duplicateOverrides: DuplicateOverrides }>;
+type RevealMessage = GameSpecificMessage<"countries-cities:reveal", { categoryIndex: number; finalResults: FinalResults }>;
+type ResultsMessage = GameSpecificMessage<"countries-cities:results", { finalResults: FinalResults; finalScores: FinalScores }>;
 type CountriesCitiesMessage =
   | SettingsMessage
   | SubmitMessage
@@ -64,12 +67,53 @@ function getVoteSummary(votes: Record<string, ReviewVote> | undefined): VoteSumm
     summary[vote] += 1;
   });
 
-  summary.winner = VOTE_ORDER.reduce((winner, vote) => {
-    if (summary[vote] > summary[winner]) return vote;
-    return winner;
-  }, "ok" as ReviewVote);
+  summary.winner = pickVoteWinner(summary);
+  return summary;
+}
+
+function getHostAuthoritativeVoteSummary(
+  votes: Record<string, ReviewVote> | undefined,
+  hostPlayerId: string,
+  seed: string
+): VoteSummary {
+  const summary: VoteSummary = { ok: 0, duplicate: 0, wrong: 0, winner: "ok" };
+
+  Object.values(votes ?? {}).forEach((vote) => {
+    summary[vote] += 1;
+  });
+
+  const regularWinners = getTopVotes(summary);
+  if (regularWinners.length === 1) {
+    summary.winner = regularWinners[0];
+    return summary;
+  }
+
+  const hostWeightedSummary = { ...summary };
+  const hostVote = votes?.[hostPlayerId];
+  if (hostVote) hostWeightedSummary[hostVote] += 1;
+
+  const hostWeightedWinners = getTopVotes(hostWeightedSummary);
+  summary.winner = hostWeightedWinners.length === 1 ? hostWeightedWinners[0] : pickDeterministicWinner(hostWeightedWinners, seed);
 
   return summary;
+}
+
+function pickVoteWinner(summary: Pick<VoteSummary, "ok" | "duplicate" | "wrong">): ReviewVote {
+  return VOTE_ORDER.reduce((winner, vote) => (summary[vote] > summary[winner] ? vote : winner), "ok" as ReviewVote);
+}
+
+function getTopVotes(summary: Pick<VoteSummary, "ok" | "duplicate" | "wrong">): ReviewVote[] {
+  const highest = Math.max(summary.ok, summary.duplicate, summary.wrong);
+  return VOTE_ORDER.filter((vote) => summary[vote] === highest);
+}
+
+function pickDeterministicWinner(options: ReviewVote[], seed: string): ReviewVote {
+  let hash = 0;
+  for (const character of seed) {
+    hash = (hash * 31 + character.charCodeAt(0)) % 2147483647;
+  }
+
+  return options[hash % options.length] ?? "ok";
 }
 
 function getAnswerPoints(answer: string, summary: VoteSummary): number {
@@ -89,6 +133,8 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const [votes, setVotes] = useState<VoteMap>({});
   const [duplicateOverrides, setDuplicateOverrides] = useState<DuplicateOverrides>({});
   const [reviewReady, setReviewReady] = useState<ReviewReady>({});
+  const [finalResults, setFinalResults] = useState<FinalResults>({});
+  const [finalScores, setFinalScores] = useState<FinalScores>({});
   const [categoryIndex, setCategoryIndex] = useState(0);
   const [deadlineAt, setDeadlineAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -119,6 +165,8 @@ export default function CountriesCitiesGame(): React.ReactElement {
     setVotes({});
     setDuplicateOverrides({});
     setReviewReady({});
+    setFinalResults({});
+    setFinalScores({});
     setCategoryIndex(0);
     setDeadlineAt(null);
     setPhase("setup");
@@ -138,6 +186,8 @@ export default function CountriesCitiesGame(): React.ReactElement {
         setVotes({});
         setDuplicateOverrides({});
         setReviewReady({});
+        setFinalResults({});
+        setFinalScores({});
         setCategoryIndex(0);
         setDeadlineAt(null);
         setPhase("input");
@@ -165,10 +215,11 @@ export default function CountriesCitiesGame(): React.ReactElement {
         addReviewReady(message.categoryIndex, message.playerId);
       } else if (message.type === "countries-cities:reveal") {
         setCategoryIndex(message.categoryIndex);
+        setFinalResults((items) => ({ ...items, ...message.finalResults }));
         setPhase("reveal");
       } else if (message.type === "countries-cities:results") {
-        setVotes(message.votes);
-        setDuplicateOverrides(message.duplicateOverrides);
+        setFinalResults(message.finalResults);
+        setFinalScores(message.finalScores);
         setPhase("results");
       } else if (message.type === "game:reset") {
         resetRound();
@@ -180,6 +231,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const lobby = useMultiplayerLobby<CountriesCitiesMessage>({ onGameMessage: onMessage });
   const players = useMemo(() => [lobby.localPlayer, ...lobby.remotePlayers], [lobby.localPlayer, lobby.remotePlayers]);
   const isHost = lobby.role === "host";
+  const hostPlayerId = isHost ? lobby.localPlayer.id : lobby.remotePlayers[0]?.id;
   const parsedCategories = useMemo(
     () => [...new Set(categoriesText.split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean))],
     [categoriesText]
@@ -235,21 +287,34 @@ export default function CountriesCitiesGame(): React.ReactElement {
     [categories, submissions]
   );
 
-  const scores = useMemo(
+  const calculatedFinalResults = useMemo<FinalResults>(() => {
+    if (!hostPlayerId) return {};
+
+    return Object.fromEntries(
+      submissions.flatMap((submission) =>
+        categories.map((category) => {
+          const id = answerId(submission.playerId, category);
+          const answer = submission.answers[category] ?? "";
+          const summary = getHostAuthoritativeVoteSummary(votes[id], hostPlayerId, id);
+          return [id, { winner: summary.winner, points: getAnswerPoints(answer, summary) }];
+        })
+      )
+    );
+  }, [categories, hostPlayerId, submissions, votes]);
+
+  const calculatedFinalScores = useMemo<FinalScores>(
     () =>
       Object.fromEntries(
         submissions.map((submission) => [
           submission.playerId,
-          categories.reduce((sum, category) => {
-            const id = answerId(submission.playerId, category);
-            const answer = submission.answers[category] ?? "";
-            const summary = getVoteSummary(votes[id]);
-            return sum + getAnswerPoints(answer, summary);
-          }, 0),
+          categories.reduce((sum, category) => sum + (calculatedFinalResults[answerId(submission.playerId, category)]?.points ?? 0), 0),
         ])
       ),
-    [categories, submissions, votes]
+    [calculatedFinalResults, categories, submissions]
   );
+
+  const displayedFinalResults = isHost ? calculatedFinalResults : finalResults;
+  const displayedFinalScores = isHost ? calculatedFinalScores : finalScores;
 
   const publishSettings = (): void => {
     if (parsedCategories.length === 0) return;
@@ -304,15 +369,20 @@ export default function CountriesCitiesGame(): React.ReactElement {
   };
 
   const revealCategory = (): void => {
+    if (!isHost) return;
+
+    setFinalResults((items) => ({ ...items, ...calculatedFinalResults }));
     setPhase("reveal");
-    lobby.sendMessage({ type: "countries-cities:reveal", categoryIndex });
+    lobby.sendMessage({ type: "countries-cities:reveal", categoryIndex, finalResults: calculatedFinalResults });
   };
 
   const nextCategory = (): void => {
     const nextIndex = categoryIndex + 1;
     if (nextIndex >= categories.length) {
+      setFinalResults(calculatedFinalResults);
+      setFinalScores(calculatedFinalScores);
       setPhase("results");
-      lobby.sendMessage({ type: "countries-cities:results", votes, duplicateOverrides });
+      lobby.sendMessage({ type: "countries-cities:results", finalResults: calculatedFinalResults, finalScores: calculatedFinalScores });
       return;
     }
 
@@ -458,6 +528,9 @@ export default function CountriesCitiesGame(): React.ReactElement {
               const answer = submission.answers[currentCategory] || t("countriesCities.emptyAnswer");
               const selectedVote = votes[id]?.[lobby.localPlayer.id];
               const summary = getVoteSummary(votes[id]);
+              const result = displayedFinalResults[id];
+              const displayWinner = showAuthors ? result?.winner ?? summary.winner : summary.winner;
+              const displayPoints = showAuthors ? result?.points ?? 0 : getAnswerPoints(submission.answers[currentCategory] ?? "", summary);
               const duplicateGroup = duplicateOverrides[id] ?? "";
 
               return (
@@ -465,7 +538,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
                   <div>
                     <strong>{showAuthors ? submission.playerName : t("countriesCities.anonymousAnswer", { number: index + 1 })}</strong>
                     <span>{answer}</span>
-                    {showAuthors && <em>{t(`countriesCities.voteResult.${summary.winner}`)}</em>}
+                    {showAuthors && <em>{t(`countriesCities.voteResult.${displayWinner}`)}</em>}
                   </div>
                   {!showAuthors ? (
                     <div>
@@ -497,7 +570,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
                       )}
                     </div>
                   ) : (
-                    <strong>{t("countriesCities.points", { points: getAnswerPoints(submission.answers[currentCategory] ?? "", summary) })}</strong>
+                    <strong>{t("countriesCities.points", { points: displayPoints })}</strong>
                   )}
                 </article>
               );
@@ -533,11 +606,11 @@ export default function CountriesCitiesGame(): React.ReactElement {
         <ol className="countries-cities-score-list">
           {submissions
             .slice()
-            .sort((a, b) => (scores[b.playerId] ?? 0) - (scores[a.playerId] ?? 0))
+            .sort((a, b) => (displayedFinalScores[b.playerId] ?? 0) - (displayedFinalScores[a.playerId] ?? 0))
             .map((submission) => (
               <li key={submission.playerId}>
                 <span>{submission.playerName}</span>
-                <strong>{t("countriesCities.points", { points: scores[submission.playerId] ?? 0 })}</strong>
+                <strong>{t("countriesCities.points", { points: displayedFinalScores[submission.playerId] ?? 0 })}</strong>
               </li>
             ))}
         </ol>
