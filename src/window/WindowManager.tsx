@@ -466,6 +466,18 @@ function WindowFrame(props: {
   // Dragging
   const headerRef = React.useRef<HTMLDivElement | null>(null);
   const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const [headerEl, setHeaderEl] = useState<HTMLDivElement | null>(null);
+  const [contentEl, setContentEl] = useState<HTMLDivElement | null>(null);
+
+  const setHeaderRef = useCallback((node: HTMLDivElement | null) => {
+    headerRef.current = node;
+    setHeaderEl(node);
+  }, []);
+
+  const setContentRef = useCallback((node: HTMLDivElement | null) => {
+    contentRef.current = node;
+    setContentEl(node);
+  }, []);
 
   // Bind drag behavior
   useWindowDrag(
@@ -478,7 +490,7 @@ function WindowFrame(props: {
       height: w.height,
       maximized: w.maximized,
     }),
-    { headerEl: headerRef.current, contentEl: contentRef.current }
+    { headerEl, contentEl }
   );
 
   const onResizeDown = (e: React.MouseEvent) => {
@@ -513,7 +525,7 @@ function WindowFrame(props: {
     >
       <div
         className="window-header"
-        ref={headerRef}
+        ref={setHeaderRef}
         onDoubleClick={() => props.onMaximize(w.id)}
         tabIndex={0}
         aria-roledescription="Window title bar. Drag to move, double click to maximize."
@@ -564,7 +576,7 @@ function WindowFrame(props: {
       </div>
       <div
         className="window-content"
-        ref={contentRef}
+        ref={setContentRef}
         onPointerDown={() => {
           // Also focus when starting content-modifier drags on first interaction
           props.onFocus(w.id);
