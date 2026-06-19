@@ -1,4 +1,7 @@
 import React, { useMemo, useRef, useState } from "react";
+import { usePeerClientRoom, usePeerHostRoom } from "@/multiplayer";
+import type { PlayerProfile } from "@/multiplayer";
+import { loadPlayerSettings } from "@/settings/player/playerSettings.storage";
 import { GameStartMenu, type GameStartMenuAction } from "@/components/GameStartMenu";
 import { useTranslation } from "@/i18n/useTranslation";
 import "./foldedMonster.css";
@@ -9,7 +12,7 @@ const SECTION_COUNT = 3;
 const SECTION_HEIGHT = CANVAS_HEIGHT / SECTION_COUNT;
 const GUIDE_SIZE = 42;
 
-type GameMode = "menu" | "play";
+type GameMode = "menu" | "play" | "onlineLobby";
 type SectionIndex = 0 | 1 | 2;
 
 type DrawPoint = {
@@ -61,6 +64,21 @@ export default function FoldedMonsterGame(): React.ReactElement {
   const [isRevealed, setIsRevealed] = useState(false);
   const [strokes, setStrokes] = useState<DrawStroke[]>([]);
   const drawingStrokeId = useRef<string | null>(null);
+  const [onlineRole, setOnlineRole] = useState<"host" | "guest">("host");
+  const [joinCode, setJoinCode] = useState("");
+  const localPlayer = useMemo<PlayerProfile>(() => {
+    const settings = loadPlayerSettings();
+    const storedId = window.localStorage.getItem("folded-monster-player-id");
+    const id = storedId ?? (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `player-${Math.random().toString(36).slice(2, 10)}`);
+    if (!storedId) window.localStorage.setItem("folded-monster-player-id", id);
+    return { id, name: settings.name, color: settings.color, emoji: settings.emoji };
+  }, []);
+  const hostRoom = usePeerHostRoom({ localPlayer });
+  const clientRoom = usePeerClientRoom({ localPlayer });
+  const onlinePlayers = onlineRole === "host" ? [localPlayer, ...hostRoom.players] : clientRoom.players.length > 0 ? clientRoom.players : [localPlayer];
+  const onlineStatus = onlineRole === "host" ? hostRoom.status : clientRoom.status;
+  const onlineRoomCode = onlineRole === "host" ? hostRoom.roomCode : clientRoom.roomCode;
+  const onlineReady = onlineRole === "host" && hostRoom.status === "connected" && onlinePlayers.length >= 3;
 
   const activeSectionName = t(`foldedMonster.section.${SECTION_KEYS[activeSection]}`);
   const progressText = t("foldedMonster.progress", { current: activeSection + 1, total: SECTION_COUNT });
@@ -68,11 +86,26 @@ export default function FoldedMonsterGame(): React.ReactElement {
   const menuActions = useMemo<GameStartMenuAction[]>(
     () => [
       {
+        id: "online",
+        title: t("foldedMonster.online.title"),
+        description: t("foldedMonster.online.description"),
+        icon: "🌐",
+        actionLabel: t("foldedMonster.online.join"),
+        featured: true,
+        variant: "blue",
+        onSelect: () => {
+          setMode("onlineLobby");
+          setOnlineRole("host");
+          setActiveSection(0);
+          setIsRevealed(false);
+          setStrokes([]);
+        },
+      },
+      {
         id: "local",
         title: t("foldedMonster.local.title"),
         description: t("foldedMonster.local.description"),
         icon: "👹",
-        featured: true,
         variant: "green",
         onSelect: () => {
           setMode("play");
@@ -146,8 +179,25 @@ export default function FoldedMonsterGame(): React.ReactElement {
   };
 
   const backToMenu = () => {
+    hostRoom.close();
+    clientRoom.close();
     resetGame();
     setMode("menu");
+  };
+
+  const createOnlineRoom = () => {
+    clientRoom.close();
+    setOnlineRole("host");
+    void hostRoom.host();
+  };
+
+  const joinOnlineRoom = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const normalizedCode = joinCode.trim().toUpperCase();
+    if (!normalizedCode) return;
+    hostRoom.close();
+    setOnlineRole("guest");
+    void clientRoom.join(normalizedCode);
   };
 
   if (mode === "menu") {
@@ -159,6 +209,44 @@ export default function FoldedMonsterGame(): React.ReactElement {
           actions={menuActions}
           className="folded-monster-start"
         />
+      </div>
+    );
+  }
+
+  if (mode === "onlineLobby") {
+    return (
+      <div className="folded-monster-root folded-monster-root--play">
+        <header className="folded-monster-topbar">
+          <div>
+            <span className="folded-monster-eyebrow">{t("foldedMonster.onlineEyebrow")}</span>
+            <h1>{t("foldedMonster.online.title")}</h1>
+            <p>{t("foldedMonster.online.subtitle")}</p>
+          </div>
+          <div className="folded-monster-actions">
+            <button type="button" onClick={backToMenu}>{t("foldedMonster.backToMenu")}</button>
+          </div>
+        </header>
+        <main className="folded-monster-stage">
+          <aside className="folded-monster-panel">
+            <strong>{t("foldedMonster.connectionStatus", { status: t(`foldedMonster.status.${onlineStatus}`) })}</strong>
+            {onlineRoomCode && <p>{t("foldedMonster.roomCode")}: <strong>{onlineRoomCode}</strong></p>}
+            <p>{t("foldedMonster.playersProgress", { current: onlinePlayers.length, min: 3, max: 8 })}</p>
+          </aside>
+          <section className="folded-monster-paper-card">
+            <div className="folded-monster-controls">
+              <button type="button" className="folded-monster-primary" onClick={createOnlineRoom}>{t("foldedMonster.createRoom")}</button>
+              <form onSubmit={joinOnlineRoom} className="folded-monster-inline-form">
+                <input value={joinCode} onChange={(event) => setJoinCode(event.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, ""))} placeholder="ABC12" aria-label={t("foldedMonster.roomCode")} />
+                <button type="submit" disabled={!joinCode.trim()}>{t("foldedMonster.joinRoom")}</button>
+              </form>
+            </div>
+            <div className="folded-monster-player-list">
+              {onlinePlayers.map((player) => <span key={player.id} className="folded-monster-player-chip"><span>{player.emoji}</span>{player.name}</span>)}
+            </div>
+            {onlineRole === "host" ? <button type="button" className="folded-monster-primary" disabled={!onlineReady}>{t("foldedMonster.startOnline")}</button> : <p>{t("foldedMonster.waitingForHost")}</p>}
+            <p className="folded-monster-muted">{t("foldedMonster.onlineWorkInProgress")}</p>
+          </section>
+        </main>
       </div>
     );
   }
