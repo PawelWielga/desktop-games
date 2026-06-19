@@ -258,3 +258,18 @@ html[data-theme="dark"] .ps-surface {
     font-size: 14px;
   }
 }
+
+/* UI quality pass: modal and drawer scale on small screens */
+.ps-surface { width: min(35rem, calc(100dvw - 1rem)); max-height: min(85dvh, 51.25rem); }
+.ps-header, .ps-desc, .ps-form { padding-inline: clamp(0.75rem, 3vmin, 1rem); }
+.ps-field { grid-template-columns: minmax(7rem, 0.7fr) minmax(0, 1fr); }
+.ps-actions { flex-wrap: wrap; }
+.ps-primary, .ps-secondary { min-height: var(--game-ui-control-height); }
+@media (max-width: 30rem), (max-height: 38rem) {
+  .ps-panel { align-items: stretch; padding: clamp(0.5rem, 2vmin, 0.75rem); }
+  .ps-surface { width: 100%; max-height: calc(100dvh - 1rem); }
+  .ps-field, .ps-color-row { grid-template-columns: 1fr; }
+  .ps-error { grid-column: 1; }
+  .ps-actions { justify-content: stretch; }
+  .ps-primary, .ps-secondary { flex: 1 1 min(10rem, 100%); }
+}
