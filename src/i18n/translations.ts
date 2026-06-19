@@ -364,7 +364,7 @@ export function translate(language: Language, key: string, variables: Translatio
   const template = translations[language][key] ?? translations.pl[key] ?? key;
 
   return Object.entries(variables).reduce(
-    (result, [name, value]) => result.replaceAll(`{${name}}`, String(value)),
+    (result, [name, value]) => result.split(`{${name}}`).join(String(value)),
     template
   );
 }
