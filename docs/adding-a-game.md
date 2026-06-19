@@ -48,13 +48,37 @@ The window manager lazy-loads this default export from the registry. Do not manu
 
 Add one entry to `AppRegistry` in `src/window/registry.ts`.
 
-For an implemented game:
+For an implemented game with an emoji/text fallback:
 
 ```ts
 {
   id: "my-game",
   title: "My Game",
   icon: "🎮",
+  kind: "game",
+  implemented: true,
+  window: {
+    width: 800,
+    height: 640,
+    minWidth: 520,
+    minHeight: 480,
+    x: 120,
+    y: 80,
+    loader: () => import("@/games/my-game/MyGame"),
+  },
+}
+```
+
+For a polished game icon, add an SVG asset and register it with `iconAsset`:
+
+```ts
+import myGameIcon from "@/assets/game-icons/my-game.svg";
+
+{
+  id: "my-game",
+  title: "My Game",
+  icon: "🎮",
+  iconAsset: myGameIcon,
   kind: "game",
   implemented: true,
   window: {
@@ -89,9 +113,13 @@ Required fields:
 
 - `id`: stable game id used by the launcher and window manager.
 - `title`: visible desktop/taskbar/window title.
-- `icon`: emoji shown on the desktop icon.
+- `icon`: emoji or text fallback shown when no SVG asset is provided.
 - `kind`: use `"game"` for games. `"system"` is reserved for shell/system apps such as settings.
 - `implemented`: `true` only when the game has a working component and loader.
+
+Optional icon field:
+
+- `iconAsset`: imported SVG asset used as the polished desktop icon. Keep `icon` as a fallback even when `iconAsset` exists.
 
 Window fields for implemented games:
 
@@ -118,6 +146,14 @@ For assets that are imported by code, keep them close to the game when possible:
 ```text
 src/games/my-game/assets/
 ```
+
+Reusable desktop icons for games can also live in:
+
+```text
+src/assets/game-icons/
+```
+
+Prefer SVG icons from sources with clear permissive licenses. Kenney icon packs are a good default for game icons because many of them are CC0/public domain. Own SVG icons created for this project are also fine.
 
 For static files that must be loaded by URL, use `public/` and build paths from Vite's base URL:
 
