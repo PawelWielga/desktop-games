@@ -20,17 +20,11 @@ const DEFAULT_VIDEO_ID = "dQw4w9WgXcQ";
 
 type ViewMode = "player" | "search";
 
-type PlayerSource =
-  | {
-      type: "video";
-      value: string;
-      title: string;
-    }
-  | {
-      type: "search";
-      value: string;
-      title: string;
-    };
+type PlayerSource = {
+  type: "video";
+  value: string;
+  title: string;
+};
 
 const getYouTubeVideoId = (value: string): string | null => {
   const trimmed = value.trim();
@@ -63,8 +57,13 @@ const getYouTubeVideoId = (value: string): string | null => {
   return null;
 };
 
+const buildYouTubeSearchUrl = (phrase: string): string => {
+  const params = new URLSearchParams({ search_query: phrase });
+  return `https://www.youtube.com/results?${params.toString()}`;
+};
+
 const buildEmbedSrc = (source: PlayerSource): string => {
-  if (source.type === "video" && source.value === DEFAULT_VIDEO_ID) {
+  if (source.value === DEFAULT_VIDEO_ID) {
     return buildDefaultYouTubeSrc(false);
   }
 
@@ -75,18 +74,13 @@ const buildEmbedSrc = (source: PlayerSource): string => {
     modestbranding: "1",
   });
 
-  if (source.type === "video") {
-    return `https://www.youtube.com/embed/${source.value}?${params.toString()}`;
-  }
-
-  params.set("listType", "search");
-  params.set("list", source.value);
-  return `https://www.youtube.com/embed?${params.toString()}`;
+  return `https://www.youtube.com/embed/${source.value}?${params.toString()}`;
 };
 
 export default function YouTubeApp(): React.ReactElement {
   const [mode, setMode] = useState<ViewMode>("player");
   const [query, setQuery] = useState("");
+  const [lastSearchUrl, setLastSearchUrl] = useState<string | null>(null);
   const [source, setSource] = useState<PlayerSource>({
     type: "video",
     value: DEFAULT_VIDEO_ID,
@@ -124,6 +118,7 @@ export default function YouTubeApp(): React.ReactElement {
       value: DEFAULT_VIDEO_ID,
       title: "YouTube",
     });
+    setLastSearchUrl(null);
     setMode("player");
   };
 
@@ -134,20 +129,20 @@ export default function YouTubeApp(): React.ReactElement {
     if (!phrase) return;
 
     const videoId = getYouTubeVideoId(phrase);
-    setSource(
-      videoId
-        ? {
-            type: "video",
-            value: videoId,
-            title: "YouTube",
-          }
-        : {
-            type: "search",
-            value: phrase,
-            title: `Wyniki: ${phrase}`,
-          }
-    );
-    setMode("player");
+    if (videoId) {
+      setSource({
+        type: "video",
+        value: videoId,
+        title: "YouTube",
+      });
+      setLastSearchUrl(null);
+      setMode("player");
+      return;
+    }
+
+    const searchUrl = buildYouTubeSearchUrl(phrase);
+    setLastSearchUrl(searchUrl);
+    window.open(searchUrl, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -180,8 +175,17 @@ export default function YouTubeApp(): React.ReactElement {
                 placeholder="Szukaj albo wklej link YouTube"
                 aria-label="Szukaj w YouTube lub wklej link"
               />
-              <button type="submit">Odtwórz</button>
+              <button type="submit">Szukaj / odtwórz</button>
             </form>
+            {lastSearchUrl && (
+              <p className="youtube-app__search-hint">
+                Wyniki wyszukiwania otworzyły się w YouTube. Jeśli nic się nie stało,
+                <a href={lastSearchUrl} target="_blank" rel="noreferrer">
+                  kliknij tutaj
+                </a>
+                .
+              </p>
+            )}
             <button
               className="youtube-app__default-button"
               type="button"
