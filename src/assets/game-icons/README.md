@@ -4,6 +4,7 @@ Use this folder for reusable game icons that are safe to ship with the public re
 
 Current assets are original SVG icons created directly for this project:
 
+- `battleships.svg`
 - `cards.svg`
 - `catculator.svg`
 - `connect4.svg`
