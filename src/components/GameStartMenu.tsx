@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "@/i18n/useTranslation";
 import "./game-start-menu.css";
 
 export type GameStartMenuAction = {
@@ -20,9 +21,12 @@ type GameStartMenuProps = {
   className?: string;
 };
 
-export function GameStartMenu({ title, eyebrow = "Gra", subtitle, actions, className }: GameStartMenuProps): React.ReactElement {
+export function GameStartMenu({ title, eyebrow, subtitle, actions, className }: GameStartMenuProps): React.ReactElement {
+  const { t } = useTranslation();
+  const displayEyebrow = eyebrow ?? t("gameStart.defaultEyebrow");
+
   return (
-    <section className={["game-start-menu", className].filter(Boolean).join(" ")} aria-label={`Menu gry ${title}`}>
+    <section className={["game-start-menu", className].filter(Boolean).join(" ")} aria-label={t("gameStart.menuAria", { title })}>
       <div className="game-start-menu__hero" aria-hidden="true">
         <div className="game-start-menu__badge">
           <span className="game-start-menu__mark game-start-menu__mark--x">×</span>
@@ -31,7 +35,7 @@ export function GameStartMenu({ title, eyebrow = "Gra", subtitle, actions, class
       </div>
 
       <div className="game-start-menu__heading">
-        <span className="game-start-menu__eyebrow">{eyebrow}</span>
+        <span className="game-start-menu__eyebrow">{displayEyebrow}</span>
         <h1>{title}</h1>
         {subtitle && <p>{subtitle}</p>}
       </div>
@@ -57,7 +61,7 @@ export function GameStartMenu({ title, eyebrow = "Gra", subtitle, actions, class
               <strong>{action.title}</strong>
               <span>{action.description}</span>
             </span>
-            <span className="game-start-card__cta">{action.actionLabel ?? "Rozpocznij"}</span>
+            <span className="game-start-card__cta">{action.actionLabel ?? t("gameStart.start")}</span>
           </button>
         ))}
       </div>
