@@ -431,6 +431,7 @@ export default function Desktop(): React.ReactElement {
               key={s.id}
               className={`desktop-icon${isDragging ? " is-dragging" : ""}`}
               data-icon={s.icon}
+              data-has-icon-asset={s.iconAsset ? "true" : undefined}
               title={s.title}
               style={style}
               onClick={() => onIconClick(s.id)}
@@ -445,6 +446,9 @@ export default function Desktop(): React.ReactElement {
               onKeyDown={(e) => onIconKeyDown(e, i, s.id)}
               type="button"
             >
+              {s.iconAsset && (
+                <img className="desktop-icon__asset" src={s.iconAsset} alt="" aria-hidden="true" />
+              )}
               <div className="icon-label">{s.title}</div>
             </button>
           );
