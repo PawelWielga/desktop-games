@@ -1,5 +1,7 @@
 const DEFAULT_YOUTUBE_VIDEO_ID = "dQw4w9WgXcQ";
 const PRELOADED_PLAYER_ID = "youtube-default-preloaded-player";
+const PRELOADED_PLAYER_WIDTH = 320;
+const PRELOADED_PLAYER_HEIGHT = 180;
 
 let preloadedIframe: HTMLIFrameElement | null = null;
 let hiddenHost: HTMLDivElement | null = null;
@@ -50,8 +52,8 @@ const createHiddenHost = (): HTMLDivElement | null => {
   host.id = `${PRELOADED_PLAYER_ID}-host`;
   host.setAttribute("aria-hidden", "true");
   host.style.position = "fixed";
-  host.style.width = "1px";
-  host.style.height = "1px";
+  host.style.width = `${PRELOADED_PLAYER_WIDTH}px`;
+  host.style.height = `${PRELOADED_PLAYER_HEIGHT}px`;
   host.style.left = "-10000px";
   host.style.top = "-10000px";
   host.style.overflow = "hidden";
@@ -63,10 +65,10 @@ const createHiddenHost = (): HTMLDivElement | null => {
 };
 
 const prepareIframeForHiddenPreload = (iframe: HTMLIFrameElement): void => {
-  iframe.width = "1";
-  iframe.height = "1";
-  iframe.style.width = "1px";
-  iframe.style.height = "1px";
+  iframe.width = String(PRELOADED_PLAYER_WIDTH);
+  iframe.height = String(PRELOADED_PLAYER_HEIGHT);
+  iframe.style.width = `${PRELOADED_PLAYER_WIDTH}px`;
+  iframe.style.height = `${PRELOADED_PLAYER_HEIGHT}px`;
   iframe.style.border = "0";
   iframe.style.opacity = "0";
   iframe.style.pointerEvents = "none";
