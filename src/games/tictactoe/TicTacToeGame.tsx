@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GameStartMenu, type GameStartMenuAction } from "@/components/GameStartMenu";
+import { useTranslation, type TranslationFunction } from "@/i18n/useTranslation";
 import { InGameMultiplayerOverlay, MultiplayerPanel, useMultiplayerLobby } from "@/multiplayer";
 import type { GameResetMessage, GameSpecificMessage, GameStartMessage, MultiplayerRole } from "@/multiplayer";
 import {
@@ -21,6 +22,7 @@ type TicTacToeMoveMessage = GameSpecificMessage<"tictactoe:move", { cell: number
 type TicTacToeMessage = TicTacToeMoveMessage | GameResetMessage | GameStartMessage;
 
 export default function TicTacToeGame(): React.ReactElement {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<GameMode>("menu");
   const [board, setBoard] = useState<CellValue[]>(() => emptyBoard());
   const [turn, setTurn] = useState<PlayerSymbol>("X");
@@ -186,26 +188,26 @@ export default function TicTacToeGame(): React.ReactElement {
   const menuActions: GameStartMenuAction[] = [
     {
       id: "local",
-      title: "Gra lokalna",
-      description: "Zagraj ze znajomym na tym samym ekranie.",
+      title: t("tictactoe.local.title"),
+      description: t("tictactoe.local.description"),
       icon: "♟",
       variant: "mint",
       onSelect: () => startMode("local"),
     },
     {
       id: "ai",
-      title: "Gra z komputerem",
-      description: "Zmierz się z komputerem w szybkiej partii.",
+      title: t("tictactoe.ai.title"),
+      description: t("tictactoe.ai.description"),
       icon: "▣",
       variant: "green",
       onSelect: () => startMode("ai"),
     },
     {
       id: "online",
-      title: "Gra online",
-      description: "Rywalizuj z graczem z innego ekranu.",
+      title: t("tictactoe.online.title"),
+      description: t("tictactoe.online.description"),
       icon: "◎",
-      actionLabel: "Dołącz do gry",
+      actionLabel: t("tictactoe.online.join"),
       featured: true,
       variant: "blue",
       onSelect: () => startMode("onlineLobby"),
@@ -216,8 +218,8 @@ export default function TicTacToeGame(): React.ReactElement {
     return (
       <div className="ttt-root ttt-root--menu">
         <GameStartMenu
-          title="Kółko i Krzyżyk"
-          subtitle="Wybierz tryb i rozpocznij krótką partię w klasycznym stylu."
+          title={t("apps.tictactoe")}
+          subtitle={t("tictactoe.subtitle")}
           actions={menuActions}
         />
       </div>
@@ -229,47 +231,47 @@ export default function TicTacToeGame(): React.ReactElement {
       <div className="ttt-root ttt-root--lobby">
         <div className="ttt-screen-actions">
           <button type="button" className="ttt-link-button" onClick={backToMenu}>
-            Wróć do menu
+            {t("tictactoe.backToMenu")}
           </button>
         </div>
 
-        <MultiplayerPanel lobby={lobby} title="Gra online" minPlayers={2} maxPlayers={2} />
+        <MultiplayerPanel lobby={lobby} title={t("tictactoe.online.title")} minPlayers={2} maxPlayers={2} />
 
         {onlineReady && isOnlineHost && (
           <button type="button" className="ttt-start-online" onClick={startOnlineGame}>
-            Rozpocznij grę
+            {t("tictactoe.startGame")}
           </button>
         )}
 
-        {onlineReady && !isOnlineHost && <p className="ttt-online-note">Czekamy, aż host rozpocznie grę.</p>}
+        {onlineReady && !isOnlineHost && <p className="ttt-online-note">{t("tictactoe.waitingForHost")}</p>}
       </div>
     );
   }
 
-  const playerLabel = getPlayerLabel(mode, turn, myOnlineSymbol);
+  const playerLabel = getPlayerLabel(mode, turn, myOnlineSymbol, t);
   const canPlay = canPlayInMode(mode, turn, myOnlineSymbol, lobby.status, winner, draw);
 
   return (
     <div className="ttt-root ttt-root--play">
       <div className="ttt-topbar">
         <button type="button" className="ttt-link-button" onClick={backToMenu}>
-          Wróć do menu
+          {t("tictactoe.backToMenu")}
         </button>
         {mode === "online" && <InGameMultiplayerOverlay lobby={lobby} maxPlayers={2} />}
       </div>
 
-      <section className="ttt-game" aria-label="Plansza Kółko i Krzyżyk">
+      <section className="ttt-game" aria-label={t("tictactoe.boardAria")}>
         <div className="ttt-status">
           <span>{playerLabel}</span>
-          <span>Tura: {turn}</span>
-          {winner && <strong>Wygrywa {winner}</strong>}
-          {draw && <strong>Remis</strong>}
+          <span>{t("tictactoe.turn", { turn })}</span>
+          {winner && <strong>{t("tictactoe.winner", { winner })}</strong>}
+          {draw && <strong>{t("tictactoe.draw")}</strong>}
         </div>
 
         <div
           className={["ttt-board", winningLineClass ? "ttt-board--won" : "", winningLineClass].filter(Boolean).join(" ")}
           role="grid"
-          aria-label="Plansza 3 na 3"
+          aria-label={t("tictactoe.boardGridAria")}
         >
           {board.map((value, index) => (
             <button
@@ -278,7 +280,7 @@ export default function TicTacToeGame(): React.ReactElement {
               className="ttt-cell"
               onClick={() => playCell(index)}
               disabled={!canPlay || value !== null}
-              aria-label={`Pole ${index + 1}${value ? `, ${value}` : ""}`}
+              aria-label={t("tictactoe.cellAria", { index: index + 1, value: value ? `, ${value}` : "" })}
             >
               {value}
             </button>
@@ -288,10 +290,10 @@ export default function TicTacToeGame(): React.ReactElement {
 
         {mode !== "online" || isOnlineHost ? (
           <button type="button" className="ttt-reset" onClick={resetGame}>
-            Reset gry
+            {t("tictactoe.reset")}
           </button>
         ) : (
-          <p className="ttt-online-note">Reset gry może wykonać tylko host.</p>
+          <p className="ttt-online-note">{t("tictactoe.hostOnlyReset")}</p>
         )}
       </section>
     </div>
@@ -326,9 +328,9 @@ function canPlayInMode(
   return false;
 }
 
-function getPlayerLabel(mode: GameMode, turn: PlayerSymbol, myOnlineSymbol: PlayerSymbol | null): string {
-  if (mode === "local") return "Gra lokalna: dwóch graczy";
-  if (mode === "ai") return turn === "X" ? "Twój ruch" : "Ruch komputera";
-  if (mode === "online") return `Twój znak: ${myOnlineSymbol ?? "brak"}`;
-  return "Wybierz tryb gry";
+function getPlayerLabel(mode: GameMode, turn: PlayerSymbol, myOnlineSymbol: PlayerSymbol | null, t: TranslationFunction): string {
+  if (mode === "local") return t("tictactoe.label.local");
+  if (mode === "ai") return turn === "X" ? t("tictactoe.label.yourMove") : t("tictactoe.label.aiMove");
+  if (mode === "online") return t("tictactoe.label.onlineSymbol", { symbol: myOnlineSymbol ?? t("tictactoe.label.noSymbol") });
+  return t("tictactoe.label.chooseMode");
 }
