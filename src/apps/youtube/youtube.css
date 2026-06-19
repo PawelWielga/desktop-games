@@ -66,19 +66,16 @@
 
 .youtube-app__brand-icon,
 .youtube-app__logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #ff0033;
-  color: #ffffff;
-  box-shadow: 0 1rem 2.5rem rgba(255, 0, 51, 0.3);
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 1rem 2.5rem rgba(255, 0, 51, 0.3));
+  user-select: none;
 }
 
 .youtube-app__brand-icon {
   width: 2rem;
   height: 1.375rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
+  flex: 0 0 auto;
 }
 
 .youtube-app__player {
@@ -124,8 +121,6 @@
 .youtube-app__logo {
   width: clamp(4rem, 14vmin, 5.5rem);
   height: clamp(2.875rem, 10vmin, 3.875rem);
-  border-radius: 1.25rem;
-  font-size: clamp(1.5rem, 5vmin, 2.25rem);
 }
 
 .youtube-app__search-card h2 {
