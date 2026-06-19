@@ -137,6 +137,25 @@
   line-height: 1.5;
 }
 
+.youtube-app__search-hint {
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.youtube-app__search-hint a {
+  color: #ffffff;
+  font-weight: 800;
+  margin-left: 0.25rem;
+  text-decoration-color: rgba(255, 255, 255, 0.55);
+  text-underline-offset: 0.2em;
+}
+
+.youtube-app__search-hint a:hover {
+  text-decoration-color: #ffffff;
+}
+
 .youtube-app__search-form {
   width: 100%;
   display: flex;
