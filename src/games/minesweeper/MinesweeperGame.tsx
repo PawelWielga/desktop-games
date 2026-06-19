@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "@/i18n/useTranslation";
 import "./minesweeper.css";
 import {
   DEFAULT_DIFFICULTY,
@@ -25,6 +26,7 @@ type WaveMeta = {
 } | null;
 
 export default function MinesweeperGame(): React.ReactElement {
+  const { t } = useTranslation();
   const [difficulty, setDifficulty] = useState(DEFAULT_DIFFICULTY);
   const { cols, rows, mines } = difficulty;
 
@@ -88,7 +90,7 @@ export default function MinesweeperGame(): React.ReactElement {
   useEffect(() => {
     if (started && !dead && !won) {
       timerRef.current = window.setInterval(
-        () => setTime((t) => Math.min(MAX_TIMER, t + 1)),
+        () => setTime((currentTime) => Math.min(MAX_TIMER, currentTime + 1)),
         TIMER_INTERVAL_MS
       );
     }
@@ -285,12 +287,12 @@ export default function MinesweeperGame(): React.ReactElement {
   return (
     <div className="ms-root">
       <div className="ms-header">
-        <div className="ms-counter" aria-label="Mines remaining">{String(remaining).padStart(3, "0")}</div>
-        <button className="ms-reset" onClick={() => reset()} title="Restart">{dead ? "😵" : won ? "😎" : "🙂"}</button>
-        <div className="ms-timer" aria-label="Timer">{String(time).padStart(3, "0")}</div>
+        <div className="ms-counter" aria-label={t("minesweeper.minesRemaining")}>{String(remaining).padStart(3, "0")}</div>
+        <button className="ms-reset" onClick={() => reset()} title={t("minesweeper.restart")}>{dead ? "😵" : won ? "😎" : "🙂"}</button>
+        <div className="ms-timer" aria-label={t("minesweeper.timer")}>{String(time).padStart(3, "0")}</div>
       </div>
 
-      <div className="ms-difficulty" aria-label="Difficulty">
+      <div className="ms-difficulty" aria-label={t("minesweeper.difficulty")}>
         {DIFFICULTIES.map((item) => (
           <button
             key={item.id}
@@ -299,16 +301,16 @@ export default function MinesweeperGame(): React.ReactElement {
             onClick={() => changeDifficulty(item.id)}
             type="button"
           >
-            <span>{item.label}</span>
+            <span>{t(`minesweeper.difficulty.${item.id}`)}</span>
             <small>
-              {item.cols}×{item.rows}, {item.mines} mines
+              {item.cols}×{item.rows}, {t("minesweeper.minesCount", { count: item.mines })}
             </small>
           </button>
         ))}
       </div>
 
       <div className="ms-grid-wrap">
-        <div className="ms-grid" style={gridStyle} onContextMenu={onContext} role="grid" aria-label="Minesweeper board">
+        <div className="ms-grid" style={gridStyle} onContextMenu={onContext} role="grid" aria-label={t("minesweeper.boardAria")}>
         {board.map((cell, i) => {
           const classes = ["ms-cell"];
           if (cell.revealed) classes.push("revealed");
@@ -333,7 +335,7 @@ export default function MinesweeperGame(): React.ReactElement {
             <button
               key={i}
               className={[...classes, colorClass].join(" ")}
-              aria-label={`Cell ${i}`}
+              aria-label={t("minesweeper.cellAria", { index: i })}
               onMouseDown={(e) => onCellMouseDown(e, i)}
               data-wave={isCurrentWave ? meta!.waveId : undefined}
               data-dist={isCurrentWave ? meta!.dist : undefined}
@@ -346,7 +348,7 @@ export default function MinesweeperGame(): React.ReactElement {
       </div>
 
       <div className="ms-footer">
-        Lewy klik odkrywa pole, prawy klik (lub długie naciśnięcie na touchpadzie) oznacza flagą.
+        {t("minesweeper.footer")}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "@/i18n/useTranslation";
 import { useSettings } from "@/settings/SettingsContext";
 import "./snake.css";
 import {
@@ -42,6 +43,7 @@ const DIR_KEYS: Record<string, Dir | undefined> = {
 /** Component */
 export default function SnakeGame(): React.ReactElement {
   const { settings } = useSettings();
+  const { t } = useTranslation();
   const speed = useMemo(() => {
     switch (settings.difficulty) {
       case "easy":
@@ -195,7 +197,7 @@ export default function SnakeGame(): React.ReactElement {
     if (parent) ro.observe(parent);
     updateCanvasSize();
 
-    const loop = (t: number) => {
+    const loop = (time: number) => {
       rafRef.current = requestAnimationFrame(loop);
       if (!aliveRef.current || paused) {
         // Still draw current frame to keep visuals up to date
@@ -203,8 +205,8 @@ export default function SnakeGame(): React.ReactElement {
         return;
       }
 
-      if (t - lastStep.current >= stepMs) {
-        lastStep.current = t;
+      if (time - lastStep.current >= stepMs) {
+        lastStep.current = time;
         // drain limited queued dirs per tick
         for (let i = 0; i < QUEUE_DRAIN_PER_TICK && dirQueue.current.length; i++) {
           setDir(dirQueue.current.shift()!);
@@ -249,18 +251,18 @@ export default function SnakeGame(): React.ReactElement {
   }, [grid.cols, grid.rows, rebuildRng]);
 
   return (
-    <div className="snake-root" role="group" aria-label="Snake">
+    <div className="snake-root" role="group" aria-label={t("snake.groupAria")}>
       <div className="snake-hud">
-        <span>Score: {score}</span>
-        <span>Speed: {speed}</span>
-        <button onClick={() => setPaused((p) => !p)}>{paused ? "Resume" : "Pause"}</button>
-        <button onClick={reset}>Restart</button>
-        {!alive && <span className="dead">Game Over</span>}
+        <span>{t("snake.score", { score })}</span>
+        <span>{t("snake.speed", { speed })}</span>
+        <button onClick={() => setPaused((p) => !p)}>{paused ? t("snake.resume") : t("snake.pause")}</button>
+        <button onClick={reset}>{t("snake.restart")}</button>
+        {!alive && <span className="dead">{t("snake.gameOver")}</span>}
       </div>
       <div className="snake-canvas-wrap">
-        <canvas ref={canvasRef} aria-label="Snake canvas" />
+        <canvas ref={canvasRef} aria-label={t("snake.canvasAria")} />
       </div>
-      <div className="snake-help">Arrows / WASD to steer. Space to pause.</div>
+      <div className="snake-help">{t("snake.help")}</div>
     </div>
   );
 }

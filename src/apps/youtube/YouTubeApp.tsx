@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import youtubeIcon from "@/assets/brand-icons/youtube.svg";
+import { useTranslation } from "@/i18n/useTranslation";
 import {
   attachDefaultYouTubePlayer,
   buildDefaultYouTubeSrc,
@@ -77,6 +78,7 @@ const buildEmbedSrc = (source: PlayerSource): string => {
 };
 
 export default function YouTubeApp(): React.ReactElement {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<ViewMode>("player");
   const [query, setQuery] = useState("");
   const [lastSearchUrl, setLastSearchUrl] = useState<string | null>(null);
@@ -148,7 +150,7 @@ export default function YouTubeApp(): React.ReactElement {
           type="button"
           onClick={() => setMode(mode === "player" ? "search" : "player")}
         >
-          {mode === "player" ? "← Wstecz" : "Odtwarzacz"}
+          {mode === "player" ? t("youtube.back") : t("youtube.player")}
         </button>
         <div className="youtube-app__brand" aria-label="YouTube">
           <img className="youtube-app__brand-icon" src={youtubeIcon} alt="" aria-hidden="true" />
@@ -161,22 +163,22 @@ export default function YouTubeApp(): React.ReactElement {
           <div className="youtube-app__search-card">
             <img className="youtube-app__logo" src={youtubeIcon} alt="" aria-hidden="true" />
             <h2>YouTube</h2>
-            <p>Wpisz frazę, link do filmu albo samo ID filmu z YouTube.</p>
+            <p>{t("youtube.description")}</p>
             <form className="youtube-app__search-form" onSubmit={submitSearch}>
               <input
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Szukaj albo wklej link YouTube"
-                aria-label="Szukaj w YouTube lub wklej link"
+                placeholder={t("youtube.placeholder")}
+                aria-label={t("youtube.searchAria")}
               />
-              <button type="submit">Szukaj / odtwórz</button>
+              <button type="submit">{t("youtube.searchOrPlay")}</button>
             </form>
             {lastSearchUrl && (
               <p className="youtube-app__search-hint">
-                Wyniki wyszukiwania otworzyły się w YouTube. Jeśli nic się nie stało,
+                {t("youtube.searchHintBeforeLink")}
                 <a href={lastSearchUrl} target="_blank" rel="noreferrer">
-                  kliknij tutaj
+                  {t("youtube.searchHintLink")}
                 </a>
                 .
               </p>
@@ -186,7 +188,7 @@ export default function YouTubeApp(): React.ReactElement {
               type="button"
               onClick={playDefaultVideo}
             >
-              Wróć do domyślnego filmu
+              {t("youtube.defaultVideo")}
             </button>
           </div>
         </main>
@@ -194,7 +196,7 @@ export default function YouTubeApp(): React.ReactElement {
         <main
           ref={playerRef}
           className="youtube-app__player"
-          aria-label="Odtwarzacz YouTube"
+          aria-label={t("youtube.playerAria")}
         >
           {!shouldUsePreloadedPlayer && (
             <iframe

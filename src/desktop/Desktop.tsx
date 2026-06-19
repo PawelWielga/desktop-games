@@ -3,6 +3,7 @@ import "./desktop.css";
 import { useWindowManager } from "@/window/WindowManager";
 import { getAppRegistration, getDesktopApps, getWindowDefaults } from "@/window/registry";
 import ProgressiveImage from "@/components/ProgressiveImage";
+import { useTranslation } from "@/i18n/useTranslation";
 
 type DesktopIconPosition = {
   column: number;
@@ -138,6 +139,7 @@ const applyDropPosition = (layout: DesktopIconLayout, draggedId: string, nextPos
 
 export default function Desktop(): React.ReactElement {
   const { open, handles, focus } = useWindowManager();
+  const { t } = useTranslation();
 
   const visibleShortcuts = useMemo(() => getDesktopApps(), []);
   const visibleShortcutIds = useMemo(() => visibleShortcuts.map((shortcut) => shortcut.id), [visibleShortcuts]);
@@ -177,7 +179,7 @@ export default function Desktop(): React.ReactElement {
     const Content = mod.default as React.ComponentType;
     open({
       id: def.id,
-      title: def.title,
+      title: t(def.titleKey ?? app.titleKey),
       content: <Content />,
       width: def.width,
       height: def.height,
@@ -399,7 +401,7 @@ export default function Desktop(): React.ReactElement {
             <ProgressiveImage
               lowSrc={low}
               src={hi}
-              alt="Wallpaper"
+              alt={t("desktop.wallpaperAlt")}
               // Longer, smoother transition + subtle zoom
               crossfadeMs={1800}
               blurPreview={true}
@@ -416,11 +418,12 @@ export default function Desktop(): React.ReactElement {
         ref={gridRef}
         className="desktop-grid"
         role="grid"
-        aria-label="Desktop icons"
+        aria-label={t("desktop.iconsAria")}
       >
         {visibleShortcuts.map((s, i) => {
           const position = iconLayout[s.id] ?? { column: 0, row: i };
           const isDragging = dragState?.id === s.id && dragState.hasMoved;
+          const title = t(s.titleKey);
           const style: React.CSSProperties = isDragging
             ? { left: dragState.left, top: dragState.top }
             : { gridColumn: position.column + 1, gridRow: position.row + 1 };
@@ -432,7 +435,7 @@ export default function Desktop(): React.ReactElement {
               className={`desktop-icon${isDragging ? " is-dragging" : ""}`}
               data-icon={s.icon}
               data-has-icon-asset={s.iconAsset ? "true" : undefined}
-              title={s.title}
+              title={title}
               style={style}
               onClick={() => onIconClick(s.id)}
               onPointerDown={(e) => onIconPointerDown(e, s.id)}
@@ -440,7 +443,7 @@ export default function Desktop(): React.ReactElement {
               onPointerUp={endIconDrag}
               onPointerCancel={endIconDrag}
               role="gridcell"
-              aria-label={s.title}
+              aria-label={title}
               aria-grabbed={isDragging}
               tabIndex={i === activeIndex ? 0 : -1}
               onKeyDown={(e) => onIconKeyDown(e, i, s.id)}
@@ -449,7 +452,7 @@ export default function Desktop(): React.ReactElement {
               {s.iconAsset && (
                 <img className="desktop-icon__asset" src={s.iconAsset} alt="" aria-hidden="true" />
               )}
-              <div className="icon-label">{s.title}</div>
+              <div className="icon-label">{title}</div>
             </button>
           );
         })}
@@ -457,13 +460,13 @@ export default function Desktop(): React.ReactElement {
 
       {/* License watermark styled like an inactive Windows notice. */}
       <div className="license-watermark" aria-hidden="true">
-        <div>MINꓷOMS Xꓷ is not activated</div>
-        <div>Go to Settings to activate MINꓷOMS Xꓷ.</div>
+        <div>{t("desktop.watermark.line1")}</div>
+        <div>{t("desktop.watermark.line2")}</div>
       </div>
 
-      <div className="taskbar" role="toolbar" aria-label="Taskbar">
+      <div className="taskbar" role="toolbar" aria-label={t("desktop.taskbarAria")}>
         <button className="start-button" title="Start" type="button">⊞</button>
-        <div className="taskbar-apps" role="group" aria-label="Open windows">
+        <div className="taskbar-apps" role="group" aria-label={t("desktop.openWindowsAria")}>
           {handles.map((h, i) => (
             <button
               ref={setTaskRef(i)}
@@ -480,7 +483,7 @@ export default function Desktop(): React.ReactElement {
             </button>
           ))}
         </div>
-        <div className="system-tray" aria-label="System status">
+        <div className="system-tray" aria-label={t("desktop.systemStatusAria")}>
           <span aria-hidden>🔊</span>
           <span aria-hidden>📶</span>
           <span id="clock" className="clock" />
@@ -495,7 +498,7 @@ export default function Desktop(): React.ReactElement {
               open={showSettings}
               onClose={() => setShowSettings(false)}
               variant={window.innerWidth <= 640 ? "drawer" : "modal"}
-              initialFocusSelector="#ps-name"
+              initialFocusSelector="#ps-language"
             />
           </PlayerSettingsProvider>
         )}

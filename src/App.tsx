@@ -1,5 +1,5 @@
 ﻿import React, { useEffect } from "react";
-import { SettingsProvider } from "@/settings/SettingsContext";
+import { SettingsProvider, useSettings } from "@/settings/SettingsContext";
 import Desktop from "@/desktop/Desktop";
 import { WindowManager } from "@/window/WindowManager";
 
@@ -7,12 +7,12 @@ import { WindowManager } from "@/window/WindowManager";
  * Hook: Updates the #clock element textContent every second.
  * Side-effect is isolated and cleaned up on unmount.
  */
-function useClock(): void {
+function useClock(locale: string): void {
   useEffect(() => {
     const el = document.getElementById("clock");
     const updateClock = () => {
       const now = new Date();
-      const time = now.toLocaleTimeString("pl-PL", {
+      const time = now.toLocaleTimeString(locale, {
         hour: "2-digit",
         minute: "2-digit",
         hour12: false,
@@ -22,13 +22,19 @@ function useClock(): void {
     updateClock();
     const id = window.setInterval(updateClock, 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [locale]);
+}
+
+function ClockUpdater(): null {
+  const { settings } = useSettings();
+  useClock(settings.language === "pl" ? "pl-PL" : "en-GB");
+  return null;
 }
 
 export default function App(): React.ReactElement {
-  useClock();
   return (
     <SettingsProvider>
+      <ClockUpdater />
       <WindowManager>
         <Desktop />
       </WindowManager>

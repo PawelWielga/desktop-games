@@ -1,4 +1,7 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useSettings } from "@/settings/SettingsContext";
+import { LANGUAGE_OPTIONS } from "@/i18n/translations";
+import { useTranslation } from "@/i18n/useTranslation";
 import { usePlayerSettings } from "./PlayerSettingsContext";
 import "./player-settings.css";
 
@@ -95,6 +98,8 @@ function useFocusTrap(enabled: boolean, containerRef: React.RefObject<HTMLElemen
 
 export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): React.ReactElement | null {
   const { open, onClose, variant = "modal", initialFocusSelector } = props;
+  const { settings: systemSettings, setLanguage } = useSettings();
+  const { t } = useTranslation();
   const { settings, setName, setColor, setEmoji, setAiColor, setAiEmoji, reset } = usePlayerSettings();
 
   const titleId = useId();
@@ -160,20 +165,20 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
       aiColor: null,
       aiEmoji: null,
     };
-    if (!name.trim()) errs.name = "Name cannot be empty.";
+    if (!name.trim()) errs.name = t("settings.nameError");
     const hex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
-    if (!hex.test(color.trim())) errs.color = "Color must be a hex value like #dc3545 or #fff.";
-    if (!hex.test(aiColor.trim())) errs.aiColor = "AI color must be a hex value like #ffc107 or #ff0.";
+    if (!hex.test(color.trim())) errs.color = t("settings.colorError");
+    if (!hex.test(aiColor.trim())) errs.aiColor = t("settings.aiColorError");
     // Basic emoji check (allow any single grapheme approximation)
     const emoj = (s: string) => s.trim().length > 0 && s.trim().length <= 4 && !/[<>{}]/.test(s);
-    if (!emoj(emoji)) errs.emoji = "Provide a valid emoji.";
-    if (!emoj(aiEmoji)) errs.aiEmoji = "Provide a valid emoji.";
+    if (!emoj(emoji)) errs.emoji = t("settings.emojiError");
+    if (!emoj(aiEmoji)) errs.aiEmoji = t("settings.emojiError");
     return errs;
-  }, [name, color, emoji, aiColor, aiEmoji]);
+  }, [name, color, emoji, aiColor, aiEmoji, t]);
 
   const hasErrors = Object.values(invalids).some(Boolean);
   const currentPickerEmoji = emojiPickerTarget === "player" ? emoji : aiEmoji;
-  const currentPickerLabel = emojiPickerTarget === "player" ? "your emoji" : "AI emoji";
+  const currentPickerLabel = emojiPickerTarget === "player" ? t("settings.currentPlayerEmoji") : t("settings.currentAiEmoji");
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,13 +189,13 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
     setAiColor(aiColor.trim());
     setAiEmoji(aiEmoji.trim());
     // lightweight toast
-    showToast("Player settings saved");
+    showToast(t("settings.savedToast"));
     if (isModal) onClose();
   };
 
   const onReset = () => {
     reset();
-    showToast("Player settings reset");
+    showToast(t("settings.resetToast"));
     if (isModal) onClose();
   };
 
@@ -218,25 +223,44 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
     >
       <div className="ps-surface" role="document" onPointerDown={(e) => e.stopPropagation()}>
         <header className="ps-header">
-          <h2 id={titleId} className="ps-title">Player Settings</h2>
+          <h2 id={titleId} className="ps-title">{t("settings.title")}</h2>
           <button
             className="ps-close"
             type="button"
-            aria-label="Close settings"
-            title="Close"
+            aria-label={t("settings.close")}
+            title={t("settings.closeShort")}
             onClick={onClose}
           >
             ×
           </button>
         </header>
 
-        <div id={descId} className="ps-desc">Customize your name, colors, and emoji for you and AI.</div>
+        <div id={descId} className="ps-desc">{t("settings.description")}</div>
 
         <form className="ps-form" onSubmit={onSubmit}>
-          <section className="ps-section" aria-labelledby="ps-user">
-            <h3 id="ps-user" className="ps-section-title">You</h3>
+          <section className="ps-section" aria-labelledby="ps-system">
+            <h3 id="ps-system" className="ps-section-title">{t("settings.system")}</h3>
             <div className="ps-field">
-              <label htmlFor="ps-name">Name</label>
+              <label htmlFor="ps-language">{t("settings.language")}</label>
+              <select
+                id="ps-language"
+                value={systemSettings.language}
+                onChange={(event) => setLanguage(event.target.value as typeof systemSettings.language)}
+              >
+                {LANGUAGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t(`language.${option.value}`)} ({option.shortLabel})
+                  </option>
+                ))}
+              </select>
+              <div className="ps-help">{t("settings.languageHelp")}</div>
+            </div>
+          </section>
+
+          <section className="ps-section" aria-labelledby="ps-user">
+            <h3 id="ps-user" className="ps-section-title">{t("settings.you")}</h3>
+            <div className="ps-field">
+              <label htmlFor="ps-name">{t("settings.name")}</label>
               <input
                 id="ps-name"
                 type="text"
@@ -250,7 +274,7 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
             </div>
 
             <div className="ps-field">
-              <label htmlFor="ps-color">Color</label>
+              <label htmlFor="ps-color">{t("settings.color")}</label>
               <div className="ps-color-row">
                 <input
                   id="ps-color"
@@ -263,8 +287,8 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
                   aria-describedby={invalids.color ? "ps-color-err" : undefined}
                 />
                 <input
-                  aria-label="Pick color"
-                  title="Pick color"
+                  aria-label={t("settings.pickColor")}
+                  title={t("settings.pickColor")}
                   className="ps-color"
                   type="color"
                   value={safeColorInput(color)}
@@ -276,7 +300,7 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
             </div>
 
             <div className="ps-field">
-              <label htmlFor="ps-emoji">Emoji</label>
+              <label htmlFor="ps-emoji">{t("settings.emoji")}</label>
               <button
                 id="ps-emoji"
                 type="button"
@@ -288,17 +312,17 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
                 onClick={() => setEmojiPickerTarget("player")}
               >
                 <span className="ps-emoji-preview" aria-hidden>{emoji}</span>
-                <span>Choose emoji</span>
+                <span>{t("settings.chooseEmoji")}</span>
               </button>
               {invalids.emoji && <div id="ps-emoji-err" className="ps-error" role="alert">{invalids.emoji}</div>}
             </div>
           </section>
 
           <section className="ps-section" aria-labelledby="ps-ai">
-            <h3 id="ps-ai" className="ps-section-title">AI Opponent</h3>
+            <h3 id="ps-ai" className="ps-section-title">{t("settings.aiOpponent")}</h3>
 
             <div className="ps-field">
-              <label htmlFor="ps-ai-color">AI Color</label>
+              <label htmlFor="ps-ai-color">{t("settings.aiColor")}</label>
               <div className="ps-color-row">
                 <input
                   id="ps-ai-color"
@@ -310,8 +334,8 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
                   aria-describedby={invalids.aiColor ? "ps-ai-color-err" : undefined}
                 />
                 <input
-                  aria-label="Pick AI color"
-                  title="Pick AI color"
+                  aria-label={t("settings.pickAiColor")}
+                  title={t("settings.pickAiColor")}
                   className="ps-color"
                   type="color"
                   value={safeColorInput(aiColor)}
@@ -323,7 +347,7 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
             </div>
 
             <div className="ps-field">
-              <label htmlFor="ps-ai-emoji">AI Emoji</label>
+              <label htmlFor="ps-ai-emoji">{t("settings.aiEmoji")}</label>
               <button
                 id="ps-ai-emoji"
                 type="button"
@@ -335,15 +359,15 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
                 onClick={() => setEmojiPickerTarget("ai")}
               >
                 <span className="ps-emoji-preview" aria-hidden>{aiEmoji}</span>
-                <span>Choose emoji</span>
+                <span>{t("settings.chooseEmoji")}</span>
               </button>
               {invalids.aiEmoji && <div id="ps-ai-emoji-err" className="ps-error" role="alert">{invalids.aiEmoji}</div>}
             </div>
           </section>
 
           <div className="ps-actions">
-            <button type="submit" className="ps-primary">Save</button>
-            <button type="button" className="ps-secondary" onClick={onReset}>Reset</button>
+            <button type="submit" className="ps-primary">{t("settings.save")}</button>
+            <button type="button" className="ps-secondary" onClick={onReset}>{t("settings.reset")}</button>
           </div>
         </form>
 
@@ -357,24 +381,26 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
               onPointerDown={(e) => e.stopPropagation()}
             >
               <div className="ps-emoji-picker-header">
-                <h3 id={emojiPickerTitleId} className="ps-emoji-picker-title">Choose {currentPickerLabel}</h3>
+                <h3 id={emojiPickerTitleId} className="ps-emoji-picker-title">
+                  {t("settings.chooseEmojiTitle", { label: currentPickerLabel })}
+                </h3>
                 <button
                   type="button"
                   className="ps-close"
-                  aria-label="Close emoji picker"
+                  aria-label={t("settings.closeEmojiPicker")}
                   onClick={() => setEmojiPickerTarget(null)}
                 >
                   ×
                 </button>
               </div>
-              <div className="ps-emoji-grid" role="listbox" aria-label={`Emoji options for ${currentPickerLabel}`}>
+              <div className="ps-emoji-grid" role="listbox" aria-label={t("settings.emojiOptions", { label: currentPickerLabel })}>
                 {EMOJI_OPTIONS.map((option) => (
                   <button
                     key={option}
                     type="button"
                     className="ps-emoji-option"
                     role="option"
-                    aria-label={`Choose ${option}`}
+                    aria-label={t("settings.chooseEmojiOption", { emoji: option })}
                     aria-selected={option === currentPickerEmoji}
                     onClick={() => onEmojiSelect(option)}
                   >

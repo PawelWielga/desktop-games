@@ -30,6 +30,7 @@ export function migrateSettings(input: any): Settings {
     difficulty: isDifficulty(input?.difficulty) ? input.difficulty : defaultSettings.difficulty,
     sound: typeof input?.sound === "boolean" ? input.sound : defaultSettings.sound,
     theme: isTheme(input?.theme) ? input.theme : defaultSettings.theme,
+    language: isLanguage(input?.language) ? input.language : defaultSettings.language,
     windowDrag: {
       enabled: typeof input?.windowDrag?.enabled === "boolean" ? input.windowDrag.enabled : defaultSettings.windowDrag.enabled,
       viewportDragModifier: isModifier(input?.windowDrag?.viewportDragModifier) ? input.windowDrag.viewportDragModifier : defaultSettings.windowDrag.viewportDragModifier,
@@ -53,6 +54,10 @@ function isDifficulty(v: any): v is Settings["difficulty"] {
 
 function isTheme(v: any): v is Settings["theme"] {
   return v === "light" || v === "dark";
+}
+
+function isLanguage(v: any): v is Settings["language"] {
+  return v === "pl" || v === "en";
 }
 
 function isModifier(v: any): v is DragModifier {
