@@ -90,6 +90,7 @@ export function isBoundaryPoint(point: PaperSoccerPoint): boolean {
 export function isLegalMove(state: PaperSoccerState, target: PaperSoccerPoint): boolean {
   if (state.winner) return false;
   if (!isPlayablePoint(target) || !isAdjacent(state.ball, target)) return false;
+  if (getGoal(target) && !isGoalEntrySegment(state.ball, target)) return false;
   if (isWallSegment(state.ball, target) || hasSegment(state.segments, state.ball, target)) return false;
   return true;
 }
@@ -203,6 +204,14 @@ function isWallSegment(from: PaperSoccerPoint, to: PaperSoccerPoint): boolean {
   if (from.x === to.x && (from.x === 0 || from.x === FIELD_WIDTH)) return true;
   if (from.y === to.y && (from.y === 0 || from.y === FIELD_HEIGHT)) return true;
   return false;
+}
+
+function isGoalEntrySegment(from: PaperSoccerPoint, to: PaperSoccerPoint): boolean {
+  const goal = getGoal(to);
+  if (!goal) return false;
+
+  const entryY = goal === "top" ? 0 : FIELD_HEIGHT;
+  return from.y === entryY && from.x >= GOAL_LEFT && from.x <= GOAL_RIGHT && to.x >= GOAL_LEFT && to.x <= GOAL_RIGHT;
 }
 
 function hasSegment(segments: PaperSoccerSegment[], from: PaperSoccerPoint, to: PaperSoccerPoint): boolean {
