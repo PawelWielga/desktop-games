@@ -44,6 +44,8 @@ const parseCssPixels = (value: string): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const parseFirstCssPixel = (value: string): number => parseCssPixels(value.split(" ")[0] ?? "");
+
 const createDefaultLayout = (ids: string[]): DesktopIconLayout =>
   ids.reduce<DesktopIconLayout>((layout, id, index) => {
     layout[id] = { column: 0, row: index };
@@ -84,14 +86,16 @@ const mergeLayoutWithVisibleApps = (storedLayout: DesktopIconLayout, appIds: str
 const getGridMetrics = (gridElement: HTMLDivElement): GridMetrics => {
   const styles = window.getComputedStyle(gridElement);
   const rect = gridElement.getBoundingClientRect();
+  const iconElement = gridElement.querySelector<HTMLButtonElement>(".desktop-icon");
+  const iconRect = iconElement?.getBoundingClientRect();
 
   return {
     paddingLeft: parseCssPixels(styles.paddingLeft),
     paddingTop: parseCssPixels(styles.paddingTop),
     paddingRight: parseCssPixels(styles.paddingRight),
     paddingBottom: parseCssPixels(styles.paddingBottom),
-    iconColumn: parseCssPixels(styles.getPropertyValue("--desktop-icon-column")),
-    iconRow: parseCssPixels(styles.getPropertyValue("--desktop-icon-row")),
+    iconColumn: parseFirstCssPixel(styles.gridTemplateColumns) || iconRect?.width || 0,
+    iconRow: parseCssPixels(styles.gridAutoRows) || iconRect?.height || 0,
     gapX: parseCssPixels(styles.columnGap),
     gapY: parseCssPixels(styles.rowGap),
     viewportWidth: rect.width,
