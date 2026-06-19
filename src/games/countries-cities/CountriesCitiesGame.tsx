@@ -10,14 +10,16 @@ type Phase = "menu" | "lobby" | "setup" | "input" | "scoring" | "results";
 type EndMode = "timer" | "manual";
 type Submission = { playerId: string; playerName: string; answers: Record<string, string> };
 type Votes = Record<string, Record<string, boolean>>;
+type DuplicateOverrides = Record<string, string>;
 type SettingsMessage = GameSpecificMessage<"countries-cities:settings", { categories: string[]; endMode: EndMode }>;
 type SubmitMessage = GameSpecificMessage<"countries-cities:submit", { player: PlayerProfile; answers: Record<string, string> }>;
 type DoneMessage = GameSpecificMessage<"countries-cities:done", { playerId: string }>;
 type DeadlineMessage = GameSpecificMessage<"countries-cities:deadline", { deadlineAt: number }>;
 type ScoringMessage = GameSpecificMessage<"countries-cities:scoring", { submissions: Submission[] }>;
 type VoteMessage = GameSpecificMessage<"countries-cities:vote", { answerId: string; accepted: boolean }>;
-type ResultsMessage = GameSpecificMessage<"countries-cities:results", { votes: Votes }>;
-type CountriesCitiesMessage = SettingsMessage | SubmitMessage | DoneMessage | DeadlineMessage | ScoringMessage | VoteMessage | ResultsMessage | GameResetMessage | GameStartMessage;
+type DuplicateMessage = GameSpecificMessage<"countries-cities:duplicate", { answerId: string; groupKey: string }>;
+type ResultsMessage = GameSpecificMessage<"countries-cities:results", { votes: Votes; duplicateOverrides: DuplicateOverrides }>;
+type CountriesCitiesMessage = SettingsMessage | SubmitMessage | DoneMessage | DeadlineMessage | ScoringMessage | VoteMessage | DuplicateMessage | ResultsMessage | GameResetMessage | GameStartMessage;
 
 const DEFAULT_CATEGORIES = ["Państwo", "Miasto", "Roślina", "Zwierzę", "Rzecz"];
 const TIMER_MS = 10_000;
@@ -35,6 +37,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [donePlayers, setDonePlayers] = useState<string[]>([]);
   const [votes, setVotes] = useState<Votes>({});
+  const [duplicateOverrides, setDuplicateOverrides] = useState<DuplicateOverrides>({});
   const [deadlineAt, setDeadlineAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
 
@@ -55,6 +58,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
     setSubmissions([]);
     setDonePlayers([]);
     setVotes({});
+    setDuplicateOverrides({});
     setDeadlineAt(null);
     setPhase("setup");
   }, []);
@@ -71,6 +75,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
       setSubmissions([]);
       setDonePlayers([]);
       setVotes({});
+      setDuplicateOverrides({});
       setDeadlineAt(null);
       setPhase("input");
     } else if (message.type === "countries-cities:submit") {
@@ -83,11 +88,15 @@ export default function CountriesCitiesGame(): React.ReactElement {
     } else if (message.type === "countries-cities:scoring") {
       setSubmissions(message.submissions);
       setVotes({});
+      setDuplicateOverrides({});
       setPhase("scoring");
     } else if (message.type === "countries-cities:vote" && message.senderId) {
       addVote(message.answerId, message.senderId, message.accepted);
+    } else if (message.type === "countries-cities:duplicate") {
+      setDuplicateOverrides((items) => ({ ...items, [message.answerId]: message.groupKey }));
     } else if (message.type === "countries-cities:results") {
       setVotes(message.votes);
+      setDuplicateOverrides(message.duplicateOverrides);
       setPhase("results");
     } else if (message.type === "game:reset") {
       resetRound();
@@ -138,9 +147,12 @@ export default function CountriesCitiesGame(): React.ReactElement {
     const currentAnswerId = answerId(submission.playerId, category);
     const answer = submission.answers[category] ?? "";
     const approvals = Object.values(votes[currentAnswerId] ?? {}).filter(Boolean).length;
-    const group = groupsByCategory[category]?.find((item) => item.answers.some((value) => normalizeAnswer(value) === normalizeAnswer(answer)));
+    const duplicateKey = duplicateOverrides[currentAnswerId];
+    const group = duplicateKey
+      ? groupsByCategory[category]?.find((item) => item.key === duplicateKey)
+      : groupsByCategory[category]?.find((item) => item.answers.some((value) => normalizeAnswer(value) === normalizeAnswer(answer)));
     return sum + calculateAnswerScore({ answer, accepted: approvals >= requiredApprovals, duplicateCount: group?.answers.length ?? 1 });
-  }, 0)])), [categories, groupsByCategory, requiredApprovals, submissions, votes]);
+  }, 0)])), [categories, duplicateOverrides, groupsByCategory, requiredApprovals, submissions, votes]);
 
   const publishSettings = (): void => {
     const cleanCategories = [...new Set(parsedCategories)];
@@ -168,6 +180,14 @@ export default function CountriesCitiesGame(): React.ReactElement {
     lobby.sendMessage({ type: "countries-cities:done", playerId: lobby.localPlayer.id });
   };
 
+
+  const markDuplicate = (id: string, category: string, answer: string): void => {
+    const targetGroup = groupsByCategory[category]?.find((group) => group.answers.some((value) => normalizeAnswer(value) === normalizeAnswer(answer))) ?? groupsByCategory[category]?.[0];
+    if (!targetGroup) return;
+    setDuplicateOverrides((items) => ({ ...items, [id]: targetGroup.key }));
+    lobby.sendMessage({ type: "countries-cities:duplicate", answerId: id, groupKey: targetGroup.key });
+  };
+
   const menuActions: GameStartMenuAction[] = [{ id: "online", title: t("countriesCities.online.title"), description: t("countriesCities.online.description"), icon: "🌍", featured: true, variant: "blue", actionLabel: t("countriesCities.online.join"), onSelect: () => setPhase("lobby") }];
 
   if (phase === "menu") return <div className="countries-cities-root"><GameStartMenu title={t("apps.countriesCities")} subtitle={t("countriesCities.subtitle")} actions={menuActions} /></div>;
@@ -178,7 +198,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
 
   if (phase === "input") return <div className="countries-cities-root"><InGameMultiplayerOverlay role={lobby.role} roomCode={lobby.roomCode} playerCount={players.length} /><section className="countries-cities-card"><div className="countries-cities-header"><h2>{t("countriesCities.inputTitle")}</h2>{secondsLeft !== null && <strong>{t("countriesCities.timer", { seconds: secondsLeft })}</strong>}</div><div className="countries-cities-grid">{categories.map((category) => <label className="countries-cities-field" key={category}><span>{category}</span><input value={answers[category] ?? ""} onChange={(event) => setAnswers((current) => ({ ...current, [category]: event.target.value }))} /></label>)}</div><div className="countries-cities-actions"><button className="countries-cities-primary" type="button" onClick={submitAnswers}>{t("countriesCities.submitAnswers")}</button>{endMode === "manual" && <button type="button" onClick={markDone}>{t("countriesCities.markDone")}</button>}</div><p>{t("countriesCities.donePlayers", { done: donePlayers.length, total: players.length })}</p></section></div>;
 
-  if (phase === "scoring") return <div className="countries-cities-root"><InGameMultiplayerOverlay role={lobby.role} roomCode={lobby.roomCode} playerCount={players.length} /><section className="countries-cities-card"><h2>{t("countriesCities.scoringTitle")}</h2><p>{t("countriesCities.requiredApprovals", { count: requiredApprovals })}</p><div className="countries-cities-scoring">{categories.map((category) => <article className="countries-cities-category" key={category}><h3>{category}</h3>{groupsByCategory[category]?.some((group) => group.answers.length > 1) && <p>{t("countriesCities.similarHint")}</p>}{submissions.map((submission) => { const id = answerId(submission.playerId, category); const approvals = Object.values(votes[id] ?? {}).filter(Boolean).length; return <div className="countries-cities-vote" key={id}><div><strong>{submission.playerName}</strong><span>{submission.answers[category] || t("countriesCities.emptyAnswer")}</span></div><div><span>{t("countriesCities.approvals", { count: approvals })}</span><button type="button" onClick={() => { addVote(id, lobby.localPlayer.id, true); lobby.sendMessage({ type: "countries-cities:vote", answerId: id, accepted: true }); }}>{t("countriesCities.accept")}</button><button type="button" onClick={() => { addVote(id, lobby.localPlayer.id, false); lobby.sendMessage({ type: "countries-cities:vote", answerId: id, accepted: false }); }}>{t("countriesCities.reject")}</button></div></div>; })}</article>)}</div>{isHost ? <button className="countries-cities-primary" type="button" onClick={() => { lobby.sendMessage({ type: "countries-cities:results", votes }); setPhase("results"); }}>{t("countriesCities.showResults")}</button> : <p>{t("countriesCities.waitingForHostResults")}</p>}</section></div>;
+  if (phase === "scoring") return <div className="countries-cities-root"><InGameMultiplayerOverlay role={lobby.role} roomCode={lobby.roomCode} playerCount={players.length} /><section className="countries-cities-card"><h2>{t("countriesCities.scoringTitle")}</h2><p>{t("countriesCities.requiredApprovals", { count: requiredApprovals })}</p><div className="countries-cities-scoring">{categories.map((category) => <article className="countries-cities-category" key={category}><h3>{category}</h3>{groupsByCategory[category]?.some((group) => group.answers.length > 1) && <p>{t("countriesCities.similarHint")}</p>}{submissions.map((submission) => { const id = answerId(submission.playerId, category); const approvals = Object.values(votes[id] ?? {}).filter(Boolean).length; return <div className="countries-cities-vote" key={id}><div><strong>{submission.playerName}</strong><span>{submission.answers[category] || t("countriesCities.emptyAnswer")}</span></div><div><span>{t("countriesCities.approvals", { count: approvals })}</span><button type="button" onClick={() => { addVote(id, lobby.localPlayer.id, true); lobby.sendMessage({ type: "countries-cities:vote", answerId: id, accepted: true }); }}>{t("countriesCities.accept")}</button><button type="button" onClick={() => { addVote(id, lobby.localPlayer.id, false); lobby.sendMessage({ type: "countries-cities:vote", answerId: id, accepted: false }); }}>{t("countriesCities.reject")}</button>{isHost && <button type="button" onClick={() => markDuplicate(id, category, submission.answers[category] ?? "")}>{t("countriesCities.markDuplicate")}</button>}</div></div>; })}</article>)}</div>{isHost ? <button className="countries-cities-primary" type="button" onClick={() => { lobby.sendMessage({ type: "countries-cities:results", votes, duplicateOverrides }); setPhase("results"); }}>{t("countriesCities.showResults")}</button> : <p>{t("countriesCities.waitingForHostResults")}</p>}</section></div>;
 
   return <div className="countries-cities-root"><section className="countries-cities-card countries-cities-center"><h2>{t("countriesCities.resultsTitle")}</h2><ol className="countries-cities-score-list">{submissions.slice().sort((a, b) => (scores[b.playerId] ?? 0) - (scores[a.playerId] ?? 0)).map((submission) => <li key={submission.playerId}><span>{submission.playerName}</span><strong>{t("countriesCities.points", { points: scores[submission.playerId] ?? 0 })}</strong></li>)}</ol>{isHost && <button className="countries-cities-primary" type="button" onClick={startInput}>{t("countriesCities.nextRound")}</button>}<button type="button" onClick={() => { lobby.sendMessage({ type: "game:reset" }); resetRound(); }}>{t("countriesCities.reset")}</button></section></div>;
 }
