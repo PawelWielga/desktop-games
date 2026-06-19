@@ -18,6 +18,7 @@ startDefaultYouTubePreload();
 export type WindowDefaults = {
   id: string;
   title: string;
+  titleKey?: string;
   width: number;
   height: number;
   minWidth?: number;
@@ -35,12 +36,13 @@ export type AppKind = "game" | "system" | "app";
 export type AppRegistration = {
   id: string;
   title: string;
+  titleKey: string;
   icon: string;
   iconAsset?: string;
   kind: AppKind;
   implemented: boolean;
   showOnDesktop?: boolean;
-  window?: Omit<WindowDefaults, "id" | "title">;
+  window?: Omit<WindowDefaults, "id" | "title" | "titleKey">;
 };
 
 export type DesktopAppRegistration = AppRegistration & {
@@ -51,6 +53,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "tictactoe",
     title: "Kółko i Krzyżyk",
+    titleKey: "apps.tictactoe",
     icon: "🔢",
     iconAsset: tictactoeIcon,
     kind: "game",
@@ -68,6 +71,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "memo",
     title: "Memo",
+    titleKey: "apps.memo",
     icon: "🧠",
     iconAsset: memoIcon,
     kind: "game",
@@ -76,6 +80,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "snake",
     title: "Wąż",
+    titleKey: "apps.snake",
     icon: "🐍",
     iconAsset: snakeIcon,
     kind: "game",
@@ -93,6 +98,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "youtube",
     title: "YouTube",
+    titleKey: "apps.youtube",
     icon: "▶️",
     iconAsset: youtubeIcon,
     kind: "app",
@@ -110,6 +116,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "rps",
     title: "Kamień Papier Nożyce",
+    titleKey: "apps.rps",
     icon: "✊",
     iconAsset: rpsIcon,
     kind: "game",
@@ -118,6 +125,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "minesweeper",
     title: "Saper",
+    titleKey: "apps.minesweeper",
     icon: "🚩",
     iconAsset: minesweeperIcon,
     kind: "game",
@@ -135,6 +143,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "tetris",
     title: "Tetris",
+    titleKey: "apps.tetris",
     icon: "🧱",
     iconAsset: tetrisIcon,
     kind: "game",
@@ -143,6 +152,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "connect4",
     title: "Connect 4",
+    titleKey: "apps.connect4",
     icon: "🟡",
     iconAsset: connect4Icon,
     kind: "game",
@@ -151,6 +161,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "pong",
     title: "Pong",
+    titleKey: "apps.pong",
     icon: "🏓",
     iconAsset: pongIcon,
     kind: "game",
@@ -159,6 +170,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "cards",
     title: "Ewolucja",
+    titleKey: "apps.cards",
     icon: "🃏",
     iconAsset: cardsIcon,
     kind: "game",
@@ -167,6 +179,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "calc",
     title: "Catculator",
+    titleKey: "apps.calc",
     icon: "🖩",
     iconAsset: catculatorIcon,
     kind: "game",
@@ -175,6 +188,7 @@ export const AppRegistry: readonly AppRegistration[] = [
   {
     id: "settings",
     title: "Ustawienia",
+    titleKey: "apps.settings",
     icon: "⚙️",
     iconAsset: settingsIcon,
     kind: "system",
@@ -190,6 +204,7 @@ export const WindowRegistry: Record<string, WindowDefaults> = AppRegistry.reduce
   registry[app.id] = {
     id: app.id,
     title: app.title,
+    titleKey: app.titleKey,
     ...app.window,
   };
 
@@ -198,6 +213,10 @@ export const WindowRegistry: Record<string, WindowDefaults> = AppRegistry.reduce
 
 export function getAppRegistration(id: string): AppRegistration | undefined {
   return AppRegistry.find((app) => app.id === id);
+}
+
+export function getAppTitleKey(id: string): string | undefined {
+  return getAppRegistration(id)?.titleKey;
 }
 
 export function getDesktopApps(options?: {
