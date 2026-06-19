@@ -54,8 +54,9 @@ const createDefaultLayout = (ids: string[]): DesktopIconLayout =>
 
 const isIconPosition = (value: unknown): value is DesktopIconPosition => {
   if (!value || typeof value !== "object") return false;
-  const position = value as Partial<DesktopIconPosition>;
-  return Number.isInteger(position.column) && Number.isInteger(position.row) && position.column >= 0 && position.row >= 0;
+
+  const { column, row } = value as Partial<DesktopIconPosition>;
+  return Number.isInteger(column) && Number.isInteger(row) && typeof column === "number" && typeof row === "number" && column >= 0 && row >= 0;
 };
 
 const readStoredLayout = (): DesktopIconLayout => {
