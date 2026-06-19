@@ -1,4 +1,7 @@
 import React from "react";
+import { startDefaultYouTubePreload } from "../apps/youtube/youtubePreloader";
+
+startDefaultYouTubePreload();
 
 export type WindowDefaults = {
   id: string;
