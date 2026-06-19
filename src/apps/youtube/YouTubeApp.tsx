@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import youtubeIcon from "@/assets/brand-icons/youtube.svg";
 import {
   attachDefaultYouTubePlayer,
   buildDefaultYouTubeSrc,
@@ -160,9 +161,7 @@ export default function YouTubeApp(): React.ReactElement {
           {mode === "player" ? "← Wstecz" : "Odtwarzacz"}
         </button>
         <div className="youtube-app__brand" aria-label="YouTube">
-          <span className="youtube-app__brand-icon" aria-hidden="true">
-            ▶
-          </span>
+          <img className="youtube-app__brand-icon" src={youtubeIcon} alt="" aria-hidden="true" />
           <span>{source.title}</span>
         </div>
       </header>
@@ -170,9 +169,7 @@ export default function YouTubeApp(): React.ReactElement {
       {mode === "search" ? (
         <main className="youtube-app__search-panel">
           <div className="youtube-app__search-card">
-            <div className="youtube-app__logo" aria-hidden="true">
-              ▶
-            </div>
+            <img className="youtube-app__logo" src={youtubeIcon} alt="" aria-hidden="true" />
             <h2>YouTube</h2>
             <p>Wpisz frazę, link do filmu albo samo ID filmu z YouTube.</p>
             <form className="youtube-app__search-form" onSubmit={submitSearch}>

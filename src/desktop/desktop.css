@@ -58,6 +58,18 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   font-size: var(--desktop-icon-font-size);
   color: #fff;
 }
+.desktop-icon[data-has-icon-asset="true"]::before {
+  content: none;
+}
+.desktop-icon__asset {
+  width: clamp(2rem, 5.6vmin, 2.875rem);
+  height: clamp(2rem, 5.6vmin, 2.875rem);
+  display: block;
+  object-fit: contain;
+  filter: drop-shadow(0 0.375rem 0.625rem rgba(0, 0, 0, 0.32));
+  pointer-events: none;
+  user-select: none;
+}
 .icon-label {
   position: absolute;
   top: calc(var(--desktop-icon-size) + var(--space-1));

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">Minesweeper</title>
+  <rect width="64" height="64" rx="16" fill="#f1f5f9"/>
+  <path d="M13 17h38M13 30h38M13 43h38M17 13v38M30 13v38M43 13v38" stroke="#cbd5e1" stroke-width="3"/>
+  <circle cx="32" cy="32" r="11" fill="#0f172a"/>
+  <path d="M32 15v8M32 41v8M15 32h8M41 32h8M20 20l6 6M38 38l6 6M44 20l-6 6M26 38l-6 6" stroke="#0f172a" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="36" cy="27" r="3" fill="#fff" opacity=".85"/>
+</svg>
