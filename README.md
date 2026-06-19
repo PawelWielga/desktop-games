@@ -40,6 +40,13 @@ Desktop Games jest projektem hobbystycznym i rozwojowym. Każda gra jest traktow
 Dokumentacja dla osób dodających nowe gry znajduje się tutaj:
 
 - [Adding a new game](docs/adding-a-game.md)
+- [Icons and visual assets](docs/icons.md)
+
+## Ikony i zasoby graficzne
+
+Projekt jest publiczny i niekomercyjny, dlatego ikony powinny pochodzić ze źródeł z jasną licencją. Dla prawdziwych usług, takich jak YouTube, używamy lokalnych plików SVG i trzymamy się zasad właściciela marki. Dla własnych gier preferowane są ikony tworzone w projekcie albo zestawy z permissive license, np. Kenney CC0.
+
+W rejestrze aplikacji `icon` pozostaje tekstowym fallbackiem, a prawdziwy plik SVG można dodać przez `iconAsset`.
 
 ## Informacje techniczne dla programistów
 
