@@ -1,3 +1,5 @@
+import type { Language } from "@/i18n/translations";
+
 export type Difficulty = "easy" | "normal" | "hard";
 export type Theme = "light" | "dark";
 
@@ -34,6 +36,7 @@ export type Settings = {
   difficulty: Difficulty;
   sound: boolean;
   theme: Theme;
+  language: Language;
   /** New: preferences for window dragging/snapping */
   windowDrag: WindowDragPrefs;
   /** New: accessibility prefs */
@@ -44,6 +47,7 @@ export const defaultSettings: Settings = {
   difficulty: "normal",
   sound: true,
   theme: "light",
+  language: "pl",
   windowDrag: {
     enabled: true,
     viewportDragModifier: "alt",
