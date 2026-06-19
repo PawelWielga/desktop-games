@@ -9,9 +9,10 @@ import React, {
 } from "react";
 import "./window.css";
 import { useWindowResize } from "./hooks/useWindowResize";
-import { getWindowDefaults } from "./registry";
+import { getAppTitleKey, getWindowDefaults } from "./registry";
 import { useWindowDrag } from "./hooks/useWindowDrag";
 import { useSettings } from "@/settings/SettingsContext";
+import { useTranslation } from "@/i18n/useTranslation";
 
 /** Public spec for opening a window */
 export type WindowSpec = {
@@ -176,6 +177,15 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
   const windowsRef = useRef<WindowState[]>([]);
   const zCounter = useRef(1500);
   const { settings } = useSettings();
+  const { t } = useTranslation();
+
+  const getDisplayTitle = useCallback(
+    (id: string, fallback: string) => {
+      const titleKey = getAppTitleKey(id);
+      return titleKey ? t(titleKey) : fallback;
+    },
+    [t]
+  );
 
   useEffect(() => {
     windowsRef.current = windows;
@@ -360,7 +370,7 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
       windows,
       handles: windows.map((w) => ({
         id: w.id,
-        title: w.title,
+        title: getDisplayTitle(w.id, w.title),
         minimized: w.minimized,
       })),
       open,
@@ -369,7 +379,7 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
       maximizeToggle,
       focus,
     }),
-    [windows, open, close, minimize, maximizeToggle, focus]
+    [windows, getDisplayTitle, open, close, minimize, maximizeToggle, focus]
   );
 
   // Global keyboard shortcuts for focused window
@@ -420,6 +430,7 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
           <WindowFrame
             key={w.id}
             state={w}
+            displayTitle={getDisplayTitle(w.id, w.title)}
             topMostId={[...arr].filter((x) => !x.minimized).sort((a, b) => b.z - a.z)[0]?.id}
             onClose={close}
             onMinimize={minimize}
@@ -439,6 +450,7 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
  */
 function WindowFrame(props: {
   state: WindowState;
+  displayTitle: string;
   topMostId?: string;
   onClose: (id: string) => void;
   onMinimize: (id: string) => void;
@@ -446,7 +458,8 @@ function WindowFrame(props: {
   onFocus: (id: string) => void;
   onPatch: (patch: Partial<WindowState>) => void;
 }): React.ReactElement | null {
-  const { state: w } = props;
+  const { state: w, displayTitle } = props;
+  const { t } = useTranslation();
 
   // Derive viewport-aware constraints
   const bounds = getUsableViewportBounds();
@@ -513,13 +526,17 @@ function WindowFrame(props: {
   };
 
   const ariaModal = props.topMostId === w.id && w.maximized;
+  const maximizeLabel = w.maximized ? t("window.restore") : t("window.maximize");
+  const maximizeWindowLabel = w.maximized
+    ? t("window.restoreWindow", { title: displayTitle })
+    : t("window.maximizeWindow", { title: displayTitle });
 
   return (
     <div
       className="window"
       style={style}
       role="dialog"
-      aria-label={w.title}
+      aria-label={displayTitle}
       aria-modal={ariaModal || undefined}
       data-maximized={w.maximized ? "1" : undefined}
     >
@@ -528,14 +545,14 @@ function WindowFrame(props: {
         ref={setHeaderRef}
         onDoubleClick={() => props.onMaximize(w.id)}
         tabIndex={0}
-        aria-roledescription="Window title bar. Drag to move, double click to maximize."
-        title="Drag to move, double click to maximize"
+        aria-roledescription={t("window.titlebarDescription")}
+        title={t("window.titlebarTitle")}
         onPointerDown={() => {
           // Ensure window is focused before drag so z-index applies to the active window
           props.onFocus(w.id);
         }}
       >
-        <div className="window-title">{w.title}</div>
+        <div className="window-title">{displayTitle}</div>
         {/* Prevent drags starting on control buttons from bubbling to header */}
         <div
           className="window-controls"
@@ -547,28 +564,28 @@ function WindowFrame(props: {
           <button
             className="window-control"
             type="button"
-            title="Minimalizuj"
+            title={t("window.minimize")}
             onClick={() => props.onMinimize(w.id)}
-            aria-label={`Minimalizuj ${w.title}`}
+            aria-label={t("window.minimizeWindow", { title: displayTitle })}
           >
             −
           </button>
           <button
             className="window-control"
             type="button"
-            title="Maksymalizuj"
+            title={maximizeLabel}
             onClick={() => props.onMaximize(w.id)}
             aria-pressed={w.maximized}
-            aria-label={`${w.maximized ? "Przywróć" : "Maksymalizuj"} ${w.title}`}
+            aria-label={maximizeWindowLabel}
           >
             □
           </button>
           <button
             className="window-control close"
             type="button"
-            title="Zamknij"
+            title={t("window.close")}
             onClick={() => props.onClose(w.id)}
-            aria-label={`Zamknij ${w.title}`}
+            aria-label={t("window.closeWindow", { title: displayTitle })}
           >
             ×
           </button>
@@ -589,9 +606,9 @@ function WindowFrame(props: {
           <div
             className="window-resizer"
             onMouseDown={onResizeDown}
-            aria-label="Resize window"
+            aria-label={t("window.resize")}
             role="separator"
-            title="Resize window"
+            title={t("window.resize")}
           />
         )
       }
