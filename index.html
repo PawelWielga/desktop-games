@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -69,7 +69,7 @@
       }
 
       /* No-JS fallback: show for small screens via media query */
-      @media (max-width: 767px) {
+      @media (max-width: 767px) and (orientation: portrait) {
         noscript .mobile-support-noscript {
           display: flex !important;
         }
@@ -81,8 +81,8 @@
     <noscript>
       <div id="mobile-support-overlay" class="mobile-support-noscript" role="dialog" aria-modal="true" aria-hidden="false">
         <div class="content">
-          <h1>This website is optimized for larger vertical screens.</h1>
-          <p>Please use a tablet, laptop, or rotate your device to portrait on a larger display.</p>
+          <h1>Turn your phone sideways</h1>
+          <p>This website can run on a phone, but it needs landscape orientation. Rotate your device to continue.</p>
         </div>
       </div>
     </noscript>
@@ -90,9 +90,9 @@
     <!-- JS-driven overlay -->
     <div id="mobile-support-overlay" role="dialog" aria-modal="true" aria-live="polite" aria-hidden="true">
       <div class="content" role="document">
-        <h1 id="mobile-support-title">This website is optimized for larger vertical screens.</h1>
+        <h1 id="mobile-support-title">Turn your phone sideways</h1>
         <p id="mobile-support-message">
-          Please use a tablet, laptop, or rotate your device to portrait on a larger display.
+          This website can run on a phone, but it needs landscape orientation. Rotate your device to continue.
         </p>
         <div class="actions">
           <button id="mobile-support-recheck" type="button" class="btn" aria-describedby="mobile-support-message">
@@ -106,16 +106,17 @@
 
     <script>
       (function () {
-        // Minimum usable thresholds
-        var MIN_WIDTH = 768;   // px
-        var MIN_HEIGHT = 600;  // px
+        // Phones are supported in landscape mode. Portrait mode stays blocked so the
+        // desktop-like UI has enough horizontal space for windows, icons, and games.
+        var PHONE_PORTRAIT_MAX_WIDTH = 767; // px
 
         var overlay = document.getElementById('mobile-support-overlay');
         var recheck = document.getElementById('mobile-support-recheck');
         var message = document.getElementById('mobile-support-message');
+        var title = document.getElementById('mobile-support-title');
 
         function getViewport() {
-          // Use visualViewport when available for more accurate mobile UI measurements
+          // Use visualViewport when available for more accurate mobile UI measurements.
           var vv = window.visualViewport;
           return vv ? { w: Math.floor(vv.width), h: Math.floor(vv.height) }
                     : { w: Math.floor(window.innerWidth), h: Math.floor(window.innerHeight) };
@@ -128,38 +129,31 @@
           return window.matchMedia('(orientation: portrait)').matches;
         }
 
-        function meetsSize() {
+        function isPhoneSizedPortrait() {
           var vp = getViewport();
-          return vp.w >= MIN_WIDTH && vp.h >= MIN_HEIGHT;
+          return isPortrait() && vp.w <= PHONE_PORTRAIT_MAX_WIDTH;
         }
 
-        function smallDevice() {
-          var vp = getViewport();
-          // Trigger on narrow viewports OR too small height
-          return (vp.w < MIN_WIDTH) || (vp.h < MIN_HEIGHT);
+        function getPreferredLanguage() {
+          var lang = (document.documentElement.getAttribute('lang') || navigator.language || 'en').toLowerCase();
+          try {
+            var saved = window.localStorage && window.localStorage.getItem('desktop-games-settings');
+            if (saved && saved.indexOf('"language":"pl"') !== -1) return 'pl';
+          } catch (_) {}
+          return lang.startsWith('pl') ? 'pl' : 'en';
         }
 
-        function computeMessage() {
-          var vp = getViewport();
-          var portrait = isPortrait();
-
-          // If device is small and landscape, suggest rotating to portrait if that might help
-          if (vp.w < MIN_WIDTH && !portrait) {
-            // If rotating to portrait would give larger vertical height, we still need MIN_WIDTH though.
-            // Suggest rotate only if current height already meets MIN_HEIGHT; otherwise larger device.
-            if (vp.h >= MIN_HEIGHT) {
-              return 'This website is optimized for larger vertical screens. Try rotating your device to portrait, or use a tablet or laptop.';
-            }
-            return 'This website is optimized for larger vertical screens. Please use a tablet or laptop.';
+        function applyMessage() {
+          var lang = getPreferredLanguage();
+          if (lang === 'pl') {
+            title && (title.textContent = 'Obróć telefon poziomo');
+            message && (message.textContent = 'Strona działa na telefonie, ale potrzebuje ustawienia poziomego. Obróć urządzenie, aby kontynuować.');
+            recheck && (recheck.textContent = 'Sprawdź ponownie');
+          } else {
+            title && (title.textContent = 'Turn your phone sideways');
+            message && (message.textContent = 'This website can run on a phone, but it needs landscape orientation. Rotate your device to continue.');
+            recheck && (recheck.textContent = 'Check Again');
           }
-
-          // If height is the limiting factor
-          if (vp.h < MIN_HEIGHT) {
-            return 'This website is optimized for larger vertical screens. Please use a tablet or laptop.';
-          }
-
-          // Default small width case
-          return 'This website is optimized for larger vertical screens. Please use a tablet, laptop, or rotate your device to portrait on a larger display.';
         }
 
         function setLock(locked) {
@@ -174,9 +168,9 @@
         }
 
         function updateOverlay() {
-          var show = smallDevice() && !meetsSize();
+          var show = isPhoneSizedPortrait();
           if (show) {
-            message && (message.textContent = computeMessage());
+            applyMessage();
             overlay.setAttribute('aria-hidden', 'false');
             setLock(true);
           } else {
@@ -185,33 +179,46 @@
           }
         }
 
-        // Initial check after content is interactive
+        function tryLandscapeLock() {
+          // Most browsers allow orientation lock only in fullscreen/PWA mode.
+          // This is best-effort; the overlay still enforces the UX by staying visible in portrait.
+          var root = document.documentElement;
+          var fullscreen = root.requestFullscreen || root.webkitRequestFullscreen || root.msRequestFullscreen;
+          var lock = window.screen && window.screen.orientation && window.screen.orientation.lock;
+          try {
+            var promise = fullscreen ? fullscreen.call(root) : Promise.resolve();
+            Promise.resolve(promise)
+              .then(function () { return lock ? window.screen.orientation.lock('landscape') : undefined; })
+              .catch(function () {})
+              .finally(function () { setTimeout(updateOverlay, 150); });
+          } catch (_) {
+            setTimeout(updateOverlay, 150);
+          }
+        }
+
+        // Initial check after content is interactive.
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', updateOverlay, { once: true });
         } else {
           updateOverlay();
         }
 
-        // Re-evaluate on resize and orientation changes
+        // Re-evaluate on resize and orientation changes.
         var ro = null;
         try {
-          // Use ResizeObserver on visualViewport where supported for more fidelity
           if (window.visualViewport && 'ResizeObserver' in window) {
             ro = new ResizeObserver(updateOverlay);
             ro.observe(document.body);
           }
-        } catch(_) {}
+        } catch (_) {}
 
         window.addEventListener('resize', updateOverlay, { passive: true });
         window.addEventListener('orientationchange', function () {
-          // Debounce slight delays on mobile orientation changes
           setTimeout(updateOverlay, 150);
         }, { passive: true });
 
-        // Optional manual re-check
-        if (recheck) recheck.addEventListener('click', updateOverlay);
+        if (recheck) recheck.addEventListener('click', tryLandscapeLock);
 
-        // Cleanup on page unload
         window.addEventListener('beforeunload', function () {
           setLock(false);
           if (ro && ro.disconnect) ro.disconnect();
