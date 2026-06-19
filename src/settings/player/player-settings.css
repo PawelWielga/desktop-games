@@ -146,6 +146,12 @@ html[data-theme="dark"] .ps-surface {
   color: var(--fg, var(--color-fg, #111));
   padding: 6px 8px;
 }
+.ps-help {
+  grid-column: 2 / -1;
+  margin-top: -6px;
+  color: var(--muted, var(--color-muted, #6b7280));
+  font-size: 12px;
+}
 :root[data-theme="dark"] .ps-field input[type="text"],
 :root[data-theme="dark"] .ps-field input[type="search"],
 :root[data-theme="dark"] .ps-field select {
@@ -356,6 +362,10 @@ html[data-theme="dark"] .ps-surface {
   .ps-field {
     grid-template-columns: 1fr;
   }
+  .ps-help,
+  .ps-error {
+    grid-column: 1;
+  }
   .ps-section-title {
     font-size: 14px;
   }
@@ -371,6 +381,7 @@ html[data-theme="dark"] .ps-surface {
   .ps-panel { align-items: stretch; padding: clamp(0.5rem, 2vmin, 0.75rem); }
   .ps-surface { width: 100%; max-height: calc(100dvh - 1rem); }
   .ps-field, .ps-color-row { grid-template-columns: 1fr; }
+  .ps-help,
   .ps-error { grid-column: 1; }
   .ps-actions { justify-content: stretch; }
   .ps-primary, .ps-secondary { flex: 1 1 min(10rem, 100%); }
