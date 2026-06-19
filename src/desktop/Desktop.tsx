@@ -1,13 +1,158 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./desktop.css";
 import { useWindowManager } from "@/window/WindowManager";
 import { getAppRegistration, getDesktopApps, getWindowDefaults } from "@/window/registry";
 import ProgressiveImage from "@/components/ProgressiveImage";
 
+type DesktopIconPosition = {
+  column: number;
+  row: number;
+};
+
+type DesktopIconLayout = Record<string, DesktopIconPosition>;
+
+type GridMetrics = {
+  paddingLeft: number;
+  paddingTop: number;
+  paddingRight: number;
+  paddingBottom: number;
+  iconColumn: number;
+  iconRow: number;
+  gapX: number;
+  gapY: number;
+  viewportWidth: number;
+  viewportHeight: number;
+};
+
+type DragState = {
+  id: string;
+  pointerId: number;
+  startX: number;
+  startY: number;
+  offsetX: number;
+  offsetY: number;
+  hasMoved: boolean;
+  left: number;
+  top: number;
+};
+
+const DESKTOP_ICON_LAYOUT_STORAGE_KEY = "desktop.iconLayout.v1";
+const DRAG_THRESHOLD_PX = 4;
+
+const parseCssPixels = (value: string): number => {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const createDefaultLayout = (ids: string[]): DesktopIconLayout =>
+  ids.reduce<DesktopIconLayout>((layout, id, index) => {
+    layout[id] = { column: 0, row: index };
+    return layout;
+  }, {});
+
+const isIconPosition = (value: unknown): value is DesktopIconPosition => {
+  if (!value || typeof value !== "object") return false;
+  const position = value as Partial<DesktopIconPosition>;
+  return Number.isInteger(position.column) && Number.isInteger(position.row) && position.column >= 0 && position.row >= 0;
+};
+
+const readStoredLayout = (): DesktopIconLayout => {
+  if (typeof window === "undefined") return {};
+
+  try {
+    const raw = window.localStorage.getItem(DESKTOP_ICON_LAYOUT_STORAGE_KEY);
+    if (!raw) return {};
+
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return Object.entries(parsed).reduce<DesktopIconLayout>((layout, [id, position]) => {
+      if (isIconPosition(position)) layout[id] = position;
+      return layout;
+    }, {});
+  } catch {
+    return {};
+  }
+};
+
+const mergeLayoutWithVisibleApps = (storedLayout: DesktopIconLayout, appIds: string[]): DesktopIconLayout => {
+  const fallbackLayout = createDefaultLayout(appIds);
+  return appIds.reduce<DesktopIconLayout>((layout, id) => {
+    layout[id] = storedLayout[id] ?? fallbackLayout[id];
+    return layout;
+  }, {});
+};
+
+const getGridMetrics = (gridElement: HTMLDivElement): GridMetrics => {
+  const styles = window.getComputedStyle(gridElement);
+  const rect = gridElement.getBoundingClientRect();
+
+  return {
+    paddingLeft: parseCssPixels(styles.paddingLeft),
+    paddingTop: parseCssPixels(styles.paddingTop),
+    paddingRight: parseCssPixels(styles.paddingRight),
+    paddingBottom: parseCssPixels(styles.paddingBottom),
+    iconColumn: parseCssPixels(styles.getPropertyValue("--desktop-icon-column")),
+    iconRow: parseCssPixels(styles.getPropertyValue("--desktop-icon-row")),
+    gapX: parseCssPixels(styles.columnGap),
+    gapY: parseCssPixels(styles.rowGap),
+    viewportWidth: rect.width,
+    viewportHeight: rect.height,
+  };
+};
+
+const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
+
+const getMaxGridPosition = (metrics: GridMetrics): DesktopIconPosition => ({
+  column: Math.max(0, Math.floor((metrics.viewportWidth - metrics.paddingLeft - metrics.paddingRight - metrics.iconColumn) / (metrics.iconColumn + metrics.gapX))),
+  row: Math.max(0, Math.floor((metrics.viewportHeight - metrics.paddingTop - metrics.paddingBottom - metrics.iconRow) / (metrics.iconRow + metrics.gapY))),
+});
+
+const getSnappedPosition = (left: number, top: number, metrics: GridMetrics): DesktopIconPosition => {
+  const maxPosition = getMaxGridPosition(metrics);
+
+  return {
+    column: clamp(Math.round((left - metrics.paddingLeft) / (metrics.iconColumn + metrics.gapX)), 0, maxPosition.column),
+    row: clamp(Math.round((top - metrics.paddingTop) / (metrics.iconRow + metrics.gapY)), 0, maxPosition.row),
+  };
+};
+
+const applyDropPosition = (layout: DesktopIconLayout, draggedId: string, nextPosition: DesktopIconPosition): DesktopIconLayout => {
+  const previousPosition = layout[draggedId];
+  const occupyingEntry = Object.entries(layout).find(
+    ([id, position]) => id !== draggedId && position.column === nextPosition.column && position.row === nextPosition.row
+  );
+
+  const nextLayout = { ...layout, [draggedId]: nextPosition };
+
+  if (occupyingEntry && previousPosition) {
+    const [occupyingId] = occupyingEntry;
+    nextLayout[occupyingId] = previousPosition;
+  }
+
+  return nextLayout;
+};
+
 export default function Desktop(): React.ReactElement {
   const { open, handles, focus } = useWindowManager();
 
   const visibleShortcuts = useMemo(() => getDesktopApps(), []);
+  const visibleShortcutIds = useMemo(() => visibleShortcuts.map((shortcut) => shortcut.id), [visibleShortcuts]);
+
+  const [iconLayout, setIconLayout] = useState<DesktopIconLayout>(() =>
+    mergeLayoutWithVisibleApps(readStoredLayout(), visibleShortcutIds)
+  );
+  const [dragState, setDragState] = useState<DragState | null>(null);
+  const dragStateRef = useRef<DragState | null>(null);
+  const suppressNextClickRef = useRef(false);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setIconLayout((currentLayout) => mergeLayoutWithVisibleApps(currentLayout, visibleShortcutIds));
+  }, [visibleShortcutIds]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(DESKTOP_ICON_LAYOUT_STORAGE_KEY, JSON.stringify(iconLayout));
+  }, [iconLayout]);
 
   const [showSettings, setShowSettings] = useState(false);
 
@@ -38,6 +183,92 @@ export default function Desktop(): React.ReactElement {
       maxWidth: def.maxWidth,
       maxHeight: def.maxHeight,
     });
+  };
+
+  const finishIconDrag = (state: DragState): void => {
+    const gridElement = gridRef.current;
+    if (!gridElement) return;
+
+    const metrics = getGridMetrics(gridElement);
+    const nextPosition = getSnappedPosition(state.left, state.top, metrics);
+    setIconLayout((currentLayout) => applyDropPosition(currentLayout, state.id, nextPosition));
+  };
+
+  const updateIconDrag = (e: React.PointerEvent<HTMLButtonElement>): void => {
+    const currentDragState = dragStateRef.current;
+    if (!currentDragState || currentDragState.pointerId !== e.pointerId) return;
+
+    const gridElement = gridRef.current;
+    if (!gridElement) return;
+
+    const gridRect = gridElement.getBoundingClientRect();
+    const metrics = getGridMetrics(gridElement);
+    const maxLeft = metrics.viewportWidth - metrics.paddingRight - metrics.iconColumn;
+    const maxTop = metrics.viewportHeight - metrics.paddingBottom - metrics.iconRow;
+    const deltaX = Math.abs(e.clientX - currentDragState.startX);
+    const deltaY = Math.abs(e.clientY - currentDragState.startY);
+    const hasMoved = currentDragState.hasMoved || deltaX > DRAG_THRESHOLD_PX || deltaY > DRAG_THRESHOLD_PX;
+
+    const nextDragState: DragState = {
+      ...currentDragState,
+      hasMoved,
+      left: clamp(e.clientX - gridRect.left - currentDragState.offsetX, metrics.paddingLeft, maxLeft),
+      top: clamp(e.clientY - gridRect.top - currentDragState.offsetY, metrics.paddingTop, maxTop),
+    };
+
+    dragStateRef.current = nextDragState;
+    setDragState(nextDragState);
+  };
+
+  const endIconDrag = (e: React.PointerEvent<HTMLButtonElement>): void => {
+    const currentDragState = dragStateRef.current;
+    if (!currentDragState || currentDragState.pointerId !== e.pointerId) return;
+
+    if (currentDragState.hasMoved) {
+      finishIconDrag(currentDragState);
+      suppressNextClickRef.current = true;
+    }
+
+    dragStateRef.current = null;
+    setDragState(null);
+
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  };
+
+  const onIconPointerDown = (e: React.PointerEvent<HTMLButtonElement>, id: string): void => {
+    if (e.button !== 0) return;
+
+    const gridElement = gridRef.current;
+    if (!gridElement) return;
+
+    const gridRect = gridElement.getBoundingClientRect();
+    const iconRect = e.currentTarget.getBoundingClientRect();
+    const nextDragState: DragState = {
+      id,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      offsetX: e.clientX - iconRect.left,
+      offsetY: e.clientY - iconRect.top,
+      hasMoved: false,
+      left: iconRect.left - gridRect.left,
+      top: iconRect.top - gridRect.top,
+    };
+
+    dragStateRef.current = nextDragState;
+    setDragState(nextDragState);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onIconClick = (id: string): void => {
+    if (suppressNextClickRef.current) {
+      suppressNextClickRef.current = false;
+      return;
+    }
+
+    handleOpenById(id);
   };
 
   // Accessibility: roving tabindex over desktop icons
@@ -177,26 +408,42 @@ export default function Desktop(): React.ReactElement {
 
       {/* Foreground grid */}
       <div
+        ref={gridRef}
         className="desktop-grid"
         role="grid"
         aria-label="Desktop icons"
       >
-        {visibleShortcuts.map((s, i) => (
-          <button
-            ref={setIconRef(i)}
-            key={s.id}
-            className="desktop-icon"
-            data-icon={s.icon}
-            title={s.title}
-            onClick={() => handleOpenById(s.id)}
-            role="gridcell"
-            aria-label={s.title}
-            tabIndex={i === activeIndex ? 0 : -1}
-            onKeyDown={(e) => onIconKeyDown(e, i, s.id)}
-          >
-            <div className="icon-label">{s.title}</div>
-          </button>
-        ))}
+        {visibleShortcuts.map((s, i) => {
+          const position = iconLayout[s.id] ?? { column: 0, row: i };
+          const isDragging = dragState?.id === s.id && dragState.hasMoved;
+          const style: React.CSSProperties = isDragging
+            ? { left: dragState.left, top: dragState.top }
+            : { gridColumn: position.column + 1, gridRow: position.row + 1 };
+
+          return (
+            <button
+              ref={setIconRef(i)}
+              key={s.id}
+              className={`desktop-icon${isDragging ? " is-dragging" : ""}`}
+              data-icon={s.icon}
+              title={s.title}
+              style={style}
+              onClick={() => onIconClick(s.id)}
+              onPointerDown={(e) => onIconPointerDown(e, s.id)}
+              onPointerMove={updateIconDrag}
+              onPointerUp={endIconDrag}
+              onPointerCancel={endIconDrag}
+              role="gridcell"
+              aria-label={s.title}
+              aria-grabbed={isDragging}
+              tabIndex={i === activeIndex ? 0 : -1}
+              onKeyDown={(e) => onIconKeyDown(e, i, s.id)}
+              type="button"
+            >
+              <div className="icon-label">{s.title}</div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Trial banner placed directly above taskbar with consistent spacing */}
