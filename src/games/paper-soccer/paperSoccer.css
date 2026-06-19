@@ -195,3 +195,20 @@
     max-height: 62vh;
   }
 }
+
+.paper-soccer-root--menu .game-start-menu__badge {
+  grid-template-columns: 1fr;
+  border: 0;
+  border-radius: clamp(1.1rem, 4vmin, 1.75rem);
+  background: url("../../assets/game-icons/paper-soccer.svg") center / contain no-repeat;
+  box-shadow: var(--game-start-shadow);
+}
+
+.paper-soccer-root--menu .game-start-menu__badge::before,
+.paper-soccer-root--menu .game-start-menu__badge::after {
+  content: none;
+}
+
+.paper-soccer-root--menu .game-start-menu__mark {
+  display: none;
+}
