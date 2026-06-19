@@ -29,8 +29,7 @@ const toProfile = (player: { id: string; name: string; color: string; emoji: str
 export default function CountriesCitiesGame(): React.ReactElement {
   const { t } = useTranslation();
   const [phase, setPhase] = useState<Phase>("menu");
-  const [categoriesText, setCategoriesText] = useState(DEFAULT_CATEGORIES.join("
-"));
+  const [categoriesText, setCategoriesText] = useState(DEFAULT_CATEGORIES.join("\n"));
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [endMode, setEndMode] = useState<EndMode>("timer");
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -66,8 +65,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const onMessage = useCallback((message: CountriesCitiesMessage) => {
     if (message.type === "countries-cities:settings") {
       setCategories(message.categories);
-      setCategoriesText(message.categories.join("
-"));
+      setCategoriesText(message.categories.join("\n"));
       setEndMode(message.endMode);
       resetRound();
     } else if (message.type === "game:start") {
@@ -107,9 +105,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const players = useMemo(() => [lobby.localPlayer, ...lobby.remotePlayers], [lobby.localPlayer, lobby.remotePlayers]);
   const isHost = lobby.role === "host";
   const requiredApprovals = getRequiredApprovalCount(players.length);
-  const parsedCategories = useMemo(() => categoriesText.split(/
-?
-|,/).map((item) => item.trim()).filter(Boolean), [categoriesText]);
+  const parsedCategories = useMemo(() => categoriesText.split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean), [categoriesText]);
   const secondsLeft = deadlineAt ? Math.max(0, Math.ceil((deadlineAt - now) / 1000)) : null;
 
   useEffect(() => {
