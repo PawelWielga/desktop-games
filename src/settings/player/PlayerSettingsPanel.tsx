@@ -17,6 +17,15 @@ export type PlayerSettingsPanelProps = {
   initialFocusSelector?: string;
 };
 
+type EmojiPickerTarget = "player" | "ai";
+
+const EMOJI_OPTIONS = [
+  "😀", "😎", "🤖", "👾", "🐱", "🐶", "🦊", "🐼",
+  "🐸", "🐵", "🦄", "🐲", "🦖", "🚀", "⭐", "🔥",
+  "⚡", "💎", "🎮", "🎲", "🏆", "👑", "❤️", "💙",
+  "💚", "💛", "🟣", "❌", "⭕", "🍕", "🍩", "🍀",
+];
+
 function useFocusTrap(enabled: boolean, containerRef: React.RefObject<HTMLElement>, initialSelector?: string) {
   useEffect(() => {
     if (!enabled) return;
@@ -90,6 +99,7 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
 
   const titleId = useId();
   const descId = useId();
+  const emojiPickerTitleId = useId();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const isModal = variant === "modal" || variant === "drawer";
@@ -97,12 +107,26 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
   // Cast is safe because HTMLDivElement extends HTMLElement and our ref will be non-null during trap usage
   useFocusTrap(open && isModal, containerRef as unknown as React.RefObject<HTMLElement>, initialFocusSelector);
 
+  // Local form state with validation
+  const [name, setNameState] = useState(settings.name);
+  const [color, setColorState] = useState(settings.color);
+  const [emoji, setEmojiState] = useState(settings.emoji);
+  const [aiColor, setAiColorState] = useState(settings.aiColor);
+  const [aiEmoji, setAiEmojiState] = useState(settings.aiEmoji);
+  const [emojiPickerTarget, setEmojiPickerTarget] = useState<EmojiPickerTarget | null>(null);
+
   // Close on Escape and outside click for modal/drawer
   useEffect(() => {
     if (!open || !isModal) return;
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key !== "Escape") return;
+      if (emojiPickerTarget) {
+        e.preventDefault();
+        setEmojiPickerTarget(null);
+        return;
+      }
+      onClose();
     };
     const onPointer = (e: PointerEvent) => {
       if (!containerRef.current) return;
@@ -116,14 +140,7 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
       window.removeEventListener("keydown", onKey);
       containerRef.current?.removeEventListener("pointerdown", onPointer as any);
     };
-  }, [open, isModal, onClose]);
-
-  // Local form state with validation
-  const [name, setNameState] = useState(settings.name);
-  const [color, setColorState] = useState(settings.color);
-  const [emoji, setEmojiState] = useState(settings.emoji);
-  const [aiColor, setAiColorState] = useState(settings.aiColor);
-  const [aiEmoji, setAiEmojiState] = useState(settings.aiEmoji);
+  }, [open, isModal, onClose, emojiPickerTarget]);
 
   useEffect(() => {
     if (!open) return;
@@ -132,6 +149,7 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
     setEmojiState(settings.emoji);
     setAiColorState(settings.aiColor);
     setAiEmojiState(settings.aiEmoji);
+    setEmojiPickerTarget(null);
   }, [open, settings]);
 
   const invalids = useMemo(() => {
@@ -154,6 +172,8 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
   }, [name, color, emoji, aiColor, aiEmoji]);
 
   const hasErrors = Object.values(invalids).some(Boolean);
+  const currentPickerEmoji = emojiPickerTarget === "player" ? emoji : aiEmoji;
+  const currentPickerLabel = emojiPickerTarget === "player" ? "your emoji" : "AI emoji";
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,6 +192,16 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
     reset();
     showToast("Player settings reset");
     if (isModal) onClose();
+  };
+
+  const onEmojiSelect = (selectedEmoji: string) => {
+    if (emojiPickerTarget === "player") {
+      setEmojiState(selectedEmoji);
+    }
+    if (emojiPickerTarget === "ai") {
+      setAiEmojiState(selectedEmoji);
+    }
+    setEmojiPickerTarget(null);
   };
 
   if (!open && isModal) return null;
@@ -247,14 +277,19 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
 
             <div className="ps-field">
               <label htmlFor="ps-emoji">Emoji</label>
-              <input
+              <button
                 id="ps-emoji"
-                type="text"
-                value={emoji}
-                onChange={(e) => setEmojiState(e.target.value)}
+                type="button"
+                className="ps-emoji-trigger"
+                aria-haspopup="dialog"
+                aria-expanded={emojiPickerTarget === "player"}
                 aria-invalid={!!invalids.emoji}
                 aria-describedby={invalids.emoji ? "ps-emoji-err" : undefined}
-              />
+                onClick={() => setEmojiPickerTarget("player")}
+              >
+                <span className="ps-emoji-preview" aria-hidden>{emoji}</span>
+                <span>Choose emoji</span>
+              </button>
               {invalids.emoji && <div id="ps-emoji-err" className="ps-error" role="alert">{invalids.emoji}</div>}
             </div>
           </section>
@@ -289,14 +324,19 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
 
             <div className="ps-field">
               <label htmlFor="ps-ai-emoji">AI Emoji</label>
-              <input
+              <button
                 id="ps-ai-emoji"
-                type="text"
-                value={aiEmoji}
-                onChange={(e) => setAiEmojiState(e.target.value)}
+                type="button"
+                className="ps-emoji-trigger"
+                aria-haspopup="dialog"
+                aria-expanded={emojiPickerTarget === "ai"}
                 aria-invalid={!!invalids.aiEmoji}
                 aria-describedby={invalids.aiEmoji ? "ps-ai-emoji-err" : undefined}
-              />
+                onClick={() => setEmojiPickerTarget("ai")}
+              >
+                <span className="ps-emoji-preview" aria-hidden>{aiEmoji}</span>
+                <span>Choose emoji</span>
+              </button>
               {invalids.aiEmoji && <div id="ps-ai-emoji-err" className="ps-error" role="alert">{invalids.aiEmoji}</div>}
             </div>
           </section>
@@ -306,6 +346,45 @@ export default function PlayerSettingsPanel(props: PlayerSettingsPanelProps): Re
             <button type="button" className="ps-secondary" onClick={onReset}>Reset</button>
           </div>
         </form>
+
+        {emojiPickerTarget && (
+          <div className="ps-emoji-picker-backdrop" onPointerDown={() => setEmojiPickerTarget(null)}>
+            <div
+              className="ps-emoji-picker"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={emojiPickerTitleId}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <div className="ps-emoji-picker-header">
+                <h3 id={emojiPickerTitleId} className="ps-emoji-picker-title">Choose {currentPickerLabel}</h3>
+                <button
+                  type="button"
+                  className="ps-close"
+                  aria-label="Close emoji picker"
+                  onClick={() => setEmojiPickerTarget(null)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="ps-emoji-grid" role="listbox" aria-label={`Emoji options for ${currentPickerLabel}`}>
+                {EMOJI_OPTIONS.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className="ps-emoji-option"
+                    role="option"
+                    aria-label={`Choose ${option}`}
+                    aria-selected={option === currentPickerEmoji}
+                    onClick={() => onEmojiSelect(option)}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
