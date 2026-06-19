@@ -453,8 +453,8 @@ export default function Desktop(): React.ReactElement {
 
       {/* License watermark styled like an inactive Windows notice. */}
       <div className="license-watermark" aria-hidden="true">
-        <div>Dors XD is not activated</div>
-        <div>Go to Settings to activate Dors XD.</div>
+        <div>MINꓷOMS Xꓷ is not activated</div>
+        <div>Go to Settings to activate MINꓷOMS Xꓷ.</div>
       </div>
 
       <div className="taskbar" role="toolbar" aria-label="Taskbar">
