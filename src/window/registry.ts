@@ -6,6 +6,7 @@ import catculatorIcon from "@/assets/game-icons/catculator.svg";
 import connect4Icon from "@/assets/game-icons/connect4.svg";
 import memoIcon from "@/assets/game-icons/memo.svg";
 import minesweeperIcon from "@/assets/game-icons/minesweeper.svg";
+import paperSoccerIcon from "@/assets/game-icons/paper-soccer.svg";
 import pongIcon from "@/assets/game-icons/pong.svg";
 import rpsIcon from "@/assets/game-icons/rps.svg";
 import snakeIcon from "@/assets/game-icons/snake.svg";
@@ -86,6 +87,24 @@ export const AppRegistry: readonly AppRegistration[] = [
       x: 130,
       y: 80,
       loader: () => import("@/games/battleships/BattleshipsGame"),
+    },
+  },
+  {
+    id: "paper-soccer",
+    title: "Piłkarzyki na kartce",
+    titleKey: "apps.paperSoccer",
+    icon: "⚽",
+    iconAsset: paperSoccerIcon,
+    kind: "game",
+    implemented: true,
+    window: {
+      width: 760,
+      height: 820,
+      minWidth: 520,
+      minHeight: 620,
+      x: 150,
+      y: 90,
+      loader: () => import("@/games/paper-soccer/PaperSoccerGame"),
     },
   },
   {
