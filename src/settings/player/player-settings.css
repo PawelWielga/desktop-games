@@ -2,7 +2,7 @@
    - Modal, Drawer, and Inline variants
    - Respects site tokens from src/styles/base.css
    - Dark/light aware via data-theme
-*/
+ */
 
 .ps-panel {
   position: fixed;
@@ -175,6 +175,107 @@ html[data-theme="dark"] .ps-surface {
 }
 :root[data-theme="dark"] .ps-swatch {
   border-color: rgba(255,255,255,0.18);
+}
+
+/* Emoji picker */
+.ps-emoji-trigger {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: var(--radius-1, 6px);
+  background: var(--bg, var(--color-bg, #fff));
+  color: var(--fg, var(--color-fg, #111));
+  padding: 6px 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+.ps-emoji-trigger:hover {
+  background: rgba(0,0,0,0.04);
+}
+.ps-emoji-preview {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.06);
+  font-size: 20px;
+}
+.ps-emoji-picker-backdrop {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(0,0,0,0.28);
+  z-index: 1;
+}
+.ps-emoji-picker {
+  width: min(360px, 100%);
+  max-height: min(70dvh, 440px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-3, 12px);
+  border: 1px solid rgba(0,0,0,0.10);
+  background: var(--bg, var(--color-bg, #fff));
+  color: var(--fg, var(--color-fg, #111));
+  box-shadow: var(--shadow-2, 0 12px 28px rgba(0,0,0,0.22));
+}
+.ps-emoji-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+.ps-emoji-picker-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+.ps-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 8px;
+  padding: 12px;
+  overflow: auto;
+}
+.ps-emoji-option {
+  min-height: 44px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 10px;
+  background: rgba(0,0,0,0.03);
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+}
+.ps-emoji-option:hover,
+.ps-emoji-option[aria-selected="true"] {
+  background: color-mix(in srgb, var(--accent, var(--color-accent, #2563eb)) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent, var(--color-accent, #2563eb)) 40%, transparent);
+}
+:root[data-theme="dark"] .ps-emoji-trigger,
+:root[data-theme="dark"] .ps-emoji-picker {
+  border-color: #2b3443;
+  background: rgb(20,24,32);
+  color: var(--color-fg-dark, #e5e7eb);
+}
+:root[data-theme="dark"] .ps-emoji-trigger:hover,
+:root[data-theme="dark"] .ps-emoji-preview,
+:root[data-theme="dark"] .ps-emoji-option {
+  background: rgba(255,255,255,0.08);
+}
+:root[data-theme="dark"] .ps-emoji-picker-header {
+  border-bottom-color: rgba(255,255,255,0.10);
+}
+:root[data-theme="dark"] .ps-emoji-option {
+  border-color: rgba(255,255,255,0.10);
+  color: var(--color-fg-dark, #e5e7eb);
 }
 
 /* Errors */
