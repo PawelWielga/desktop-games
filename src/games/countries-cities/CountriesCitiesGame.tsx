@@ -3,28 +3,79 @@ import { GameStartMenu, type GameStartMenuAction } from "@/components/GameStartM
 import { useTranslation } from "@/i18n/useTranslation";
 import { InGameMultiplayerOverlay, MultiplayerPanel, useMultiplayerLobby } from "@/multiplayer";
 import type { GameResetMessage, GameSpecificMessage, GameStartMessage, PlayerProfile } from "@/multiplayer";
-import { calculateAnswerScore, getRequiredApprovalCount, groupSimilarAnswers, normalizeAnswer } from "./countriesCities.logic";
+import { groupSimilarAnswers, normalizeAnswer } from "./countriesCities.logic";
 import "./countriesCities.css";
 
-type Phase = "menu" | "lobby" | "setup" | "input" | "scoring" | "results";
+type Phase = "menu" | "lobby" | "setup" | "input" | "review" | "reveal" | "results";
 type EndMode = "timer" | "manual";
+type ReviewVote = "ok" | "duplicate" | "wrong";
 type Submission = { playerId: string; playerName: string; answers: Record<string, string> };
-type Votes = Record<string, Record<string, boolean>>;
+type VoteMap = Record<string, Record<string, ReviewVote>>;
 type DuplicateOverrides = Record<string, string>;
+type ReviewReady = Record<number, string[]>;
+
 type SettingsMessage = GameSpecificMessage<"countries-cities:settings", { categories: string[]; endMode: EndMode }>;
 type SubmitMessage = GameSpecificMessage<"countries-cities:submit", { player: PlayerProfile; answers: Record<string, string> }>;
 type DoneMessage = GameSpecificMessage<"countries-cities:done", { playerId: string }>;
 type DeadlineMessage = GameSpecificMessage<"countries-cities:deadline", { deadlineAt: number }>;
-type ScoringMessage = GameSpecificMessage<"countries-cities:scoring", { submissions: Submission[] }>;
-type VoteMessage = GameSpecificMessage<"countries-cities:vote", { answerId: string; accepted: boolean }>;
-type DuplicateMessage = GameSpecificMessage<"countries-cities:duplicate", { answerId: string; groupKey: string }>;
-type ResultsMessage = GameSpecificMessage<"countries-cities:results", { votes: Votes; duplicateOverrides: DuplicateOverrides }>;
-type CountriesCitiesMessage = SettingsMessage | SubmitMessage | DoneMessage | DeadlineMessage | ScoringMessage | VoteMessage | DuplicateMessage | ResultsMessage | GameResetMessage | GameStartMessage;
+type ReviewMessage = GameSpecificMessage<"countries-cities:review", { submissions: Submission[]; categoryIndex: number }>;
+type VoteMessage = GameSpecificMessage<"countries-cities:vote", { answerId: string; vote: ReviewVote }>;
+type DuplicateMessage = GameSpecificMessage<"countries-cities:duplicate", { answerId: string; groupKey: string | null }>;
+type ReviewReadyMessage = GameSpecificMessage<"countries-cities:review-ready", { categoryIndex: number; playerId: string }>;
+type RevealMessage = GameSpecificMessage<"countries-cities:reveal", { categoryIndex: number }>;
+type ResultsMessage = GameSpecificMessage<"countries-cities:results", { votes: VoteMap; duplicateOverrides: DuplicateOverrides }>;
+type CountriesCitiesMessage =
+  | SettingsMessage
+  | SubmitMessage
+  | DoneMessage
+  | DeadlineMessage
+  | ReviewMessage
+  | VoteMessage
+  | DuplicateMessage
+  | ReviewReadyMessage
+  | RevealMessage
+  | ResultsMessage
+  | GameResetMessage
+  | GameStartMessage;
+
+type VoteSummary = {
+  ok: number;
+  duplicate: number;
+  wrong: number;
+  winner: ReviewVote;
+};
 
 const DEFAULT_CATEGORIES = ["Państwo", "Miasto", "Roślina", "Zwierzę", "Rzecz"];
 const TIMER_MS = 10_000;
+const VOTE_ORDER: ReviewVote[] = ["ok", "duplicate", "wrong"];
+
 const answerId = (playerId: string, category: string): string => `${playerId}::${category}`;
-const toProfile = (player: { id: string; name: string; color: string; emoji: string }): PlayerProfile => ({ id: player.id, name: player.name, color: player.color, emoji: player.emoji });
+const toProfile = (player: { id: string; name: string; color: string; emoji: string }): PlayerProfile => ({
+  id: player.id,
+  name: player.name,
+  color: player.color,
+  emoji: player.emoji,
+});
+
+function getVoteSummary(votes: Record<string, ReviewVote> | undefined): VoteSummary {
+  const summary: VoteSummary = { ok: 0, duplicate: 0, wrong: 0, winner: "ok" };
+
+  Object.values(votes ?? {}).forEach((vote) => {
+    summary[vote] += 1;
+  });
+
+  summary.winner = VOTE_ORDER.reduce((winner, vote) => {
+    if (summary[vote] > summary[winner]) return vote;
+    return winner;
+  }, "ok" as ReviewVote);
+
+  return summary;
+}
+
+function getAnswerPoints(answer: string, summary: VoteSummary): number {
+  if (!answer.trim() || summary.winner === "wrong") return 0;
+  return summary.winner === "duplicate" ? 10 : 15;
+}
 
 export default function CountriesCitiesGame(): React.ReactElement {
   const { t } = useTranslation();
@@ -35,21 +86,30 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [donePlayers, setDonePlayers] = useState<string[]>([]);
-  const [votes, setVotes] = useState<Votes>({});
+  const [votes, setVotes] = useState<VoteMap>({});
   const [duplicateOverrides, setDuplicateOverrides] = useState<DuplicateOverrides>({});
+  const [reviewReady, setReviewReady] = useState<ReviewReady>({});
+  const [categoryIndex, setCategoryIndex] = useState(0);
   const [deadlineAt, setDeadlineAt] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
-
-  const upsertSubmission = useCallback((submission: Submission) => {
-    setSubmissions((items) => [...items.filter((item) => item.playerId !== submission.playerId), submission]);
-  }, []);
 
   const addDonePlayer = useCallback((playerId: string) => {
     setDonePlayers((items) => (items.includes(playerId) ? items : [...items, playerId]));
   }, []);
 
-  const addVote = useCallback((id: string, voterId: string, accepted: boolean) => {
-    setVotes((items) => ({ ...items, [id]: { ...(items[id] ?? {}), [voterId]: accepted } }));
+  const upsertSubmission = useCallback((submission: Submission) => {
+    setSubmissions((items) => [...items.filter((item) => item.playerId !== submission.playerId), submission]);
+  }, []);
+
+  const addVote = useCallback((id: string, voterId: string, vote: ReviewVote) => {
+    setVotes((items) => ({ ...items, [id]: { ...(items[id] ?? {}), [voterId]: vote } }));
+  }, []);
+
+  const addReviewReady = useCallback((index: number, playerId: string) => {
+    setReviewReady((items) => {
+      const ready = items[index] ?? [];
+      return ready.includes(playerId) ? items : { ...items, [index]: [...ready, playerId] };
+    });
   }, []);
 
   const resetRound = useCallback(() => {
@@ -58,55 +118,75 @@ export default function CountriesCitiesGame(): React.ReactElement {
     setDonePlayers([]);
     setVotes({});
     setDuplicateOverrides({});
+    setReviewReady({});
+    setCategoryIndex(0);
     setDeadlineAt(null);
     setPhase("setup");
   }, []);
 
-  const onMessage = useCallback((message: CountriesCitiesMessage) => {
-    if (message.type === "countries-cities:settings") {
-      setCategories(message.categories);
-      setCategoriesText(message.categories.join("\n"));
-      setEndMode(message.endMode);
-      resetRound();
-    } else if (message.type === "game:start") {
-      setAnswers({});
-      setSubmissions([]);
-      setDonePlayers([]);
-      setVotes({});
-      setDuplicateOverrides({});
-      setDeadlineAt(null);
-      setPhase("input");
-    } else if (message.type === "countries-cities:submit") {
-      upsertSubmission({ playerId: message.player.id, playerName: message.player.name, answers: message.answers });
-      addDonePlayer(message.player.id);
-    } else if (message.type === "countries-cities:done") {
-      addDonePlayer(message.playerId);
-    } else if (message.type === "countries-cities:deadline") {
-      setDeadlineAt(message.deadlineAt);
-    } else if (message.type === "countries-cities:scoring") {
-      setSubmissions(message.submissions);
-      setVotes({});
-      setDuplicateOverrides({});
-      setPhase("scoring");
-    } else if (message.type === "countries-cities:vote" && message.senderId) {
-      addVote(message.answerId, message.senderId, message.accepted);
-    } else if (message.type === "countries-cities:duplicate") {
-      setDuplicateOverrides((items) => ({ ...items, [message.answerId]: message.groupKey }));
-    } else if (message.type === "countries-cities:results") {
-      setVotes(message.votes);
-      setDuplicateOverrides(message.duplicateOverrides);
-      setPhase("results");
-    } else if (message.type === "game:reset") {
-      resetRound();
-    }
-  }, [addDonePlayer, addVote, resetRound, upsertSubmission]);
+  const onMessage = useCallback(
+    (message: CountriesCitiesMessage) => {
+      if (message.type === "countries-cities:settings") {
+        setCategories(message.categories);
+        setCategoriesText(message.categories.join("\n"));
+        setEndMode(message.endMode);
+        resetRound();
+      } else if (message.type === "game:start") {
+        setAnswers({});
+        setSubmissions([]);
+        setDonePlayers([]);
+        setVotes({});
+        setDuplicateOverrides({});
+        setReviewReady({});
+        setCategoryIndex(0);
+        setDeadlineAt(null);
+        setPhase("input");
+      } else if (message.type === "countries-cities:submit") {
+        upsertSubmission({ playerId: message.player.id, playerName: message.player.name, answers: message.answers });
+        addDonePlayer(message.player.id);
+      } else if (message.type === "countries-cities:done") {
+        addDonePlayer(message.playerId);
+      } else if (message.type === "countries-cities:deadline") {
+        setDeadlineAt(message.deadlineAt);
+      } else if (message.type === "countries-cities:review") {
+        setSubmissions(message.submissions);
+        setCategoryIndex(message.categoryIndex);
+        setPhase("review");
+      } else if (message.type === "countries-cities:vote" && message.senderId) {
+        addVote(message.answerId, message.senderId, message.vote);
+      } else if (message.type === "countries-cities:duplicate") {
+        setDuplicateOverrides((items) => {
+          const next = { ...items };
+          if (message.groupKey) next[message.answerId] = message.groupKey;
+          else delete next[message.answerId];
+          return next;
+        });
+      } else if (message.type === "countries-cities:review-ready") {
+        addReviewReady(message.categoryIndex, message.playerId);
+      } else if (message.type === "countries-cities:reveal") {
+        setCategoryIndex(message.categoryIndex);
+        setPhase("reveal");
+      } else if (message.type === "countries-cities:results") {
+        setVotes(message.votes);
+        setDuplicateOverrides(message.duplicateOverrides);
+        setPhase("results");
+      } else if (message.type === "game:reset") {
+        resetRound();
+      }
+    },
+    [addDonePlayer, addReviewReady, addVote, resetRound, upsertSubmission]
+  );
 
   const lobby = useMultiplayerLobby<CountriesCitiesMessage>({ onGameMessage: onMessage });
   const players = useMemo(() => [lobby.localPlayer, ...lobby.remotePlayers], [lobby.localPlayer, lobby.remotePlayers]);
   const isHost = lobby.role === "host";
-  const requiredApprovals = getRequiredApprovalCount(players.length);
-  const parsedCategories = useMemo(() => categoriesText.split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean), [categoriesText]);
+  const parsedCategories = useMemo(
+    () => [...new Set(categoriesText.split(/\r?\n|,/).map((item) => item.trim()).filter(Boolean))],
+    [categoriesText]
+  );
   const secondsLeft = deadlineAt ? Math.max(0, Math.ceil((deadlineAt - now) / 1000)) : null;
+  const currentCategory = categories[categoryIndex] ?? categories[0];
+  const currentReady = reviewReady[categoryIndex] ?? [];
 
   useEffect(() => {
     if (!deadlineAt || phase !== "input") return undefined;
@@ -114,47 +194,69 @@ export default function CountriesCitiesGame(): React.ReactElement {
     return () => window.clearInterval(intervalId);
   }, [deadlineAt, phase]);
 
-  const beginScoring = useCallback((items = submissions) => {
-    const fullSubmissions = players.map((player) => items.find((item) => item.playerId === player.id) ?? {
-      playerId: player.id,
-      playerName: player.name,
-      answers: Object.fromEntries(categories.map((category) => [category, ""])),
-    });
-    setSubmissions(fullSubmissions);
-    setVotes({});
-    setPhase("scoring");
-    lobby.sendMessage({ type: "countries-cities:scoring", submissions: fullSubmissions });
-  }, [categories, lobby, players, submissions]);
+  const beginReview = useCallback(
+    (items = submissions) => {
+      const fullSubmissions = players.map(
+        (player) =>
+          items.find((item) => item.playerId === player.id) ?? {
+            playerId: player.id,
+            playerName: player.name,
+            answers: Object.fromEntries(categories.map((category) => [category, ""])),
+          }
+      );
+
+      setSubmissions(fullSubmissions);
+      setCategoryIndex(0);
+      setPhase("review");
+      lobby.sendMessage({ type: "countries-cities:review", submissions: fullSubmissions, categoryIndex: 0 });
+    },
+    [categories, lobby, players, submissions]
+  );
 
   useEffect(() => {
     if (!isHost || phase !== "input") return;
+
     if (endMode === "timer" && submissions.length > 0 && deadlineAt === null) {
       const nextDeadline = Date.now() + TIMER_MS;
       setDeadlineAt(nextDeadline);
       lobby.sendMessage({ type: "countries-cities:deadline", deadlineAt: nextDeadline });
       return;
     }
-    const shouldEnd = endMode === "manual" ? donePlayers.length >= players.length : deadlineAt !== null && Date.now() >= deadlineAt;
-    if (shouldEnd) beginScoring();
-  }, [beginScoring, deadlineAt, donePlayers.length, endMode, isHost, lobby, phase, players.length, submissions.length, now]);
 
-  const groupsByCategory = useMemo(() => Object.fromEntries(categories.map((category) => [category, groupSimilarAnswers(submissions.map((item) => item.answers[category] ?? ""))])), [categories, submissions]);
-  const scores = useMemo(() => Object.fromEntries(submissions.map((submission) => [submission.playerId, categories.reduce((sum, category) => {
-    const currentAnswerId = answerId(submission.playerId, category);
-    const answer = submission.answers[category] ?? "";
-    const approvals = Object.values(votes[currentAnswerId] ?? {}).filter(Boolean).length;
-    const duplicateKey = duplicateOverrides[currentAnswerId];
-    const group = duplicateKey
-      ? groupsByCategory[category]?.find((item) => item.key === duplicateKey)
-      : groupsByCategory[category]?.find((item) => item.answers.some((value) => normalizeAnswer(value) === normalizeAnswer(answer)));
-    return sum + calculateAnswerScore({ answer, accepted: approvals >= requiredApprovals, duplicateCount: group?.answers.length ?? 1 });
-  }, 0)])), [categories, duplicateOverrides, groupsByCategory, requiredApprovals, submissions, votes]);
+    const shouldEnd = endMode === "manual" ? donePlayers.length >= players.length : deadlineAt !== null && Date.now() >= deadlineAt;
+    if (shouldEnd) beginReview();
+  }, [beginReview, deadlineAt, donePlayers.length, endMode, isHost, lobby, phase, players.length, submissions.length, now]);
+
+  const groupsByCategory = useMemo(
+    () =>
+      Object.fromEntries(
+        categories.map((category) => [category, groupSimilarAnswers(submissions.map((item) => item.answers[category] ?? ""))])
+      ),
+    [categories, submissions]
+  );
+
+  const scores = useMemo(
+    () =>
+      Object.fromEntries(
+        submissions.map((submission) => [
+          submission.playerId,
+          categories.reduce((sum, category) => {
+            const id = answerId(submission.playerId, category);
+            const answer = submission.answers[category] ?? "";
+            const summary = getVoteSummary(votes[id]);
+            return sum + getAnswerPoints(answer, summary);
+          }, 0),
+        ])
+      ),
+    [categories, submissions, votes]
+  );
 
   const publishSettings = (): void => {
-    const cleanCategories = [...new Set(parsedCategories)];
-    setCategories(cleanCategories);
+    if (parsedCategories.length === 0) return;
+
+    setCategories(parsedCategories);
     resetRound();
-    lobby.sendMessage({ type: "countries-cities:settings", categories: cleanCategories, endMode });
+    lobby.sendMessage({ type: "countries-cities:settings", categories: parsedCategories, endMode });
   };
 
   const startInput = (): void => {
@@ -165,7 +267,12 @@ export default function CountriesCitiesGame(): React.ReactElement {
 
   const submitAnswers = (): void => {
     const player = toProfile(lobby.localPlayer);
-    const submission = { playerId: player.id, playerName: player.name, answers: Object.fromEntries(categories.map((category) => [category, answers[category]?.trim() ?? ""])) };
+    const submission = {
+      playerId: player.id,
+      playerName: player.name,
+      answers: Object.fromEntries(categories.map((category) => [category, answers[category]?.trim() ?? ""])),
+    };
+
     upsertSubmission(submission);
     addDonePlayer(player.id);
     lobby.sendMessage({ type: "countries-cities:submit", player, answers: submission.answers });
@@ -176,25 +283,279 @@ export default function CountriesCitiesGame(): React.ReactElement {
     lobby.sendMessage({ type: "countries-cities:done", playerId: lobby.localPlayer.id });
   };
 
-
-  const markDuplicate = (id: string, category: string, answer: string): void => {
-    const targetGroup = groupsByCategory[category]?.find((group) => group.answers.some((value) => normalizeAnswer(value) === normalizeAnswer(answer))) ?? groupsByCategory[category]?.[0];
-    if (!targetGroup) return;
-    setDuplicateOverrides((items) => ({ ...items, [id]: targetGroup.key }));
-    lobby.sendMessage({ type: "countries-cities:duplicate", answerId: id, groupKey: targetGroup.key });
+  const vote = (id: string, selectedVote: ReviewVote): void => {
+    addVote(id, lobby.localPlayer.id, selectedVote);
+    lobby.sendMessage({ type: "countries-cities:vote", answerId: id, vote: selectedVote });
   };
 
-  const menuActions: GameStartMenuAction[] = [{ id: "online", title: t("countriesCities.online.title"), description: t("countriesCities.online.description"), icon: "🌍", featured: true, variant: "blue", actionLabel: t("countriesCities.online.join"), onSelect: () => setPhase("lobby") }];
+  const setDuplicate = (id: string, groupKey: string | null): void => {
+    setDuplicateOverrides((items) => {
+      const next = { ...items };
+      if (groupKey) next[id] = groupKey;
+      else delete next[id];
+      return next;
+    });
+    lobby.sendMessage({ type: "countries-cities:duplicate", answerId: id, groupKey });
+  };
 
-  if (phase === "menu") return <div className="countries-cities-root"><GameStartMenu title={t("apps.countriesCities")} subtitle={t("countriesCities.subtitle")} actions={menuActions} /></div>;
+  const acceptReview = (): void => {
+    addReviewReady(categoryIndex, lobby.localPlayer.id);
+    lobby.sendMessage({ type: "countries-cities:review-ready", categoryIndex, playerId: lobby.localPlayer.id });
+  };
 
-  if (phase === "lobby") return <div className="countries-cities-root"><MultiplayerPanel lobby={lobby} title={t("countriesCities.online.title")} minPlayers={2} maxPlayers={8} /><button type="button" onClick={() => setPhase("menu")}>{t("countriesCities.backToMenu")}</button>{lobby.status === "connected" && <section className="countries-cities-card">{isHost ? <><label className="countries-cities-field"><span>{t("countriesCities.categoriesLabel")}</span><textarea value={categoriesText} onChange={(event) => setCategoriesText(event.target.value)} rows={7} /></label><label className="countries-cities-checkbox"><input type="checkbox" checked={endMode === "timer"} onChange={(event) => setEndMode(event.target.checked ? "timer" : "manual")} /><span>{t("countriesCities.timerModeLabel")}</span></label><p>{t("countriesCities.parsedCategories", { count: parsedCategories.length })}</p><button className="countries-cities-primary" type="button" disabled={parsedCategories.length === 0} onClick={publishSettings}>{t("countriesCities.saveSettings")}</button></> : <p>{t("countriesCities.waitingForHostSettings")}</p>}</section>}</div>;
+  const revealCategory = (): void => {
+    setPhase("reveal");
+    lobby.sendMessage({ type: "countries-cities:reveal", categoryIndex });
+  };
 
-  if (phase === "setup") return <div className="countries-cities-root"><InGameMultiplayerOverlay lobby={lobby} maxPlayers={8} /><section className="countries-cities-card countries-cities-center"><h2>{t("countriesCities.setupTitle")}</h2><ul className="countries-cities-chip-list">{categories.map((category) => <li key={category}>{category}</li>)}</ul><p>{t(`countriesCities.endMode.${endMode}`)}</p>{isHost ? <button className="countries-cities-primary" type="button" onClick={startInput}>{t("countriesCities.startRound")}</button> : <p>{t("countriesCities.waitingForHostStart")}</p>}</section></div>;
+  const nextCategory = (): void => {
+    const nextIndex = categoryIndex + 1;
+    if (nextIndex >= categories.length) {
+      setPhase("results");
+      lobby.sendMessage({ type: "countries-cities:results", votes, duplicateOverrides });
+      return;
+    }
 
-  if (phase === "input") return <div className="countries-cities-root"><InGameMultiplayerOverlay lobby={lobby} maxPlayers={8} /><section className="countries-cities-card"><div className="countries-cities-header"><h2>{t("countriesCities.inputTitle")}</h2>{secondsLeft !== null && <strong>{t("countriesCities.timer", { seconds: secondsLeft })}</strong>}</div><div className="countries-cities-grid">{categories.map((category) => <label className="countries-cities-field" key={category}><span>{category}</span><input value={answers[category] ?? ""} onChange={(event) => setAnswers((current) => ({ ...current, [category]: event.target.value }))} /></label>)}</div><div className="countries-cities-actions"><button className="countries-cities-primary" type="button" onClick={submitAnswers}>{t("countriesCities.submitAnswers")}</button>{endMode === "manual" && <button type="button" onClick={markDone}>{t("countriesCities.markDone")}</button>}</div><p>{t("countriesCities.donePlayers", { done: donePlayers.length, total: players.length })}</p></section></div>;
+    setCategoryIndex(nextIndex);
+    setPhase("review");
+    lobby.sendMessage({ type: "countries-cities:review", submissions, categoryIndex: nextIndex });
+  };
 
-  if (phase === "scoring") return <div className="countries-cities-root"><InGameMultiplayerOverlay lobby={lobby} maxPlayers={8} /><section className="countries-cities-card"><h2>{t("countriesCities.scoringTitle")}</h2><p>{t("countriesCities.requiredApprovals", { count: requiredApprovals })}</p><div className="countries-cities-scoring">{categories.map((category) => <article className="countries-cities-category" key={category}><h3>{category}</h3>{groupsByCategory[category]?.some((group) => group.answers.length > 1) && <p>{t("countriesCities.similarHint")}</p>}{submissions.map((submission) => { const id = answerId(submission.playerId, category); const approvals = Object.values(votes[id] ?? {}).filter(Boolean).length; return <div className="countries-cities-vote" key={id}><div><strong>{submission.playerName}</strong><span>{submission.answers[category] || t("countriesCities.emptyAnswer")}</span></div><div><span>{t("countriesCities.approvals", { count: approvals })}</span><button type="button" onClick={() => { addVote(id, lobby.localPlayer.id, true); lobby.sendMessage({ type: "countries-cities:vote", answerId: id, accepted: true }); }}>{t("countriesCities.accept")}</button><button type="button" onClick={() => { addVote(id, lobby.localPlayer.id, false); lobby.sendMessage({ type: "countries-cities:vote", answerId: id, accepted: false }); }}>{t("countriesCities.reject")}</button>{isHost && <button type="button" onClick={() => markDuplicate(id, category, submission.answers[category] ?? "")}>{t("countriesCities.markDuplicate")}</button>}</div></div>; })}</article>)}</div>{isHost ? <button className="countries-cities-primary" type="button" onClick={() => { lobby.sendMessage({ type: "countries-cities:results", votes, duplicateOverrides }); setPhase("results"); }}>{t("countriesCities.showResults")}</button> : <p>{t("countriesCities.waitingForHostResults")}</p>}</section></div>;
+  const menuActions: GameStartMenuAction[] = [
+    {
+      id: "online",
+      title: t("countriesCities.online.title"),
+      description: t("countriesCities.online.description"),
+      icon: "🌍",
+      featured: true,
+      variant: "blue",
+      actionLabel: t("countriesCities.online.join"),
+      onSelect: () => setPhase("lobby"),
+    },
+  ];
 
-  return <div className="countries-cities-root"><section className="countries-cities-card countries-cities-center"><h2>{t("countriesCities.resultsTitle")}</h2><ol className="countries-cities-score-list">{submissions.slice().sort((a, b) => (scores[b.playerId] ?? 0) - (scores[a.playerId] ?? 0)).map((submission) => <li key={submission.playerId}><span>{submission.playerName}</span><strong>{t("countriesCities.points", { points: scores[submission.playerId] ?? 0 })}</strong></li>)}</ol>{isHost && <button className="countries-cities-primary" type="button" onClick={startInput}>{t("countriesCities.nextRound")}</button>}<button type="button" onClick={() => { lobby.sendMessage({ type: "game:reset" }); resetRound(); }}>{t("countriesCities.reset")}</button></section></div>;
+  if (phase === "menu") {
+    return (
+      <div className="countries-cities-root">
+        <GameStartMenu title={t("apps.countriesCities")} subtitle={t("countriesCities.subtitle")} actions={menuActions} />
+      </div>
+    );
+  }
+
+  if (phase === "lobby") {
+    return (
+      <div className="countries-cities-root">
+        <MultiplayerPanel lobby={lobby} title={t("countriesCities.online.title")} minPlayers={2} maxPlayers={8} />
+        <button type="button" onClick={() => setPhase("menu")}>
+          {t("countriesCities.backToMenu")}
+        </button>
+        {lobby.status === "connected" && (
+          <section className="countries-cities-card">
+            {isHost ? (
+              <>
+                <label className="countries-cities-field">
+                  <span>{t("countriesCities.categoriesLabel")}</span>
+                  <textarea value={categoriesText} onChange={(event) => setCategoriesText(event.target.value)} rows={7} />
+                </label>
+                <label className="countries-cities-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={endMode === "timer"}
+                    onChange={(event) => setEndMode(event.target.checked ? "timer" : "manual")}
+                  />
+                  <span>{t("countriesCities.timerModeLabel")}</span>
+                </label>
+                <p>{t("countriesCities.parsedCategories", { count: parsedCategories.length })}</p>
+                <button className="countries-cities-primary" type="button" disabled={parsedCategories.length === 0} onClick={publishSettings}>
+                  {t("countriesCities.saveSettings")}
+                </button>
+              </>
+            ) : (
+              <p>{t("countriesCities.waitingForHostSettings")}</p>
+            )}
+          </section>
+        )}
+      </div>
+    );
+  }
+
+  if (phase === "setup") {
+    return (
+      <div className="countries-cities-root">
+        <InGameMultiplayerOverlay lobby={lobby} maxPlayers={8} />
+        <section className="countries-cities-card countries-cities-center">
+          <h2>{t("countriesCities.setupTitle")}</h2>
+          <ul className="countries-cities-chip-list">
+            {categories.map((category) => (
+              <li key={category}>{category}</li>
+            ))}
+          </ul>
+          <p>{t(`countriesCities.endMode.${endMode}`)}</p>
+          {isHost ? (
+            <button className="countries-cities-primary" type="button" onClick={startInput}>
+              {t("countriesCities.startRound")}
+            </button>
+          ) : (
+            <p>{t("countriesCities.waitingForHostStart")}</p>
+          )}
+        </section>
+      </div>
+    );
+  }
+
+  if (phase === "input") {
+    return (
+      <div className="countries-cities-root">
+        <InGameMultiplayerOverlay lobby={lobby} maxPlayers={8} />
+        <section className="countries-cities-card">
+          <div className="countries-cities-header">
+            <h2>{t("countriesCities.inputTitle")}</h2>
+            {secondsLeft !== null && <strong>{t("countriesCities.timer", { seconds: secondsLeft })}</strong>}
+          </div>
+          <div className="countries-cities-grid">
+            {categories.map((category) => (
+              <label className="countries-cities-field" key={category}>
+                <span>{category}</span>
+                <input value={answers[category] ?? ""} onChange={(event) => setAnswers((current) => ({ ...current, [category]: event.target.value }))} />
+              </label>
+            ))}
+          </div>
+          <div className="countries-cities-actions">
+            <button className="countries-cities-primary" type="button" onClick={submitAnswers}>
+              {t("countriesCities.submitAnswers")}
+            </button>
+            {endMode === "manual" && (
+              <button type="button" onClick={markDone}>
+                {t("countriesCities.markDone")}
+              </button>
+            )}
+          </div>
+          <p>{t("countriesCities.donePlayers", { done: donePlayers.length, total: players.length })}</p>
+        </section>
+      </div>
+    );
+  }
+
+  if (phase === "review" || phase === "reveal") {
+    const answerGroups = groupsByCategory[currentCategory] ?? [];
+    const showAuthors = phase === "reveal";
+
+    return (
+      <div className="countries-cities-root">
+        <InGameMultiplayerOverlay lobby={lobby} maxPlayers={8} />
+        <section className="countries-cities-card">
+          <div className="countries-cities-header">
+            <div>
+              <h2>{t(showAuthors ? "countriesCities.revealTitle" : "countriesCities.reviewTitle", { category: currentCategory })}</h2>
+              <p>{t("countriesCities.categoryProgress", { current: categoryIndex + 1, total: categories.length })}</p>
+            </div>
+            {!showAuthors && <strong>{t("countriesCities.reviewReady", { done: currentReady.length, total: players.length })}</strong>}
+          </div>
+          {!showAuthors && <p>{t("countriesCities.reviewHint")}</p>}
+          <div className="countries-cities-scoring">
+            {submissions.map((submission, index) => {
+              const id = answerId(submission.playerId, currentCategory);
+              const answer = submission.answers[currentCategory] || t("countriesCities.emptyAnswer");
+              const selectedVote = votes[id]?.[lobby.localPlayer.id];
+              const summary = getVoteSummary(votes[id]);
+              const duplicateGroup = duplicateOverrides[id] ?? "";
+
+              return (
+                <article className="countries-cities-vote" key={id}>
+                  <div>
+                    <strong>{showAuthors ? submission.playerName : t("countriesCities.anonymousAnswer", { number: index + 1 })}</strong>
+                    <span>{answer}</span>
+                    {showAuthors && <em>{t(`countriesCities.voteResult.${summary.winner}`)}</em>}
+                  </div>
+                  {!showAuthors ? (
+                    <div>
+                      <span>{t("countriesCities.voteCounts", { ok: summary.ok, duplicate: summary.duplicate, wrong: summary.wrong })}</span>
+                      <button className={selectedVote === "ok" ? "countries-cities-selected" : undefined} type="button" onClick={() => vote(id, "ok")}>
+                        {t("countriesCities.vote.ok")}
+                      </button>
+                      <button
+                        className={selectedVote === "duplicate" ? "countries-cities-selected" : undefined}
+                        type="button"
+                        onClick={() => vote(id, "duplicate")}
+                      >
+                        {t("countriesCities.vote.duplicate")}
+                      </button>
+                      <button className={selectedVote === "wrong" ? "countries-cities-selected" : undefined} type="button" onClick={() => vote(id, "wrong")}>
+                        {t("countriesCities.vote.wrong")}
+                      </button>
+                      {isHost && selectedVote === "duplicate" && (
+                        <select value={duplicateGroup} onChange={(event) => setDuplicate(id, event.target.value || null)} aria-label={t("countriesCities.duplicateSelect")}>
+                          <option value="">{t("countriesCities.notDuplicate")}</option>
+                          {answerGroups
+                            .filter((group) => group.key !== normalizeAnswer(submission.answers[currentCategory] ?? ""))
+                            .map((group) => (
+                              <option key={group.key} value={group.key}>
+                                {t("countriesCities.duplicateOf", { answer: group.answers[0] })}
+                              </option>
+                            ))}
+                        </select>
+                      )}
+                    </div>
+                  ) : (
+                    <strong>{t("countriesCities.points", { points: getAnswerPoints(submission.answers[currentCategory] ?? "", summary) })}</strong>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+          {!showAuthors ? (
+            <div className="countries-cities-actions">
+              <button className="countries-cities-primary" type="button" onClick={acceptReview}>
+                {t("countriesCities.acceptReview")}
+              </button>
+              {isHost && (
+                <button type="button" disabled={currentReady.length < players.length} onClick={revealCategory}>
+                  {t("countriesCities.revealAnswers")}
+                </button>
+              )}
+            </div>
+          ) : (
+            isHost && (
+              <button className="countries-cities-primary" type="button" onClick={nextCategory}>
+                {categoryIndex + 1 >= categories.length ? t("countriesCities.showResults") : t("countriesCities.nextCategory")}
+              </button>
+            )
+          )}
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="countries-cities-root">
+      <section className="countries-cities-card countries-cities-center">
+        <h2>{t("countriesCities.resultsTitle")}</h2>
+        <ol className="countries-cities-score-list">
+          {submissions
+            .slice()
+            .sort((a, b) => (scores[b.playerId] ?? 0) - (scores[a.playerId] ?? 0))
+            .map((submission) => (
+              <li key={submission.playerId}>
+                <span>{submission.playerName}</span>
+                <strong>{t("countriesCities.points", { points: scores[submission.playerId] ?? 0 })}</strong>
+              </li>
+            ))}
+        </ol>
+        {isHost && (
+          <button className="countries-cities-primary" type="button" onClick={startInput}>
+            {t("countriesCities.nextRound")}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            lobby.sendMessage({ type: "game:reset" });
+            resetRound();
+          }}
+        >
+          {t("countriesCities.reset")}
+        </button>
+      </section>
+    </div>
+  );
 }
