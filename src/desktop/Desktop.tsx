@@ -47,11 +47,16 @@ const parseCssPixels = (value: string): number => {
 
 const parseFirstCssPixel = (value: string): number => parseCssPixels(value.split(" ")[0] ?? "");
 
-const createDefaultLayout = (ids: string[]): DesktopIconLayout =>
-  ids.reduce<DesktopIconLayout>((layout, id, index) => {
-    layout[id] = { column: 0, row: index };
-    return layout;
-  }, {});
+const getIconPositionKey = ({ column, row }: DesktopIconPosition): string => `${column}:${row}`;
+
+const findFirstFreeIconPosition = (occupiedPositions: ReadonlySet<string>): DesktopIconPosition => {
+  for (let row = 0; row <= occupiedPositions.size; row += 1) {
+    const position = { column: 0, row };
+    if (!occupiedPositions.has(getIconPositionKey(position))) return position;
+  }
+
+  return { column: 0, row: occupiedPositions.size };
+};
 
 const isIconPosition = (value: unknown): value is DesktopIconPosition => {
   if (!value || typeof value !== "object") return false;
@@ -78,9 +83,17 @@ const readStoredLayout = (): DesktopIconLayout => {
 };
 
 const mergeLayoutWithVisibleApps = (storedLayout: DesktopIconLayout, appIds: string[]): DesktopIconLayout => {
-  const fallbackLayout = createDefaultLayout(appIds);
+  const usedPositions = new Set<string>();
+
   return appIds.reduce<DesktopIconLayout>((layout, id) => {
-    layout[id] = storedLayout[id] ?? fallbackLayout[id];
+    const storedPosition = storedLayout[id];
+    const position =
+      storedPosition && !usedPositions.has(getIconPositionKey(storedPosition))
+        ? storedPosition
+        : findFirstFreeIconPosition(usedPositions);
+
+    layout[id] = position;
+    usedPositions.add(getIconPositionKey(position));
     return layout;
   }, {});
 };
