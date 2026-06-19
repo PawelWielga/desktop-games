@@ -15,12 +15,13 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   position: relative;
   padding: clamp(var(--space-3), 3vmin, var(--space-5));
   display: grid;
-  /* Strict single column so next icon is directly under the previous one. */
-  grid-template-columns: var(--desktop-icon-column);
+  grid-template-columns: repeat(auto-fill, var(--desktop-icon-column));
   grid-auto-rows: var(--desktop-icon-row);
   gap: clamp(var(--space-3), 3vmin, var(--space-5));
   align-content: start;
   justify-content: start;
+  box-sizing: border-box;
+  user-select: none;
 }
 
 /* Icons */
@@ -33,16 +34,25 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: grab;
   position: relative;
-  transition: transform .15s ease, background .2s ease;
+  transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
   backdrop-filter: blur(1.25rem);
   -webkit-backdrop-filter: blur(1.25rem);
   text-decoration: none;
   outline: none;
   color: #fff;
+  touch-action: none;
+  z-index: 1;
 }
 .desktop-icon:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+.desktop-icon.is-dragging {
+  position: absolute;
+  cursor: grabbing;
+  transform: scale(1.05);
+  z-index: calc(var(--z-windows) - 1);
+  box-shadow: var(--shadow-2);
+}
 .desktop-icon::before {
   content: attr(data-icon);
   font-size: var(--desktop-icon-font-size);
@@ -61,6 +71,7 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   max-width: var(--desktop-icon-column);
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 /* Taskbar */
