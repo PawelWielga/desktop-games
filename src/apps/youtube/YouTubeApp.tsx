@@ -21,10 +21,17 @@ const DEFAULT_VIDEO_ID = "dQw4w9WgXcQ";
 
 type ViewMode = "player" | "search";
 
-type PlayerSource = {
-  value: string;
-  title: string;
-};
+type PlayerSource =
+  | {
+      type: "video";
+      value: string;
+      title: string;
+    }
+  | {
+      type: "search";
+      value: string;
+      title: string;
+    };
 
 const getYouTubeVideoId = (value: string): string | null => {
   const trimmed = value.trim();
@@ -57,13 +64,8 @@ const getYouTubeVideoId = (value: string): string | null => {
   return null;
 };
 
-const buildYouTubeSearchUrl = (phrase: string): string => {
-  const params = new URLSearchParams({ search_query: phrase });
-  return `https://www.youtube.com/results?${params.toString()}`;
-};
-
 const buildEmbedSrc = (source: PlayerSource): string => {
-  if (source.value === DEFAULT_VIDEO_ID) {
+  if (source.type === "video" && source.value === DEFAULT_VIDEO_ID) {
     return buildDefaultYouTubeSrc(false);
   }
 
@@ -74,15 +76,21 @@ const buildEmbedSrc = (source: PlayerSource): string => {
     modestbranding: "1",
   });
 
-  return `https://www.youtube.com/embed/${source.value}?${params.toString()}`;
+  if (source.type === "video") {
+    return `https://www.youtube.com/embed/${source.value}?${params.toString()}`;
+  }
+
+  params.set("listType", "search");
+  params.set("list", source.value);
+  return `https://www.youtube.com/embed?${params.toString()}`;
 };
 
 export default function YouTubeApp(): React.ReactElement {
   const { t } = useTranslation();
   const [mode, setMode] = useState<ViewMode>("player");
   const [query, setQuery] = useState("");
-  const [lastSearchUrl, setLastSearchUrl] = useState<string | null>(null);
   const [source, setSource] = useState<PlayerSource>({
+    type: "video",
     value: DEFAULT_VIDEO_ID,
     title: "YouTube",
   });
@@ -91,6 +99,7 @@ export default function YouTubeApp(): React.ReactElement {
   const embedSrc = useMemo(() => buildEmbedSrc(source), [source]);
   const shouldUsePreloadedPlayer =
     mode === "player" &&
+    source.type === "video" &&
     source.value === DEFAULT_VIDEO_ID &&
     canUsePreloadedYouTubePlayer();
 
@@ -113,10 +122,10 @@ export default function YouTubeApp(): React.ReactElement {
 
   const playDefaultVideo = (): void => {
     setSource({
+      type: "video",
       value: DEFAULT_VIDEO_ID,
       title: "YouTube",
     });
-    setLastSearchUrl(null);
     setMode("player");
   };
 
@@ -127,19 +136,20 @@ export default function YouTubeApp(): React.ReactElement {
     if (!phrase) return;
 
     const videoId = getYouTubeVideoId(phrase);
-    if (videoId) {
-      setSource({
-        value: videoId,
-        title: "YouTube",
-      });
-      setLastSearchUrl(null);
-      setMode("player");
-      return;
-    }
-
-    const searchUrl = buildYouTubeSearchUrl(phrase);
-    setLastSearchUrl(searchUrl);
-    window.open(searchUrl, "_blank", "noopener,noreferrer");
+    setSource(
+      videoId
+        ? {
+            type: "video",
+            value: videoId,
+            title: "YouTube",
+          }
+        : {
+            type: "search",
+            value: phrase,
+            title: `YouTube: ${phrase}`,
+          }
+    );
+    setMode("player");
   };
 
   return (
@@ -153,7 +163,12 @@ export default function YouTubeApp(): React.ReactElement {
           {mode === "player" ? t("youtube.back") : t("youtube.player")}
         </button>
         <div className="youtube-app__brand" aria-label="YouTube">
-          <img className="youtube-app__brand-icon" src={youtubeIcon} alt="" aria-hidden="true" />
+          <img
+            className="youtube-app__brand-icon"
+            src={youtubeIcon}
+            alt=""
+            aria-hidden="true"
+          />
           <span>{source.title}</span>
         </div>
       </header>
@@ -161,7 +176,12 @@ export default function YouTubeApp(): React.ReactElement {
       {mode === "search" ? (
         <main className="youtube-app__search-panel">
           <div className="youtube-app__search-card">
-            <img className="youtube-app__logo" src={youtubeIcon} alt="" aria-hidden="true" />
+            <img
+              className="youtube-app__logo"
+              src={youtubeIcon}
+              alt=""
+              aria-hidden="true"
+            />
             <h2>YouTube</h2>
             <p>{t("youtube.description")}</p>
             <form className="youtube-app__search-form" onSubmit={submitSearch}>
@@ -174,15 +194,6 @@ export default function YouTubeApp(): React.ReactElement {
               />
               <button type="submit">{t("youtube.searchOrPlay")}</button>
             </form>
-            {lastSearchUrl && (
-              <p className="youtube-app__search-hint">
-                {t("youtube.searchHintBeforeLink")}
-                <a href={lastSearchUrl} target="_blank" rel="noreferrer">
-                  {t("youtube.searchHintLink")}
-                </a>
-                .
-              </p>
-            )}
             <button
               className="youtube-app__default-button"
               type="button"
