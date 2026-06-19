@@ -25,6 +25,7 @@ export type PeerRoomSnapshot = {
 
 export type MultiplayerConnectionError = {
   message: string;
+  i18nKey?: string;
   cause?: unknown;
 };
 
