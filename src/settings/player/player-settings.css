@@ -32,6 +32,7 @@
 
 /* Surface */
 .ps-surface {
+  position: relative;
   width: min(560px, calc(100vw - 32px));
   max-height: min(85vh, 820px);
   display: flex;
