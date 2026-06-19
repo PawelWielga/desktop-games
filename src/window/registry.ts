@@ -1,4 +1,16 @@
 import React from "react";
+import youtubeIcon from "@/assets/brand-icons/youtube.svg";
+import cardsIcon from "@/assets/game-icons/cards.svg";
+import catculatorIcon from "@/assets/game-icons/catculator.svg";
+import connect4Icon from "@/assets/game-icons/connect4.svg";
+import memoIcon from "@/assets/game-icons/memo.svg";
+import minesweeperIcon from "@/assets/game-icons/minesweeper.svg";
+import pongIcon from "@/assets/game-icons/pong.svg";
+import rpsIcon from "@/assets/game-icons/rps.svg";
+import snakeIcon from "@/assets/game-icons/snake.svg";
+import tetrisIcon from "@/assets/game-icons/tetris.svg";
+import tictactoeIcon from "@/assets/game-icons/tictactoe.svg";
+import settingsIcon from "@/assets/system-icons/settings.svg";
 import { startDefaultYouTubePreload } from "../apps/youtube/youtubePreloader";
 
 startDefaultYouTubePreload();
@@ -24,6 +36,7 @@ export type AppRegistration = {
   id: string;
   title: string;
   icon: string;
+  iconAsset?: string;
   kind: AppKind;
   implemented: boolean;
   showOnDesktop?: boolean;
@@ -39,6 +52,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "tictactoe",
     title: "Kółko i Krzyżyk",
     icon: "🔢",
+    iconAsset: tictactoeIcon,
     kind: "game",
     implemented: true,
     window: {
@@ -55,6 +69,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "memo",
     title: "Memo",
     icon: "🧠",
+    iconAsset: memoIcon,
     kind: "game",
     implemented: false,
   },
@@ -62,6 +77,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "snake",
     title: "Wąż",
     icon: "🐍",
+    iconAsset: snakeIcon,
     kind: "game",
     implemented: true,
     window: {
@@ -78,6 +94,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "youtube",
     title: "YouTube",
     icon: "▶️",
+    iconAsset: youtubeIcon,
     kind: "app",
     implemented: true,
     window: {
@@ -94,6 +111,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "rps",
     title: "Kamień Papier Nożyce",
     icon: "✊",
+    iconAsset: rpsIcon,
     kind: "game",
     implemented: false,
   },
@@ -101,6 +119,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "minesweeper",
     title: "Saper",
     icon: "🚩",
+    iconAsset: minesweeperIcon,
     kind: "game",
     implemented: true,
     window: {
@@ -117,6 +136,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "tetris",
     title: "Tetris",
     icon: "🧱",
+    iconAsset: tetrisIcon,
     kind: "game",
     implemented: false,
   },
@@ -124,6 +144,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "connect4",
     title: "Connect 4",
     icon: "🟡",
+    iconAsset: connect4Icon,
     kind: "game",
     implemented: false,
   },
@@ -131,6 +152,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "pong",
     title: "Pong",
     icon: "🏓",
+    iconAsset: pongIcon,
     kind: "game",
     implemented: false,
   },
@@ -138,6 +160,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "cards",
     title: "Ewolucja",
     icon: "🃏",
+    iconAsset: cardsIcon,
     kind: "game",
     implemented: false,
   },
@@ -145,6 +168,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "calc",
     title: "Catculator",
     icon: "🖩",
+    iconAsset: catculatorIcon,
     kind: "game",
     implemented: false,
   },
@@ -152,6 +176,7 @@ export const AppRegistry: readonly AppRegistration[] = [
     id: "settings",
     title: "Ustawienia",
     icon: "⚙️",
+    iconAsset: settingsIcon,
     kind: "system",
     implemented: true,
   },
