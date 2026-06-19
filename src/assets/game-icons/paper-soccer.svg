@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Paper soccer">
+  <defs>
+    <linearGradient id="paperSoccerBg" x1="12" y1="8" x2="84" y2="88" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f8fff8" />
+      <stop offset="0.52" stop-color="#dff6ea" />
+      <stop offset="1" stop-color="#cfe5ff" />
+    </linearGradient>
+    <linearGradient id="paperSoccerLine" x1="20" y1="24" x2="78" y2="72" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#188b63" />
+      <stop offset="1" stop-color="#2368c9" />
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="22" fill="url(#paperSoccerBg)" />
+  <path d="M28 14h40v10h10v48H68v10H28V72H18V24h10V14Z" fill="#ffffff" fill-opacity=".78" stroke="#174a3a" stroke-width="4" stroke-linejoin="round" />
+  <path d="M48 24v48M28 24v48M68 24v48M18 36h60M18 48h60M18 60h60" stroke="#174a3a" stroke-opacity=".13" stroke-width="2" />
+  <path d="M48 48 58 38 68 48 58 58 48 48 38 58 28 48" fill="none" stroke="url(#paperSoccerLine)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="48" cy="48" r="8" fill="#fff" stroke="#174a3a" stroke-width="4" />
+  <circle cx="28" cy="48" r="4" fill="#174a3a" />
+  <circle cx="38" cy="58" r="4" fill="#174a3a" />
+  <circle cx="58" cy="38" r="4" fill="#174a3a" />
+  <circle cx="68" cy="48" r="4" fill="#174a3a" />
+</svg>
