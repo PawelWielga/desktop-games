@@ -1,103 +1,102 @@
 # Desktop Games
 
-React + Vite + TypeScript desktop-style collection of small browser games.
+Desktop Games to przeglądarkowa kolekcja małych gier uruchamianych z ekranu przypominającego pulpit komputera. Projekt działa jak lekka, zabawna parodia klasycznego systemu operacyjnego: są ikony, okna, pasek zadań i gry otwierane tak, jakby były osobnymi programami.
 
-## Play online
+Aplikacja jest przeznaczona dla osób, które chcą po prostu wejść na stronę i pograć w krótkie, proste gry bez instalowania czegokolwiek na komputerze. Wystarczy przeglądarka internetowa.
+
+## Zagraj online
 
 https://pawelwielga.github.io/desktop-games/
 
-## Development
+## Co można tu znaleźć?
 
-Install dependencies:
+Na pulpicie dostępne są obecnie między innymi:
+
+- **Kółko i Krzyżyk** - klasyczna gra dla dwóch osób.
+- **Wąż** - sterowanie wężem, zbieranie punktów i unikanie zderzeń.
+- **Saper** - odkrywanie pól i omijanie min.
+
+Projekt jest rozwijany stopniowo. W planach są kolejne gry i funkcje, np. Memo, Tetris, Pong, Connect 4 czy inne miniaplikacje pasujące do pulpitu.
+
+## Jak działa aplikacja?
+
+Po wejściu na stronę użytkownik widzi pulpit z ikonami. Kliknięcie ikony otwiera wybraną grę w osobnym oknie. Okna można przesuwać, minimalizować, maksymalizować i zamykać, podobnie jak w zwykłym systemie operacyjnym.
+
+Całość działa w przeglądarce, więc nie trzeba nic pobierać ani instalować. Projekt ma być prosty w użyciu, lekki i przyjemny wizualnie.
+
+## Dla kogo jest ten projekt?
+
+Ten projekt może być ciekawy dla:
+
+- osób, które chcą szybko pograć w proste gry w przeglądarce,
+- dzieci i dorosłych lubiących klasyczne mini gry,
+- osób zainteresowanych wyglądem starego pulpitu komputerowego,
+- programistów, którzy chcą zobaczyć przykład aplikacji z wieloma grami we wspólnym interfejsie.
+
+## Rozwój projektu
+
+Desktop Games jest projektem hobbystycznym i rozwojowym. Każda gra jest traktowana jak osobna aplikacja uruchamiana we wspólnym środowisku pulpitu. Dzięki temu można dodawać kolejne gry bez przebudowywania całej aplikacji od zera.
+
+Dokumentacja dla osób dodających nowe gry znajduje się tutaj:
+
+- [Adding a new game](docs/adding-a-game.md)
+
+## Informacje techniczne dla programistów
+
+Projekt jest zbudowany jako aplikacja React uruchamiana przez Vite. Do sprawdzania jakości kodu używane są TypeScript, ESLint i testy automatyczne.
+
+Instalacja zależności:
 
 ```sh
 npm install
 ```
 
-Start the local dev server:
+Uruchomienie lokalnej wersji deweloperskiej:
 
 ```sh
 npm run dev
 ```
 
-Build the app:
+Zbudowanie aplikacji:
 
 ```sh
 npm run build
 ```
 
-Preview the production build:
+Podgląd wersji produkcyjnej:
 
 ```sh
 npm run preview
 ```
 
-## Project docs
-
-- [Adding a new game](docs/adding-a-game.md)
-
-## Verification
-
-Run TypeScript checks:
+Sprawdzenie typów TypeScript:
 
 ```sh
 npm run typecheck
 ```
 
-Run the current lint baseline:
+Uruchomienie lintowania:
 
 ```sh
 npm run lint
 ```
 
-`lint` runs ESLint for JavaScript, TypeScript, TSX and config files. The ESLint setup uses the TypeScript parser for TS/TSX sources and also runs `npm run typecheck`, so linting catches both style/rule issues and TypeScript compilation problems.
-
-Run automated tests:
+Uruchomienie testów:
 
 ```sh
 npm test
 ```
 
-The project uses Vitest (`vitest run`) for automated tests. Current coverage includes game logic tests for Snake and Minesweeper, and new reusable game logic should be covered with matching `*.test.ts` files.
-
-Run all merge checks:
+Pełna weryfikacja przed połączeniem zmian:
 
 ```sh
 npm run verify
 ```
 
-`verify` runs TypeScript checks, linting, Vitest tests and a production build. This is the same command used by CI before merging.
+`npm run verify` uruchamia sprawdzanie TypeScript, lintowanie, testy oraz produkcyjny build aplikacji.
 
-## Pull request checks
+## Pull requesty i kontrola jakości
 
-GitHub Actions runs the `CI / build-and-test` check for pull requests targeting `main`. The workflow installs dependencies with `npm ci` and then runs `npm run verify`.
+Dla pull requestów kierowanych do `main` GitHub Actions uruchamia check `CI / build-and-test`. Workflow instaluje zależności przez `npm ci`, a następnie wykonuje `npm run verify`.
 
-To block merging broken pull requests, configure branch protection or a repository ruleset for `main` and require the `build-and-test` status check to pass before merging.
-
-### Protecting `main`
-
-Use repository rulesets if they are available in the repository settings:
-
-1. Open the repository on GitHub.
-2. Go to `Settings` -> `Rules` -> `Rulesets`.
-3. Choose `New ruleset` -> `New branch ruleset`.
-4. Set a clear name, for example `Protect main`.
-5. Set `Enforcement status` to `Active`.
-6. In `Target branches`, add `main`.
-7. Enable `Require a pull request before merging`.
-8. Enable `Require status checks to pass`.
-9. Add the required check named `build-and-test`.
-10. Save the ruleset.
-
-If the repository uses the older branch protection screen instead:
-
-1. Open the repository on GitHub.
-2. Go to `Settings` -> `Branches`.
-3. Under `Branch protection rules`, choose `Add branch protection rule`.
-4. Set `Branch name pattern` to `main`.
-5. Enable `Require a pull request before merging`.
-6. Enable `Require status checks to pass before merging`.
-7. Search for and select the required check named `build-and-test`.
-8. Save the protection rule.
-
-After this, GitHub will block merging pull requests into `main` until the CI check passes.
+Aby zablokować mergowanie zmian, które nie przechodzą testów, można skonfigurować ochronę brancha `main` w ustawieniach repozytorium i wymagać przejścia checka `build-and-test` przed merge.
