@@ -385,3 +385,14 @@
     min-height: 2rem;
   }
 }
+
+/* UI quality pass: shared light game shell */
+.ttt-root { background: radial-gradient(circle at 18% 12%, rgba(211, 241, 224, 0.75), transparent 34%), radial-gradient(circle at 88% 18%, rgba(198, 236, 207, 0.62), transparent 32%), linear-gradient(180deg, rgba(248, 250, 249, 0.98), rgba(231, 238, 234, 0.98)); scrollbar-gutter: stable both-edges; }
+.ttt-screen-actions, .ttt-topbar, .ttt-game, .ttt-root--lobby .mp-panel, .ttt-online-note { max-width: min(100%, 38rem); }
+.ttt-game, .ttt-topbar, .ttt-root--lobby .mp-panel, .ttt-online-note { border-color: var(--game-ui-border); background: var(--game-ui-surface); box-shadow: var(--game-ui-shadow-soft); }
+.ttt-status { width: 100%; }
+.ttt-board { width: min(100%, clamp(13rem, min(58vmin, 58dvh), 21rem)); }
+.ttt-cell { min-width: 0; min-height: 0; }
+.ttt-start-online, .ttt-link-button, .ttt-reset { min-width: 0; max-width: 100%; }
+@media (max-height: 38rem) { .ttt-root { gap: var(--game-ui-gap); padding: var(--game-ui-padding); } .ttt-game, .ttt-topbar { padding: var(--game-ui-padding); } .ttt-board { width: min(100%, clamp(11rem, min(52vmin, 48dvh), 17rem)); } .ttt-online-note { padding-block: clamp(0.4rem, 1.4vmin, 0.6rem); } }
+@media (max-width: 22rem) { .ttt-screen-actions, .ttt-topbar { align-items: stretch; } .ttt-screen-actions > *, .ttt-topbar > * { width: 100%; } }
