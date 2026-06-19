@@ -1,5 +1,6 @@
 import React from "react";
 import youtubeIcon from "@/assets/brand-icons/youtube.svg";
+import battleshipsIcon from "@/assets/game-icons/battleships.svg";
 import cardsIcon from "@/assets/game-icons/cards.svg";
 import catculatorIcon from "@/assets/game-icons/catculator.svg";
 import connect4Icon from "@/assets/game-icons/connect4.svg";
@@ -66,6 +67,25 @@ export const AppRegistry: readonly AppRegistration[] = [
       x: 100,
       y: 70,
       loader: () => import("@/games/tictactoe/TicTacToeGame"),
+    },
+  },
+
+  {
+    id: "battleships",
+    title: "Okręty",
+    titleKey: "apps.battleships",
+    icon: "⚓",
+    iconAsset: battleshipsIcon,
+    kind: "game",
+    implemented: true,
+    window: {
+      width: 1040,
+      height: 760,
+      minWidth: 720,
+      minHeight: 620,
+      x: 130,
+      y: 80,
+      loader: () => import("@/games/battleships/BattleshipsGame"),
     },
   },
   {
