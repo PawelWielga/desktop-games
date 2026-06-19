@@ -6,6 +6,7 @@ import catculatorIcon from "@/assets/game-icons/catculator.svg";
 import connect4Icon from "@/assets/game-icons/connect4.svg";
 import memoIcon from "@/assets/game-icons/memo.svg";
 import foldedMonsterIcon from "@/assets/game-icons/folded-monster.svg";
+import countriesCitiesIcon from "@/assets/game-icons/countries-cities.svg";
 import minesweeperIcon from "@/assets/game-icons/minesweeper.svg";
 import paperSoccerIcon from "@/assets/game-icons/paper-soccer.svg";
 import pongIcon from "@/assets/game-icons/pong.svg";
@@ -124,6 +125,24 @@ export const AppRegistry: readonly AppRegistration[] = [
       x: 170,
       y: 100,
       loader: () => import("@/games/folded-monster/FoldedMonsterGame"),
+    },
+  },
+  {
+    id: "countries-cities",
+    title: "Państwa Miasta",
+    titleKey: "apps.countriesCities",
+    icon: "🌍",
+    iconAsset: countriesCitiesIcon,
+    kind: "game",
+    implemented: true,
+    window: {
+      width: 940,
+      height: 760,
+      minWidth: 640,
+      minHeight: 620,
+      x: 190,
+      y: 110,
+      loader: () => import("@/games/countries-cities/CountriesCitiesGame"),
     },
   },
   {
