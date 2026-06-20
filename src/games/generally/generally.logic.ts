@@ -25,10 +25,114 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const length2d = (v: Vec3) => Math.hypot(v.x, v.z);
 const normalize2d = (v: Vec3): Vec3 => { const len = length2d(v); return len > 0.0001 ? { x: v.x / len, y: 0, z: v.z / len } : { x: 0, y: 0, z: 0 }; };
 const dot2d = (a: Vec3, b: Vec3) => a.x * b.x + a.z * b.z;
-function makeHeightMap(cols: number, rows: number): number[][] { return Array.from({ length: rows }, (_, z) => Array.from({ length: cols }, (_, x) => { const nx = x / (cols - 1) - 0.5, nz = z / (rows - 1) - 0.5; const hill = Math.exp(-((nx + 0.18) ** 2 + (nz - 0.12) ** 2) * 20) * 4.2; const valley = Math.exp(-((nx - 0.25) ** 2 + (nz + 0.18) ** 2) * 26) * -2.3; const jump = Math.exp(-(nx ** 2) * 160 - ((nz + 0.32) ** 2) * 35) * 2.4; return Number((hill + valley + Math.sin(x * 0.55) * 0.2 + Math.cos(z * 0.45) * 0.2 + jump).toFixed(3)); })); }
-function surfaceForWorld(worldX: number, worldZ: number, width: number, depth: number): SurfaceId { const cx = worldX / (width / 2), cz = worldZ / (depth / 2); const outer = (cx / 0.82) ** 2 + (cz / 0.7) ** 2, inner = (cx / 0.42) ** 2 + (cz / 0.34) ** 2; if (outer < 1 && inner > 1) return Math.abs(cz) > 0.54 ? "gravel" : "asphalt"; if (Math.abs(cx) < 0.18 && cz < -0.46 && cz > -0.68) return "sand"; if (cx > 0.18 && cx < 0.45 && cz > 0.05 && cz < 0.3) return "mud"; if (cx < -0.42 && cz < 0.1 && cz > -0.22) return "ice"; return "grass"; }
-function makeSurfaceMap(cols: number, rows: number, width: number, depth: number): SurfaceId[][] { return Array.from({ length: rows }, (_, z) => Array.from({ length: cols }, (_, x) => surfaceForWorld((x / (cols - 1) - 0.5) * width, (z / (rows - 1) - 0.5) * depth, width, depth))); }
-export const DEFAULT_TRACK: TrackDefinition = (() => { const width = 92, depth = 68, cols = 64, rows = 48; return { id: "green-hills", name: "Green Hills", width, depth, heightMap: makeHeightMap(cols, rows), surfaceMap: makeSurfaceMap(cols, rows, width, depth), start: { x: 0, y: 0, z: 22 }, startYaw: Math.PI, finishLineZ: 22, waypoints: [{ x: -22, y: 0, z: 20 }, { x: -35, y: 0, z: -4 }, { x: -18, y: 0, z: -25 }, { x: 18, y: 0, z: -24 }, { x: 36, y: 0, z: -3 }, { x: 22, y: 0, z: 20 }], decorations: [{ id: "tree-1", kind: "tree", position: { x: -38, y: 0, z: 25 }, radius: 2.3 }, { id: "tree-2", kind: "tree", position: { x: 37, y: 0, z: 23 }, radius: 2.3 }, { id: "tyres-1", kind: "tyres", position: { x: 0, y: 0, z: -8 }, radius: 2.7 }, { id: "post-1", kind: "post", position: { x: -9, y: 0, z: 21 }, radius: 1.3 }, { id: "building-1", kind: "building", position: { x: 32, y: 0, z: -25 }, radius: 4.2 }] }; })();
+function makeHeightMap(cols: number, rows: number): number[][] {
+  return Array.from({ length: rows }, (_, z) =>
+    Array.from({ length: cols }, (_, x) => {
+      const nx = x / (cols - 1) - 0.5;
+      const nz = z / (rows - 1) - 0.5;
+      const ridgeLeft = Math.exp(-((nx + 0.34) ** 2) * 55 - ((nz - 0.02) ** 2) * 3) * 5.3;
+      const ridgeRight = Math.exp(-((nx - 0.3) ** 2) * 40 - ((nz + 0.08) ** 2) * 5) * 4.2;
+      const valley = Math.exp(-((nx + 0.02) ** 2) * 9 - ((nz + 0.02) ** 2) * 14) * -3.8;
+      const northBowl = Math.exp(-((nx - 0.05) ** 2 + (nz + 0.34) ** 2) * 30) * -2.2;
+      const southHill = Math.exp(-((nx - 0.12) ** 2 + (nz - 0.33) ** 2) * 24) * 3.6;
+      const jump = Math.exp(-((nx + 0.11) ** 2) * 120 - ((nz - 0.03) ** 2) * 34) * 2.8;
+      const noise = Math.sin(x * 0.38) * 0.25 + Math.cos(z * 0.43) * 0.25 + Math.sin((x + z) * 0.18) * 0.2;
+      return Number((ridgeLeft + ridgeRight + valley + northBowl + southHill + jump + noise).toFixed(3));
+    })
+  );
+}
+
+function isInsideRotatedEllipse(x: number, z: number, cx: number, cz: number, rx: number, rz: number, rotation: number): boolean {
+  const dx = x - cx;
+  const dz = z - cz;
+  const cos = Math.cos(rotation);
+  const sin = Math.sin(rotation);
+  const localX = dx * cos + dz * sin;
+  const localZ = -dx * sin + dz * cos;
+  return (localX / rx) ** 2 + (localZ / rz) ** 2 <= 1;
+}
+
+function isOnRoad(worldX: number, worldZ: number, width: number, depth: number): boolean {
+  const x = worldX / (width / 2);
+  const z = worldZ / (depth / 2);
+  const outerLoop = (x / 0.82) ** 2 + (z / 0.72) ** 2 < 1;
+  const innerLake = (x / 0.43) ** 2 + (z / 0.31) ** 2 < 1;
+  const westHairpin = isInsideRotatedEllipse(x, z, -0.45, 0.02, 0.23, 0.36, -0.45);
+  const eastHairpin = isInsideRotatedEllipse(x, z, 0.46, -0.05, 0.26, 0.32, 0.45);
+  const centralBridge = Math.abs(x) < 0.13 && z > -0.55 && z < 0.42;
+  const southernS = isInsideRotatedEllipse(x, z, -0.08, 0.46, 0.48, 0.16, 0.16);
+  return (outerLoop && !innerLake) || westHairpin || eastHairpin || centralBridge || southernS;
+}
+
+function surfaceForWorld(worldX: number, worldZ: number, width: number, depth: number): SurfaceId {
+  const x = worldX / (width / 2);
+  const z = worldZ / (depth / 2);
+  if (isOnRoad(worldX, worldZ, width, depth)) {
+    if (z < -0.52 || x > 0.56) return "gravel";
+    if (Math.abs(x) < 0.14 && z > -0.46 && z < 0.38) return "asphalt";
+    return "asphalt";
+  }
+  if (isInsideRotatedEllipse(x, z, -0.13, -0.05, 0.29, 0.19, -0.1)) return "sand";
+  if (isInsideRotatedEllipse(x, z, 0.24, 0.25, 0.19, 0.15, 0.4)) return "mud";
+  if (isInsideRotatedEllipse(x, z, -0.49, -0.27, 0.17, 0.13, -0.3)) return "ice";
+  if (Math.abs(x) > 0.86 || Math.abs(z) > 0.76) return "sand";
+  return "grass";
+}
+
+function makeSurfaceMap(cols: number, rows: number, width: number, depth: number): SurfaceId[][] {
+  return Array.from({ length: rows }, (_, z) =>
+    Array.from({ length: cols }, (_, x) => {
+      const worldX = (x / (cols - 1) - 0.5) * width;
+      const worldZ = (z / (rows - 1) - 0.5) * depth;
+      return surfaceForWorld(worldX, worldZ, width, depth);
+    })
+  );
+}
+
+export const DEFAULT_TRACK: TrackDefinition = (() => {
+  const width = 104;
+  const depth = 78;
+  const cols = 80;
+  const rows = 60;
+  return {
+    id: "hidden-valley-inspired",
+    name: "Hidden Valley Sprint",
+    width,
+    depth,
+    heightMap: makeHeightMap(cols, rows),
+    surfaceMap: makeSurfaceMap(cols, rows, width, depth),
+    start: { x: -4, y: 0, z: 28 },
+    startYaw: Math.PI,
+    finishLineZ: 28,
+    waypoints: [
+      { x: -24, y: 0, z: 26 },
+      { x: -43, y: 0, z: 9 },
+      { x: -36, y: 0, z: -17 },
+      { x: -10, y: 0, z: -32 },
+      { x: 26, y: 0, z: -30 },
+      { x: 45, y: 0, z: -8 },
+      { x: 32, y: 0, z: 17 },
+      { x: 5, y: 0, z: 6 },
+      { x: -2, y: 0, z: -18 },
+      { x: -6, y: 0, z: 24 },
+    ],
+    decorations: [
+      { id: "tree-1", kind: "tree", position: { x: -47, y: 0, z: 30 }, radius: 2.3 },
+      { id: "tree-2", kind: "tree", position: { x: -37, y: 0, z: 31 }, radius: 2.3 },
+      { id: "tree-3", kind: "tree", position: { x: 42, y: 0, z: 27 }, radius: 2.3 },
+      { id: "tree-4", kind: "tree", position: { x: 48, y: 0, z: 8 }, radius: 2.3 },
+      { id: "tree-5", kind: "tree", position: { x: -46, y: 0, z: -25 }, radius: 2.3 },
+      { id: "tree-6", kind: "tree", position: { x: 19, y: 0, z: -34 }, radius: 2.3 },
+      { id: "tyres-1", kind: "tyres", position: { x: -12, y: 0, z: 28 }, radius: 2.4 },
+      { id: "tyres-2", kind: "tyres", position: { x: 12, y: 0, z: 27 }, radius: 2.4 },
+      { id: "tyres-3", kind: "tyres", position: { x: 7, y: 0, z: 3 }, radius: 2.5 },
+      { id: "post-1", kind: "post", position: { x: -18, y: 0, z: -3 }, radius: 1.2 },
+      { id: "post-2", kind: "post", position: { x: 18, y: 0, z: -2 }, radius: 1.2 },
+      { id: "building-1", kind: "building", position: { x: 37, y: 0, z: -28 }, radius: 4.2 },
+    ],
+  };
+})();
+
 export function sampleHeight(track: TrackDefinition, x: number, z: number): number { const rows = track.heightMap.length, cols = track.heightMap[0]?.length ?? 0; const u = clamp((x / track.width + 0.5) * (cols - 1), 0, cols - 1), v = clamp((z / track.depth + 0.5) * (rows - 1), 0, rows - 1); const x0 = Math.floor(u), z0 = Math.floor(v), x1 = Math.min(x0 + 1, cols - 1), z1 = Math.min(z0 + 1, rows - 1); const tx = u - x0, tz = v - z0; return lerp(lerp(track.heightMap[z0][x0], track.heightMap[z0][x1], tx), lerp(track.heightMap[z1][x0], track.heightMap[z1][x1], tx), tz); }
 export function sampleSurface(track: TrackDefinition, x: number, z: number): SurfaceDefinition { const rows = track.surfaceMap.length, cols = track.surfaceMap[0]?.length ?? 0; const ix = clamp(Math.round((x / track.width + 0.5) * (cols - 1)), 0, cols - 1), iz = clamp(Math.round((z / track.depth + 0.5) * (rows - 1)), 0, rows - 1); return SURFACES[track.surfaceMap[iz][ix]]; }
 export function sampleSlope(track: TrackDefinition, x: number, z: number): Vec3 { return { x: sampleHeight(track, x + 0.5, z) - sampleHeight(track, x - 0.5, z), y: 0, z: sampleHeight(track, x, z + 0.5) - sampleHeight(track, x, z - 0.5) }; }
