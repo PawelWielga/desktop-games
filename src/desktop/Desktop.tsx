@@ -1,16 +1,16 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import "./desktop.css";
 import { useWindowManager } from "@/window/WindowManager";
 import { getAppRegistration, getDesktopApps, getWindowDefaults } from "@/window/registry";
 import ProgressiveImage from "@/components/ProgressiveImage";
 import { useTranslation } from "@/i18n/useTranslation";
-
-type DesktopIconPosition = {
-  column: number;
-  row: number;
-};
-
-type DesktopIconLayout = Record<string, DesktopIconPosition>;
+import {
+  createDesktopIconLayout,
+  isIconPosition,
+  type DesktopIconGridDimensions,
+  type DesktopIconLayout,
+  type DesktopIconPosition,
+} from "./desktopIconLayout";
 
 type GridMetrics = {
   paddingLeft: number;
@@ -40,31 +40,6 @@ type DragState = {
 const DESKTOP_ICON_LAYOUT_STORAGE_KEY = "desktop.iconLayout.v1";
 const DRAG_THRESHOLD_PX = 4;
 
-const parseCssPixels = (value: string): number => {
-  const parsed = Number.parseFloat(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-};
-
-const parseFirstCssPixel = (value: string): number => parseCssPixels(value.split(" ")[0] ?? "");
-
-const getIconPositionKey = ({ column, row }: DesktopIconPosition): string => `${column}:${row}`;
-
-const findFirstFreeIconPosition = (occupiedPositions: ReadonlySet<string>): DesktopIconPosition => {
-  for (let row = 0; row <= occupiedPositions.size; row += 1) {
-    const position = { column: 0, row };
-    if (!occupiedPositions.has(getIconPositionKey(position))) return position;
-  }
-
-  return { column: 0, row: occupiedPositions.size };
-};
-
-const isIconPosition = (value: unknown): value is DesktopIconPosition => {
-  if (!value || typeof value !== "object") return false;
-
-  const { column, row } = value as Partial<DesktopIconPosition>;
-  return Number.isInteger(column) && Number.isInteger(row) && typeof column === "number" && typeof row === "number" && column >= 0 && row >= 0;
-};
-
 const readStoredLayout = (): DesktopIconLayout => {
   if (typeof window === "undefined") return {};
 
@@ -82,21 +57,12 @@ const readStoredLayout = (): DesktopIconLayout => {
   }
 };
 
-const mergeLayoutWithVisibleApps = (storedLayout: DesktopIconLayout, appIds: string[]): DesktopIconLayout => {
-  const usedPositions = new Set<string>();
-
-  return appIds.reduce<DesktopIconLayout>((layout, id) => {
-    const storedPosition = storedLayout[id];
-    const position =
-      storedPosition && !usedPositions.has(getIconPositionKey(storedPosition))
-        ? storedPosition
-        : findFirstFreeIconPosition(usedPositions);
-
-    layout[id] = position;
-    usedPositions.add(getIconPositionKey(position));
-    return layout;
-  }, {});
+const parseCssPixels = (value: string): number => {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 };
+
+const parseFirstCssPixel = (value: string): number => parseCssPixels(value.split(" ")[0] ?? "");
 
 const getGridMetrics = (gridElement: HTMLDivElement): GridMetrics => {
   const styles = window.getComputedStyle(gridElement);
@@ -120,10 +86,18 @@ const getGridMetrics = (gridElement: HTMLDivElement): GridMetrics => {
 
 const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
 
-const getMaxGridPosition = (metrics: GridMetrics): DesktopIconPosition => ({
-  column: Math.max(0, Math.floor((metrics.viewportWidth - metrics.paddingLeft - metrics.paddingRight - metrics.iconColumn) / (metrics.iconColumn + metrics.gapX))),
-  row: Math.max(0, Math.floor((metrics.viewportHeight - metrics.paddingTop - metrics.paddingBottom - metrics.iconRow) / (metrics.iconRow + metrics.gapY))),
+const getGridDimensions = (metrics: GridMetrics): DesktopIconGridDimensions => ({
+  columns: Math.max(1, Math.floor((metrics.viewportWidth - metrics.paddingLeft - metrics.paddingRight - metrics.iconColumn) / (metrics.iconColumn + metrics.gapX)) + 1),
+  rowsPerColumn: Math.max(1, Math.floor((metrics.viewportHeight - metrics.paddingTop - metrics.paddingBottom - metrics.iconRow) / (metrics.iconRow + metrics.gapY)) + 1),
 });
+
+const getMaxGridPosition = (metrics: GridMetrics): DesktopIconPosition => {
+  const dimensions = getGridDimensions(metrics);
+  return {
+    column: dimensions.columns - 1,
+    row: dimensions.rowsPerColumn - 1,
+  };
+};
 
 const getSnappedPosition = (left: number, top: number, metrics: GridMetrics): DesktopIconPosition => {
   const maxPosition = getMaxGridPosition(metrics);
@@ -158,16 +132,49 @@ export default function Desktop(): React.ReactElement {
   const visibleShortcutIds = useMemo(() => visibleShortcuts.map((shortcut) => shortcut.id), [visibleShortcuts]);
 
   const [iconLayout, setIconLayout] = useState<DesktopIconLayout>(() =>
-    mergeLayoutWithVisibleApps(readStoredLayout(), visibleShortcutIds)
+    createDesktopIconLayout({
+      appIds: visibleShortcutIds,
+      storedLayout: readStoredLayout(),
+      gridDimensions: { rowsPerColumn: visibleShortcutIds.length || 1, columns: 1 },
+    })
   );
   const [dragState, setDragState] = useState<DragState | null>(null);
   const dragStateRef = useRef<DragState | null>(null);
   const suppressNextClickRef = useRef(false);
   const gridRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    setIconLayout((currentLayout) => mergeLayoutWithVisibleApps(currentLayout, visibleShortcutIds));
-  }, [visibleShortcutIds]);
+  const calculateLayoutForCurrentGrid = useCallback(
+    (layout: DesktopIconLayout): DesktopIconLayout => {
+      const gridElement = gridRef.current;
+
+      if (!gridElement) {
+        return createDesktopIconLayout({
+          appIds: visibleShortcutIds,
+          storedLayout: layout,
+          gridDimensions: { rowsPerColumn: visibleShortcutIds.length || 1, columns: 1 },
+        });
+      }
+
+      const metrics = getGridMetrics(gridElement);
+      return createDesktopIconLayout({
+        appIds: visibleShortcutIds,
+        storedLayout: layout,
+        gridDimensions: getGridDimensions(metrics),
+      });
+    },
+    [visibleShortcutIds]
+  );
+
+  useLayoutEffect(() => {
+    const updateLayout = (): void => {
+      setIconLayout((currentLayout) => calculateLayoutForCurrentGrid(currentLayout));
+    };
+
+    updateLayout();
+    window.addEventListener("resize", updateLayout);
+
+    return () => window.removeEventListener("resize", updateLayout);
+  }, [calculateLayoutForCurrentGrid]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
