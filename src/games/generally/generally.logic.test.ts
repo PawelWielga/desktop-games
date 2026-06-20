@@ -9,7 +9,7 @@ describe("generally driving model", () => {
   });
 
   it("samples different terrain surfaces from the track", () => {
-    expect(sampleSurface(DEFAULT_TRACK, 0, 22).id).toBe("asphalt");
+    expect(sampleSurface(DEFAULT_TRACK, 20, 15).id).toBe("asphalt");
     expect(sampleSurface(DEFAULT_TRACK, 0, 0).id).toBe("grass");
   });
 
