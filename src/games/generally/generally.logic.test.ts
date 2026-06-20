@@ -40,3 +40,10 @@ it("parses a GeneRally .TRK-like binary map", () => {
   expect(track.heightMap).toHaveLength(64);
   expect(track.surfaceMap[0]).toHaveLength(64);
 });
+
+it("has a more advanced default Hidden Valley-inspired layout", () => {
+  expect(DEFAULT_TRACK.name).toBe("Hidden Valley Sprint");
+  expect(DEFAULT_TRACK.waypoints.length).toBeGreaterThanOrEqual(10);
+  expect(DEFAULT_TRACK.decorations.length).toBeGreaterThanOrEqual(10);
+  expect(new Set(DEFAULT_TRACK.surfaceMap.flat()).size).toBeGreaterThanOrEqual(5);
+});

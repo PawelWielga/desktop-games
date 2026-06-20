@@ -16,7 +16,7 @@ const translations: Record<Language, Record<string, string>> = {
     "apps.battleships": "Okręty",
     "apps.paperSoccer": "Piłkarzyki na kartce",
     "apps.foldedMonster": "Składany Rysunek",
-    "apps.generally": "Generally 3D",
+    "apps.racing3d": "Wyścigi 3D",
     "apps.countriesCities": "Państwa Miasta",
     "apps.memo": "Memo",
     "apps.snake": "Wąż",
@@ -31,7 +31,7 @@ const translations: Record<Language, Record<string, string>> = {
     "apps.settings": "Ustawienia",
 
 
-    "generally.title": "Generally 3D",
+    "generally.title": "Wyścigi 3D",
     "generally.subtitle": "Małe samochodziki, cały tor na ekranie, nachylenia, skoki i nawierzchnie jak w klasycznym GeneRally.",
     "generally.start": "Start wyścigu",
     "generally.canvasLabel": "Tor wyścigowy Generally 3D",
@@ -395,7 +395,7 @@ const translations: Record<Language, Record<string, string>> = {
     "apps.battleships": "Battleships",
     "apps.paperSoccer": "Paper soccer",
     "apps.foldedMonster": "Folded Monster",
-    "apps.generally": "Generally 3D",
+    "apps.racing3d": "Wyścigi 3D",
     "apps.countriesCities": "Countries Cities",
     "apps.memo": "Memo",
     "apps.snake": "Snake",
@@ -410,7 +410,7 @@ const translations: Record<Language, Record<string, string>> = {
     "apps.settings": "Settings",
 
 
-    "generally.title": "Generally 3D",
+    "generally.title": "Wyścigi 3D",
     "generally.subtitle": "Tiny cars, whole track visible, slopes, jumps and changing surfaces inspired by classic GeneRally.",
     "generally.start": "Start race",
     "generally.canvasLabel": "Generally 3D race track",
