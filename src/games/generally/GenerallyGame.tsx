@@ -28,7 +28,7 @@ import {
 import { readGenerallyTrackFile } from "./generally.trk";
 
 type GenerallySnapshotMessage = BaseMultiplayerMessage<"generally:snapshot"> & { snapshot: GenerallyNetworkSnapshot };
-type GenerallyStartMessage = BaseMultiplayerMessage<"generally:start"> & { mode: RaceMode };
+type GenerallyStartMessage = BaseMultiplayerMessage<"generally:start"> & { mode: RaceMode; track: TrackDefinition };
 type GenerallyMessage = GenerallySnapshotMessage | GenerallyStartMessage;
 type MeshMap = Record<string, THREE.Group>;
 
@@ -173,6 +173,11 @@ export default function GenerallyGame(): React.ReactElement {
   const [status, setStatus] = useState(t("generally.status.ready"));
   const [importError, setImportError] = useState<string | null>(null);
 
+  const activateTrack = useCallback((nextTrack: TrackDefinition) => {
+    trackRef.current = nextTrack;
+    setTrack(nextTrack);
+  }, []);
+
   const startRace = useCallback(
     (nextMode: RaceMode) => {
       const initial = createRaceForTrack(nextMode, trackRef.current);
@@ -190,7 +195,10 @@ export default function GenerallyGame(): React.ReactElement {
       if (message.type === "generally:snapshot") {
         raceRef.current = { ...raceRef.current, cars: mergeRemoteCar(raceRef.current.cars, message.snapshot) };
       }
-      if (message.type === "generally:start") startRace(message.mode);
+      if (message.type === "generally:start") {
+        activateTrack(message.track);
+        startRace(message.mode);
+      }
     },
   });
 
@@ -219,8 +227,7 @@ export default function GenerallyGame(): React.ReactElement {
   async function importTrack(file: File): Promise<void> {
     try {
       const importedTrack = await readGenerallyTrackFile(file);
-      trackRef.current = importedTrack;
-      setTrack(importedTrack);
+      activateTrack(importedTrack);
       const nextRace = createRaceForTrack(mode, importedTrack);
       raceRef.current = nextRace;
       setRace(nextRace);
@@ -240,7 +247,7 @@ export default function GenerallyGame(): React.ReactElement {
       if (key === "escape") setMenuOpen((open) => !open);
       if (key === "r") {
         startRace(mode);
-        if (mode === "online") broadcast({ type: "generally:start", mode });
+        if (mode === "online") broadcast({ type: "generally:start", mode, track: trackRef.current });
       }
     };
     const onKeyUp = (event: KeyboardEvent) => keysRef.current.delete(event.key.toLowerCase());
@@ -336,7 +343,7 @@ export default function GenerallyGame(): React.ReactElement {
               className="generally-primary"
               onClick={() => {
                 startRace(mode);
-                if (mode === "online") broadcast({ type: "generally:start", mode });
+                if (mode === "online") broadcast({ type: "generally:start", mode, track: trackRef.current });
               }}
             >
               {t("generally.start")}
