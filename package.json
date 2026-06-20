@@ -28,7 +28,8 @@
     "vite": "^8.0.16",
     "@typescript-eslint/eslint-plugin": "^8.49.1",
     "@typescript-eslint/parser": "^8.49.1",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.15",
+    "@types/three": "^0.184.0"
   },
   "dependencies": {
     "@types/react": "^19.2.17",
