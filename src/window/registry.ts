@@ -6,6 +6,7 @@ import catculatorIcon from "@/assets/game-icons/catculator.svg";
 import connect4Icon from "@/assets/game-icons/connect4.svg";
 import memoIcon from "@/assets/game-icons/memo.svg";
 import foldedMonsterIcon from "@/assets/game-icons/folded-monster.svg";
+import generallyIcon from "@/assets/game-icons/generally.svg";
 import countriesCitiesIcon from "@/assets/game-icons/countries-cities.svg";
 import minesweeperIcon from "@/assets/game-icons/minesweeper.svg";
 import paperSoccerIcon from "@/assets/game-icons/paper-soccer.svg";
@@ -143,6 +144,25 @@ export const AppRegistry: readonly AppRegistration[] = [
       x: 190,
       y: 110,
       loader: () => import("@/games/countries-cities/CountriesCitiesGame"),
+    },
+  },
+
+  {
+    id: "generally",
+    title: "Generally 3D",
+    titleKey: "apps.generally",
+    icon: "🏁",
+    iconAsset: generallyIcon,
+    kind: "game",
+    implemented: true,
+    window: {
+      width: 1120,
+      height: 760,
+      minWidth: 760,
+      minHeight: 560,
+      x: 110,
+      y: 60,
+      loader: () => import("@/games/generally/GenerallyGame"),
     },
   },
   {
