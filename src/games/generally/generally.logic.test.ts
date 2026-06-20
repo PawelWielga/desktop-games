@@ -11,7 +11,7 @@ describe("generally driving model", () => {
 
   it("samples different terrain surfaces from the track", () => {
     expect(sampleSurface(DEFAULT_TRACK, 20, 15).id).toBe("asphalt");
-    expect(sampleSurface(DEFAULT_TRACK, -48, 0).id).toBe("grass");
+    expect(sampleSurface(DEFAULT_TRACK, -48, 0).id).toBe("sand");
   });
 
   it("keeps the car on the generated heightmap after landing", () => {
