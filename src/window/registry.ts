@@ -149,8 +149,8 @@ export const AppRegistry: readonly AppRegistration[] = [
 
   {
     id: "generally",
-    title: "Generally 3D",
-    titleKey: "apps.generally",
+    title: "Wyścigi 3D",
+    titleKey: "apps.racing3d",
     icon: "🏁",
     iconAsset: generallyIcon,
     kind: "game",
