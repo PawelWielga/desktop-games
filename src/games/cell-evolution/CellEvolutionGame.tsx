@@ -542,6 +542,11 @@ export default function CellEvolutionGame(): React.ReactElement {
     syncSnapshot();
   }, [syncSnapshot]);
 
+  const isKeyboardFocusOnCanvas = useCallback(
+    () => document.activeElement === canvasRef.current,
+    [],
+  );
+
   const applyUpgrade = useCallback(
     (upgrade: UpgradeId) => {
       const state = stateRef.current;
@@ -561,6 +566,7 @@ export default function CellEvolutionGame(): React.ReactElement {
     const onKeyDown = (event: KeyboardEvent): void => {
       const key = event.key.toLowerCase();
       if (!KEYBOARD_KEYS.has(key)) return;
+      if (!isKeyboardFocusOnCanvas()) return;
 
       event.preventDefault();
       pointerTargetRef.current = null;
@@ -578,7 +584,7 @@ export default function CellEvolutionGame(): React.ReactElement {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, []);
+  }, [isKeyboardFocusOnCanvas]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -717,6 +723,9 @@ export default function CellEvolutionGame(): React.ReactElement {
       <div className="cell-evolution-arena-wrap">
         <canvas
           ref={canvasRef}
+          tabIndex={0}
+          onBlur={() => pressedKeysRef.current.clear()}
+          onPointerDown={() => canvasRef.current?.focus()}
           onPointerMove={onPointerMove}
           onPointerLeave={onPointerLeave}
           aria-label={t('cellEvolution.canvasAria')}
