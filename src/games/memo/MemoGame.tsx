@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "@/i18n/useTranslation";
 import "./memo.css";
 
 type MemoCard = {
@@ -39,6 +40,7 @@ function createDeck(): MemoCard[] {
 }
 
 export default function MemoGame(): React.ReactElement {
+  const { t } = useTranslation();
   const [cards, setCards] = useState<MemoCard[]>(() => createDeck());
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [isLocked, setIsLocked] = useState(false);
@@ -124,45 +126,45 @@ export default function MemoGame(): React.ReactElement {
 
   const isWon = pairsFound === TOTAL_PAIRS;
   const statusText = isWon
-    ? `Wygrana w ${moves} ruchach!`
+    ? t("memo.status.won", { moves })
     : selectedIds.length === 1
-      ? "Wybierz drugą kartę."
-      : "Odkryj dwie takie same karty.";
+      ? t("memo.status.pickSecond")
+      : t("memo.status.ready");
 
   return (
     <div className="memo-root">
       <header className="memo-header">
         <div>
-          <p className="memo-eyebrow">Gra pamięciowa</p>
-          <h1>Memo</h1>
+          <p className="memo-eyebrow">{t("memo.eyebrow")}</p>
+          <h1>{t("memo.title")}</h1>
           <p className="memo-intro">
-            Odkrywaj po dwie karty i znajdź wszystkie pary w jak najmniejszej liczbie ruchów.
+            {t("memo.intro")}
           </p>
         </div>
         <button className="memo-reset" type="button" onClick={startNewGame}>
-          Nowa gra
+          {t("memo.newGame")}
         </button>
       </header>
 
-      <section className="memo-stats" aria-label="Statystyki gry memo">
+      <section className="memo-stats" aria-label={t("memo.statsAria")}>
         <div className="memo-stat">
-          <span>Ruchy</span>
+          <span>{t("memo.moves")}</span>
           <strong>{moves}</strong>
         </div>
         <div className="memo-stat">
-          <span>Pary</span>
+          <span>{t("memo.pairs")}</span>
           <strong>
             {pairsFound}/{TOTAL_PAIRS}
           </strong>
         </div>
         <div className="memo-stat memo-stat--wide">
-          <span>Status</span>
+          <span>{t("memo.status")}</span>
           <strong>{statusText}</strong>
         </div>
       </section>
 
       <main className="memo-board-wrap">
-        <div className="memo-board" aria-label="Plansza memo 4 na 4">
+        <div className="memo-board" aria-label={t("memo.boardAria")}>
           {cards.map((card) => {
             const isVisible = card.isRevealed || card.isMatched;
 
@@ -174,7 +176,7 @@ export default function MemoGame(): React.ReactElement {
                 data-visible={isVisible}
                 data-matched={card.isMatched}
                 disabled={isLocked || isVisible}
-                aria-label={isVisible ? `Karta ${card.symbol}` : "Zakryta karta"}
+                aria-label={isVisible ? t("memo.cardVisible", { symbol: card.symbol }) : t("memo.cardHidden")}
                 aria-pressed={isVisible}
                 onClick={() => handleCardClick(card.id)}
               >
@@ -190,7 +192,7 @@ export default function MemoGame(): React.ReactElement {
 
       {isWon ? (
         <p className="memo-win" role="status">
-          Brawo! Wszystkie pary znalezione.
+          {t("memo.win")}
         </p>
       ) : null}
     </div>
