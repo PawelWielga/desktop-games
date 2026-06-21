@@ -52,9 +52,18 @@ const KEY_TO_CONTROL: Record<string, { side: "left" | "right"; direction: -1 | 1
   arrowdown: { side: "right", direction: 1 },
 };
 const PAUSE_KEYS = new Set([" ", "p"]);
+const TEXT_ENTRY_SELECTOR = "input, textarea, select, [contenteditable='true'], [contenteditable='plaintext-only']";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+function isTextEntryTarget(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && Boolean(target.closest(TEXT_ENTRY_SELECTOR));
+}
+
+function focusCanvas(canvas: HTMLCanvasElement | null): void {
+  canvas?.focus({ preventScroll: true });
 }
 
 function createPaddle(x: number): Paddle {
@@ -192,6 +201,7 @@ function draw(ctx: CanvasRenderingContext2D, state: PongState): void {
 
 export default function PongGame(): React.ReactElement {
   const { t } = useTranslation();
+  const rootRef = useRef<HTMLElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const stateRef = useRef<PongState>(createInitialState());
@@ -274,6 +284,7 @@ export default function PongGame(): React.ReactElement {
     pressedKeysRef.current.clear();
     lastFrameRef.current = null;
     publishState();
+    window.requestAnimationFrame(() => focusCanvas(canvasRef.current));
   }, [publishState]);
 
   const togglePause = useCallback(() => {
@@ -284,6 +295,13 @@ export default function PongGame(): React.ReactElement {
     lastFrameRef.current = null;
     publishState();
   }, [publishState]);
+
+  const shouldHandleKeyboardEvent = useCallback((event: KeyboardEvent) => {
+    const root = rootRef.current;
+    const target = event.target;
+    if (!root || !(target instanceof Node) || !root.contains(target)) return false;
+    return !isTextEntryTarget(target);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -334,6 +352,11 @@ export default function PongGame(): React.ReactElement {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
+      if (!shouldHandleKeyboardEvent(event)) {
+        if (PAUSE_KEYS.has(key) || KEY_TO_CONTROL[key]) pressedKeysRef.current.clear();
+        return;
+      }
+
       if (PAUSE_KEYS.has(key)) {
         event.preventDefault();
         togglePause();
@@ -349,8 +372,9 @@ export default function PongGame(): React.ReactElement {
     const onKeyUp = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
       if (!KEY_TO_CONTROL[key]) return;
-      event.preventDefault();
       pressedKeysRef.current.delete(key);
+      if (!shouldHandleKeyboardEvent(event)) return;
+      event.preventDefault();
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -359,7 +383,13 @@ export default function PongGame(): React.ReactElement {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
-  }, [togglePause]);
+  }, [shouldHandleKeyboardEvent, togglePause]);
+
+  useEffect(() => {
+    const clearPressedKeys = () => pressedKeysRef.current.clear();
+    window.addEventListener("blur", clearPressedKeys);
+    return () => window.removeEventListener("blur", clearPressedKeys);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -368,7 +398,7 @@ export default function PongGame(): React.ReactElement {
   }, []);
 
   return (
-    <section className="pong-root" aria-label={t("pong.title")}>
+    <section className="pong-root" aria-label={t("pong.title")} ref={rootRef}>
       <header className="pong-header">
         <div>
           <p className="pong-eyebrow">{t("pong.eyebrow")}</p>
@@ -397,7 +427,7 @@ export default function PongGame(): React.ReactElement {
         <strong aria-live="polite">{statusText}</strong>
       </div>
 
-      <div className="pong-board-wrap" ref={wrapRef}>
+      <div className="pong-board-wrap" ref={wrapRef} onPointerDown={() => focusCanvas(canvasRef.current)}>
         <canvas
           ref={canvasRef}
           className="pong-canvas"
@@ -405,6 +435,7 @@ export default function PongGame(): React.ReactElement {
           height={BOARD_HEIGHT}
           aria-label={t("pong.boardAria")}
           role="img"
+          tabIndex={0}
           style={{ width: canvasSize.width, height: canvasSize.height }}
         />
       </div>
