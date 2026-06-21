@@ -309,7 +309,16 @@ export const AppRegistry: readonly AppRegistration[] = [
     icon: "🏓",
     iconAsset: pongIcon,
     kind: "game",
-    implemented: false,
+    implemented: true,
+    window: {
+      width: 700,
+      height: 640,
+      minWidth: 460,
+      minHeight: 500,
+      x: 210,
+      y: 120,
+      loader: () => import("@/games/pong/PongGame"),
+    },
   },
   {
     id: "cards",
