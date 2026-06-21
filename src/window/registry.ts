@@ -291,7 +291,16 @@ export const AppRegistry: readonly AppRegistration[] = [
     icon: "🟡",
     iconAsset: connect4Icon,
     kind: "game",
-    implemented: false,
+    implemented: true,
+    window: {
+      width: 760,
+      height: 720,
+      minWidth: 480,
+      minHeight: 520,
+      x: 170,
+      y: 90,
+      loader: () => import("@/games/connect4/Connect4Game"),
+    },
   },
   {
     id: "pong",
