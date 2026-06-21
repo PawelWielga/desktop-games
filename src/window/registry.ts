@@ -2,6 +2,7 @@ import React from "react";
 import youtubeIcon from "@/assets/brand-icons/youtube.svg";
 import battleshipsIcon from "@/assets/game-icons/battleships.svg";
 import cardsIcon from "@/assets/game-icons/cards.svg";
+import cellEvolutionIcon from "@/assets/game-icons/cell-evolution.svg";
 import catculatorIcon from "@/assets/game-icons/catculator.svg";
 import connect4Icon from "@/assets/game-icons/connect4.svg";
 import memoIcon from "@/assets/game-icons/memo.svg";
@@ -144,6 +145,25 @@ export const AppRegistry: readonly AppRegistration[] = [
       x: 190,
       y: 110,
       loader: () => import("@/games/countries-cities/CountriesCitiesGame"),
+    },
+  },
+
+  {
+    id: "cell-evolution",
+    title: "Ewolucja komórki",
+    titleKey: "apps.cellEvolution",
+    icon: "🦠",
+    iconAsset: cellEvolutionIcon,
+    kind: "game",
+    implemented: true,
+    window: {
+      width: 980,
+      height: 720,
+      minWidth: 620,
+      minHeight: 520,
+      x: 150,
+      y: 80,
+      loader: () => import("@/games/cell-evolution/CellEvolutionGame"),
     },
   },
 

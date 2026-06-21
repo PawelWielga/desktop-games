@@ -1,0 +1,189 @@
+.cell-evolution-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding: clamp(0.75rem, 2vmin, 1rem);
+  gap: clamp(0.55rem, 1.6vmin, 0.85rem);
+  box-sizing: border-box;
+  color: var(--game-ui-ink);
+  background:
+    radial-gradient(
+      circle at 18% 12%,
+      rgba(210, 255, 232, 0.78),
+      transparent 34%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(247, 252, 249, 0.98),
+      rgba(225, 239, 232, 0.98)
+    );
+  overflow: hidden;
+}
+
+.cell-evolution-header,
+.cell-evolution-hud {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1.5vmin, 0.85rem);
+  flex-wrap: wrap;
+  border: 0.0625rem solid var(--game-ui-border);
+  border-radius: var(--game-ui-radius);
+  background: var(--game-ui-surface);
+  box-shadow: var(--game-ui-shadow-soft);
+}
+
+.cell-evolution-header {
+  justify-content: space-between;
+  padding: clamp(0.65rem, 1.8vmin, 0.95rem);
+}
+
+.cell-evolution-header h2,
+.cell-evolution-card h3 {
+  margin: 0;
+  line-height: 1.1;
+}
+
+.cell-evolution-header p,
+.cell-evolution-card p {
+  margin: 0.25rem 0 0;
+  color: var(--game-ui-muted);
+  font-size: clamp(0.75rem, 1.7vmin, 0.9rem);
+}
+
+.cell-evolution-eyebrow {
+  margin: 0;
+  color: var(--game-ui-accent);
+  font-size: clamp(0.65rem, 1.5vmin, 0.75rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cell-evolution-header button,
+.cell-evolution-card button,
+.cell-evolution-upgrades button {
+  border: 0.0625rem solid var(--game-ui-border-strong);
+  border-radius: var(--game-ui-radius);
+  background: var(--game-ui-surface-strong);
+  color: var(--game-ui-ink);
+  box-shadow: 0 0.25rem 0.65rem rgba(31, 36, 48, 0.08);
+  cursor: pointer;
+}
+
+.cell-evolution-header button,
+.cell-evolution-card > button {
+  padding: clamp(0.45rem, 1.4vmin, 0.7rem) clamp(0.75rem, 2vmin, 1rem);
+  font-weight: 700;
+}
+
+.cell-evolution-header button:hover,
+.cell-evolution-card button:hover,
+.cell-evolution-upgrades button:hover {
+  background: #ffffff;
+}
+
+.cell-evolution-hud {
+  padding: clamp(0.45rem, 1.3vmin, 0.65rem);
+  font-size: clamp(0.75rem, 1.7vmin, 0.9rem);
+}
+
+.cell-evolution-hud span {
+  padding: 0.25rem 0.55rem;
+  border-radius: 999rem;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.cell-evolution-xp {
+  height: clamp(0.55rem, 1.2vmin, 0.7rem);
+  border: 0.0625rem solid rgba(31, 36, 48, 0.14);
+  border-radius: 999rem;
+  background: rgba(255, 255, 255, 0.74);
+  overflow: hidden;
+}
+
+.cell-evolution-xp div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #38bdf8);
+  transition: width 160ms ease-out;
+}
+
+.cell-evolution-arena-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: stretch;
+  border: 0.0625rem solid rgba(31, 36, 48, 0.14);
+  border-radius: var(--game-ui-radius);
+  background: linear-gradient(
+    180deg,
+    rgba(10, 15, 22, 0.94),
+    rgba(15, 23, 42, 0.96)
+  );
+  box-shadow: var(--game-ui-shadow);
+  overflow: hidden;
+}
+
+.cell-evolution-arena-wrap canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.cell-evolution-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(0.3rem);
+}
+
+.cell-evolution-card {
+  width: min(38rem, 100%);
+  padding: clamp(1rem, 3vmin, 1.35rem);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.72);
+  border-radius: calc(var(--game-ui-radius) + 0.35rem);
+  background: rgba(248, 250, 249, 0.96);
+  box-shadow: 0 1.2rem 2.5rem rgba(15, 23, 42, 0.28);
+}
+
+.cell-evolution-upgrades {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.cell-evolution-upgrades button {
+  display: grid;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 0.85rem;
+  text-align: left;
+}
+
+.cell-evolution-upgrades strong {
+  font-size: 0.95rem;
+}
+
+.cell-evolution-upgrades span,
+.cell-evolution-help {
+  color: var(--game-ui-muted);
+  font-size: clamp(0.7rem, 1.6vmin, 0.8rem);
+}
+
+.cell-evolution-help {
+  text-align: center;
+}
+
+@media (max-height: 42rem) {
+  .cell-evolution-header p,
+  .cell-evolution-help {
+    display: none;
+  }
+}
