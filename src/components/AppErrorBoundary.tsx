@@ -1,14 +1,14 @@
 import React from "react";
-import type { AppKind } from "@/window/registry";
 
 export type AppLaunchMode = "desktop-window" | "direct-route" | "unknown";
 export type AppErrorSource = "AppErrorBoundary" | "AppLoader";
+export type AppErrorKind = "game" | "system" | "app" | "unknown";
 
 export type AppErrorContext = {
   appId: string;
   appTitle: string;
   appTitleKey?: string;
-  appKind: AppKind | "unknown";
+  appKind: AppErrorKind;
   launchMode: AppLaunchMode;
 };
 
@@ -24,7 +24,7 @@ export type SafeAppErrorLogPayload = {
     id: string;
     title: string;
     titleKey?: string;
-    kind: AppKind | "unknown";
+    kind: AppErrorKind;
     launchMode: AppLaunchMode;
   };
   build: {
