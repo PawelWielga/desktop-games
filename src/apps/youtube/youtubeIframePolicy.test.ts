@@ -36,6 +36,16 @@ describe("youtube iframe policy", () => {
     expect(YOUTUBE_IFRAME_ALLOW).not.toContain("clipboard-write");
   });
 
+  it("keeps sandbox policy narrow enough to prevent the previous escape regression", () => {
+    const sandboxTokens = YOUTUBE_IFRAME_SANDBOX.split(" ");
+
+    expect(sandboxTokens).toEqual([
+      "allow-scripts",
+      "allow-same-origin",
+      "allow-presentation",
+    ]);
+  });
+
   it("limits referrer data for the cross-origin iframe", () => {
     expect(YOUTUBE_IFRAME_REFERRER_POLICY).toBe(
       "strict-origin-when-cross-origin"
