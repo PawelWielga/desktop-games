@@ -1,5 +1,5 @@
 import React from "react";
-import AppErrorBoundary, type { AppLaunchMode } from "@/components/AppErrorBoundary";
+import AppErrorBoundary, { type AppLaunchMode } from "@/components/AppErrorBoundary";
 import youtubeIcon from "@/assets/brand-icons/youtube.svg";
 import battleshipsIcon from "@/assets/game-icons/battleships.svg";
 import cardsIcon from "@/assets/game-icons/cards.svg";
