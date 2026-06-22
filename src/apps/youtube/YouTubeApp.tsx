@@ -263,7 +263,10 @@ export default function YouTubeApp(): React.ReactElement {
           </div>
         </main>
       ) : (
-        <main className="youtube-app__player" aria-label={t("youtube.playerAria")}>
+        <main
+          className="youtube-app__player"
+          aria-label={t("youtube.playerAria")}
+        >
           {shouldUsePreloadedPlayer ? (
             <div
               ref={preloadedPlayerHostRef}
