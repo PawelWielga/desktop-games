@@ -3,7 +3,7 @@ import { GameStartMenu, type GameStartMenuAction } from "@/components/GameStartM
 import { useTranslation } from "@/i18n/useTranslation";
 import { InGameMultiplayerOverlay, MultiplayerPanel, useMultiplayerLobby } from "@/multiplayer";
 import type { GameResetMessage, GameSpecificMessage, PlayerProfile } from "@/multiplayer";
-import { drawRoundLetter, groupSimilarAnswers, normalizeAnswer } from "./countriesCities.logic";
+import { COUNTRIES_CITIES_LETTERS, drawRoundLetter, groupSimilarAnswers, normalizeAnswer } from "./countriesCities.logic";
 import "./countriesCities.css";
 
 type Phase = "menu" | "lobby" | "setup" | "input" | "review" | "reveal" | "results";
@@ -242,6 +242,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const secondsLeft = deadlineAt ? Math.max(0, Math.ceil((deadlineAt - now) / 1000)) : null;
   const currentCategory = categories[categoryIndex] ?? categories[0];
   const currentReady = reviewReady[categoryIndex] ?? [];
+  const hasAvailableRoundLetters = usedLetters.length < COUNTRIES_CITIES_LETTERS.length;
   const hasAcceptedCurrentReview = currentReady.includes(lobby.localPlayer.id);
   const acceptReviewButtonClassName = hasAcceptedCurrentReview
     ? "countries-cities-primary countries-cities-accept-review countries-cities-review-accepted"
@@ -337,6 +338,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
     if (!isHost) return;
 
     const nextRound = drawRoundLetter(usedLetters);
+    if (!nextRound) return;
     setCurrentLetter(nextRound.letter);
     setUsedLetters(nextRound.usedLetters);
     resetRound("input");
@@ -477,9 +479,12 @@ export default function CountriesCitiesGame(): React.ReactElement {
           </ul>
           <p>{t(`countriesCities.endMode.${endMode}`)}</p>
           {isHost ? (
-            <button className="countries-cities-primary" type="button" onClick={startInput}>
-              {t("countriesCities.startRound")}
-            </button>
+            <>
+              <button className="countries-cities-primary" type="button" disabled={!hasAvailableRoundLetters} onClick={startInput}>
+                {t("countriesCities.startRound")}
+              </button>
+              {!hasAvailableRoundLetters && <p>{t("countriesCities.allLettersUsed")}</p>}
+            </>
           ) : (
             <p>{t("countriesCities.waitingForHostStart")}</p>
           )}
@@ -637,9 +642,10 @@ export default function CountriesCitiesGame(): React.ReactElement {
             ))}
         </ol>
         {isHost && (
-          <button className="countries-cities-primary" type="button" onClick={startInput}>
-            {t("countriesCities.nextRound")}
-          </button>
+            <button className="countries-cities-primary" type="button" disabled={!hasAvailableRoundLetters} onClick={startInput}>
+              {t("countriesCities.nextRound")}
+            </button>
+            {!hasAvailableRoundLetters && <p>{t("countriesCities.allLettersUsed")}</p>}
         )}
         <button
           type="button"

@@ -89,16 +89,18 @@ export function groupSimilarAnswers(answers: string[]): AnswerMatchGroup[] {
 export function drawRoundLetter(
   usedLetters: readonly string[],
   random: () => number = Math.random
-): { letter: string; usedLetters: string[] } {
+): { letter: string; usedLetters: string[] } | null {
   const knownLetters = new Set<string>(COUNTRIES_CITIES_LETTERS);
   const usedSet = new Set(usedLetters.map((letter) => letter.trim().toUpperCase()).filter((letter) => knownLetters.has(letter)));
   const availableLetters = COUNTRIES_CITIES_LETTERS.filter((letter) => !usedSet.has(letter));
-  const letterPool = availableLetters.length > 0 ? availableLetters : COUNTRIES_CITIES_LETTERS;
-  const letter = letterPool[Math.floor(random() * letterPool.length)] ?? letterPool[0];
+
+  if (availableLetters.length === 0) return null;
+
+  const letter = availableLetters[Math.floor(random() * availableLetters.length)] ?? availableLetters[0];
 
   return {
     letter,
-    usedLetters: availableLetters.length > 0 ? [...usedSet, letter] : [letter],
+    usedLetters: [...usedSet, letter],
   };
 }
 

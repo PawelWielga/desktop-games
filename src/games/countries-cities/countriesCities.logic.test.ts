@@ -39,11 +39,8 @@ describe("countriesCities.logic", () => {
     expect(result.usedLetters).toEqual([...usedLetters, COUNTRIES_CITIES_LETTERS[3]]);
   });
 
-  it("starts a fresh letter cycle after all letters were used", () => {
-    const result = drawRoundLetter(COUNTRIES_CITIES_LETTERS, () => 0);
-
-    expect(result.letter).toBe(COUNTRIES_CITIES_LETTERS[0]);
-    expect(result.usedLetters).toEqual([COUNTRIES_CITIES_LETTERS[0]]);
+  it("does not draw a letter after all letters were used", () => {
+    expect(drawRoundLetter(COUNTRIES_CITIES_LETTERS, () => 0)).toBeNull();
   });
 
   it("requires more than half of players to approve", () => {
