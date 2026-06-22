@@ -18,8 +18,11 @@ import {
 import "./youtube.css";
 
 const DEFAULT_VIDEO_ID = "dQw4w9WgXcQ";
+const PLAYER_LOAD_TIMEOUT_MS = 8000;
+const YOUTUBE_EMBED_ORIGIN = "https://www.youtube-nocookie.com";
 
 type ViewMode = "player" | "search";
+type PlayerLoadState = "loading" | "ready" | "failed";
 
 type PlayerSource =
   | {
@@ -32,6 +35,21 @@ type PlayerSource =
       value: string;
       title: string;
     };
+
+const isBrowser = (): boolean => typeof window !== "undefined";
+
+const getOrigin = (): string =>
+  isBrowser() ? window.location.origin : "http://localhost";
+
+const buildPlayerParams = (): URLSearchParams =>
+  new URLSearchParams({
+    autoplay: "1",
+    enablejsapi: "1",
+    playsinline: "1",
+    rel: "0",
+    modestbranding: "1",
+    origin: getOrigin(),
+  });
 
 const getYouTubeVideoId = (value: string): string | null => {
   const trimmed = value.trim();
@@ -47,7 +65,10 @@ const getYouTubeVideoId = (value: string): string | null => {
       return id && /^[a-zA-Z0-9_-]{11}$/.test(id) ? id : null;
     }
 
-    if (url.hostname.includes("youtube.com")) {
+    if (
+      url.hostname.includes("youtube.com") ||
+      url.hostname.includes("youtube-nocookie.com")
+    ) {
       const watchId = url.searchParams.get("v");
       if (watchId && /^[a-zA-Z0-9_-]{11}$/.test(watchId)) return watchId;
 
@@ -69,26 +90,24 @@ const buildEmbedSrc = (source: PlayerSource): string => {
     return buildDefaultYouTubeSrc(false);
   }
 
-  const params = new URLSearchParams({
-    autoplay: "1",
-    playsinline: "1",
-    rel: "0",
-    modestbranding: "1",
-  });
+  const params = buildPlayerParams();
 
   if (source.type === "video") {
-    return `https://www.youtube.com/embed/${source.value}?${params.toString()}`;
+    return `${YOUTUBE_EMBED_ORIGIN}/embed/${source.value}?${params.toString()}`;
   }
 
   params.set("listType", "search");
   params.set("list", source.value);
-  return `https://www.youtube.com/embed?${params.toString()}`;
+  return `${YOUTUBE_EMBED_ORIGIN}/embed?${params.toString()}`;
 };
 
 export default function YouTubeApp(): React.ReactElement {
   const { t } = useTranslation();
   const [mode, setMode] = useState<ViewMode>("player");
   const [query, setQuery] = useState("");
+  const [playerLoadState, setPlayerLoadState] =
+    useState<PlayerLoadState>("loading");
+  const [playerReloadKey, setPlayerReloadKey] = useState(0);
   const [source, setSource] = useState<PlayerSource>({
     type: "video",
     value: DEFAULT_VIDEO_ID,
@@ -97,15 +116,31 @@ export default function YouTubeApp(): React.ReactElement {
   const playerRef = useRef<HTMLElement | null>(null);
 
   const embedSrc = useMemo(() => buildEmbedSrc(source), [source]);
+  const iframeKey = `${embedSrc}:${playerReloadKey}`;
   const shouldUsePreloadedPlayer =
     mode === "player" &&
     source.type === "video" &&
     source.value === DEFAULT_VIDEO_ID &&
+    playerReloadKey === 0 &&
     canUsePreloadedYouTubePlayer();
 
   useEffect(() => {
     startDefaultYouTubePreload();
   }, []);
+
+  useEffect(() => {
+    if (mode !== "player") return;
+
+    setPlayerLoadState("loading");
+
+    const timeout = window.setTimeout(() => {
+      setPlayerLoadState((currentState) =>
+        currentState === "loading" ? "failed" : currentState
+      );
+    }, PLAYER_LOAD_TIMEOUT_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, [embedSrc, mode, playerReloadKey, shouldUsePreloadedPlayer]);
 
   useLayoutEffect(() => {
     if (!shouldUsePreloadedPlayer) {
@@ -113,9 +148,18 @@ export default function YouTubeApp(): React.ReactElement {
       return;
     }
 
-    attachDefaultYouTubePlayer(playerRef.current);
+    const attachedPlayer = attachDefaultYouTubePlayer(playerRef.current, {
+      onLoad: () => setPlayerLoadState("ready"),
+      onError: () => setPlayerLoadState("failed"),
+    });
+
+    if (!attachedPlayer.attached) {
+      setPlayerLoadState("failed");
+      return;
+    }
 
     return () => {
+      attachedPlayer.dispose();
       detachDefaultYouTubePlayer();
     };
   }, [shouldUsePreloadedPlayer]);
@@ -126,7 +170,13 @@ export default function YouTubeApp(): React.ReactElement {
       value: DEFAULT_VIDEO_ID,
       title: "YouTube",
     });
+    setPlayerReloadKey(0);
     setMode("player");
+  };
+
+  const retryPlayerLoad = (): void => {
+    setPlayerLoadState("loading");
+    setPlayerReloadKey((currentKey) => currentKey + 1);
   };
 
   const submitSearch = (event: FormEvent<HTMLFormElement>): void => {
@@ -149,6 +199,7 @@ export default function YouTubeApp(): React.ReactElement {
             title: `YouTube: ${phrase}`,
           }
     );
+    setPlayerReloadKey(0);
     setMode("player");
   };
 
@@ -211,12 +262,40 @@ export default function YouTubeApp(): React.ReactElement {
         >
           {!shouldUsePreloadedPlayer && (
             <iframe
-              key={embedSrc}
+              key={iframeKey}
               src={embedSrc}
               title={source.title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              loading="eager"
               allowFullScreen
+              onLoad={() => setPlayerLoadState("ready")}
+              onError={() => setPlayerLoadState("failed")}
             />
+          )}
+
+          {playerLoadState === "loading" && (
+            <div className="youtube-app__player-state" aria-live="polite">
+              <div className="youtube-app__player-state-card">
+                {t("youtube.playerLoading")}
+              </div>
+            </div>
+          )}
+
+          {playerLoadState === "failed" && (
+            <div className="youtube-app__player-state" role="alert">
+              <div className="youtube-app__player-state-card">
+                <h2>{t("youtube.playerFallbackTitle")}</h2>
+                <p>{t("youtube.playerFallbackDescription")}</p>
+                <button
+                  className="youtube-app__player-retry-button"
+                  type="button"
+                  onClick={retryPlayerLoad}
+                >
+                  {t("youtube.retryPlayer")}
+                </button>
+              </div>
+            </div>
           )}
         </main>
       )}

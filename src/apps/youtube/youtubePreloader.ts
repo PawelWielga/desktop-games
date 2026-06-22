@@ -2,10 +2,24 @@ const DEFAULT_YOUTUBE_VIDEO_ID = "dQw4w9WgXcQ";
 const PRELOADED_PLAYER_ID = "youtube-default-preloaded-player";
 const PRELOADED_PLAYER_WIDTH = 320;
 const PRELOADED_PLAYER_HEIGHT = 180;
+const YOUTUBE_EMBED_ORIGIN = "https://www.youtube-nocookie.com";
+
+export type YouTubePlayerLoadState = "idle" | "loading" | "ready" | "failed";
+
+type AttachDefaultYouTubePlayerCallbacks = {
+  onLoad?: () => void;
+  onError?: () => void;
+};
+
+type AttachedDefaultYouTubePlayer = {
+  attached: boolean;
+  dispose: () => void;
+};
 
 let preloadedIframe: HTMLIFrameElement | null = null;
 let hiddenHost: HTMLDivElement | null = null;
 let deferredPreloadStarted = false;
+let preloadedIframeLoadState: YouTubePlayerLoadState = "idle";
 
 const isBrowser = (): boolean =>
   typeof window !== "undefined" && typeof document !== "undefined";
@@ -36,7 +50,7 @@ export const buildDefaultYouTubeSrc = (muted: boolean): string => {
     params.set("mute", "1");
   }
 
-  return `https://www.youtube.com/embed/${DEFAULT_YOUTUBE_VIDEO_ID}?${params.toString()}`;
+  return `${YOUTUBE_EMBED_ORIGIN}/embed/${DEFAULT_YOUTUBE_VIDEO_ID}?${params.toString()}`;
 };
 
 const createHiddenHost = (): HTMLDivElement | null => {
@@ -92,12 +106,8 @@ const postPlayerCommand = (
   args: Array<number | boolean> = []
 ): void => {
   iframe.contentWindow?.postMessage(
-    JSON.stringify({
-      event: "command",
-      func,
-      args,
-    }),
-    "https://www.youtube.com"
+    JSON.stringify({ event: "command", func, args }),
+    YOUTUBE_EMBED_ORIGIN
   );
 };
 
@@ -111,10 +121,8 @@ const wakeDefaultPlayer = (iframe: HTMLIFrameElement): void => {
 export const startDefaultYouTubePreload = (): void => {
   if (!isBrowser() || preloadedIframe) return;
 
-  ensurePreconnect("https://www.youtube.com");
+  ensurePreconnect(YOUTUBE_EMBED_ORIGIN);
   ensurePreconnect("https://i.ytimg.com");
-  ensurePreconnect("https://www.google.com");
-  ensurePreconnect("https://googleads.g.doubleclick.net");
 
   hiddenHost = createHiddenHost();
   if (!hiddenHost) {
@@ -132,22 +140,52 @@ export const startDefaultYouTubePreload = (): void => {
   iframe.title = "YouTube";
   iframe.src = buildDefaultYouTubeSrc(true);
   iframe.setAttribute("loading", "eager");
+  iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
   iframe.allow =
     "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
   iframe.setAttribute("allowfullscreen", "true");
+  iframe.addEventListener("load", () => {
+    preloadedIframeLoadState = "ready";
+  });
+  iframe.addEventListener("error", () => {
+    preloadedIframeLoadState = "failed";
+  });
 
   prepareIframeForHiddenPreload(iframe);
   hiddenHost.appendChild(iframe);
   preloadedIframe = iframe;
+  preloadedIframeLoadState = "loading";
 };
 
 export const attachDefaultYouTubePlayer = (
-  target: HTMLElement | null
-): boolean => {
-  if (!isBrowser() || !target) return false;
+  target: HTMLElement | null,
+  callbacks: AttachDefaultYouTubePlayerCallbacks = {}
+): AttachedDefaultYouTubePlayer => {
+  if (!isBrowser() || !target) {
+    return { attached: false, dispose: () => undefined };
+  }
 
   startDefaultYouTubePreload();
-  if (!preloadedIframe) return false;
+  if (!preloadedIframe) {
+    return { attached: false, dispose: () => undefined };
+  }
+
+  let disposed = false;
+  const handleLoad = (): void => {
+    if (!disposed) callbacks.onLoad?.();
+  };
+  const handleError = (): void => {
+    if (!disposed) callbacks.onError?.();
+  };
+
+  if (preloadedIframeLoadState === "ready") {
+    callbacks.onLoad?.();
+  } else if (preloadedIframeLoadState === "failed") {
+    callbacks.onError?.();
+  } else {
+    preloadedIframe.addEventListener("load", handleLoad, { once: true });
+    preloadedIframe.addEventListener("error", handleError, { once: true });
+  }
 
   prepareIframeForPlayer(preloadedIframe);
   target.textContent = "";
@@ -165,7 +203,14 @@ export const attachDefaultYouTubePlayer = (
     }
   }, 750);
 
-  return true;
+  return {
+    attached: true,
+    dispose: () => {
+      disposed = true;
+      preloadedIframe?.removeEventListener("load", handleLoad);
+      preloadedIframe?.removeEventListener("error", handleError);
+    },
+  };
 };
 
 export const detachDefaultYouTubePlayer = (): void => {
