@@ -176,3 +176,96 @@
   .window-header { padding-inline: clamp(0.45rem, 2vmin, var(--space-3)); }
   .window-controls { gap: clamp(0.25rem, 1.5vmin, var(--space-2)); }
 }
+
+.window-error-boundary {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: clamp(var(--space-4), 4vw, var(--space-7));
+  color: var(--text-primary);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.94), rgba(246, 248, 252, 0.98));
+}
+
+.window-error-boundary__icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 193, 7, 0.18);
+  font-size: 1.5rem;
+}
+
+.window-error-boundary__body {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 42rem;
+}
+
+.window-error-boundary__body h2 {
+  margin: 0;
+  font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+}
+
+.window-error-boundary__body p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.window-error-boundary__close {
+  justify-self: start;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--text-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.window-error-boundary__close:hover {
+  background: rgba(255, 255, 255, 1);
+}
+
+.window-error-boundary__details {
+  width: 100%;
+  max-width: 52rem;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.window-error-boundary__details summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.window-error-boundary__details dl {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+}
+
+.window-error-boundary__details dt {
+  font-weight: 700;
+}
+
+.window-error-boundary__details dd {
+  margin: 0;
+}
+
+.window-error-boundary__details pre {
+  max-height: 14rem;
+  overflow: auto;
+  margin: 0;
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  background: rgba(15, 23, 42, 0.08);
+  white-space: pre-wrap;
+  word-break: break-word;
+}

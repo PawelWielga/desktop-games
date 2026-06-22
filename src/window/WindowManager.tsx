@@ -8,6 +8,7 @@ import React, {
   useEffect,
 } from "react";
 import "./window.css";
+import { WindowErrorBoundary, type WindowErrorBoundaryLabels } from "./WindowErrorBoundary";
 import { useWindowResize } from "./hooks/useWindowResize";
 import { getAppTitleKey, getWindowDefaults } from "./registry";
 import { useWindowDrag } from "./hooks/useWindowDrag";
@@ -530,6 +531,18 @@ function WindowFrame(props: {
   const maximizeWindowLabel = w.maximized
     ? t("window.restoreWindow", { title: displayTitle })
     : t("window.maximizeWindow", { title: displayTitle });
+  const errorBoundaryLabels = useMemo<WindowErrorBoundaryLabels>(
+    () => ({
+      title: t("window.error.title"),
+      message: t("window.error.message", { title: displayTitle }),
+      close: t("window.error.close"),
+      technicalDetails: t("window.error.technicalDetails"),
+      errorMessage: t("window.error.errorMessage"),
+      stackTrace: t("window.error.stackTrace"),
+      componentStack: t("window.error.componentStack"),
+    }),
+    [displayTitle, t]
+  );
 
   return (
     <div
@@ -599,7 +612,13 @@ function WindowFrame(props: {
           props.onFocus(w.id);
         }}
       >
-        {w.content}
+        <WindowErrorBoundary
+          labels={errorBoundaryLabels}
+          onClose={() => props.onClose(w.id)}
+          windowTitle={displayTitle}
+        >
+          {w.content}
+        </WindowErrorBoundary>
       </div>
       {
         !w.maximized && (
