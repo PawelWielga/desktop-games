@@ -3,6 +3,32 @@ export type AnswerMatchGroup = {
   answers: string[];
 };
 
+export const COUNTRIES_CITIES_LETTERS = [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "H",
+  "I",
+  "J",
+  "K",
+  "L",
+  "Ł",
+  "M",
+  "N",
+  "O",
+  "P",
+  "R",
+  "S",
+  "T",
+  "U",
+  "W",
+  "Z",
+] as const;
+
 const POLISH_CHARS: Record<string, string> = {
   ą: "a",
   ć: "c",
@@ -58,6 +84,24 @@ export function groupSimilarAnswers(answers: string[]): AnswerMatchGroup[] {
     groups.push({ key: normalized, answers: [answer] });
     return groups;
   }, []);
+}
+
+export function drawRoundLetter(
+  usedLetters: readonly string[],
+  random: () => number = Math.random
+): { letter: string; usedLetters: string[] } | null {
+  const knownLetters = new Set<string>(COUNTRIES_CITIES_LETTERS);
+  const usedSet = new Set(usedLetters.map((letter) => letter.trim().toUpperCase()).filter((letter) => knownLetters.has(letter)));
+  const availableLetters = COUNTRIES_CITIES_LETTERS.filter((letter) => !usedSet.has(letter));
+
+  if (availableLetters.length === 0) return null;
+
+  const letter = availableLetters[Math.floor(random() * availableLetters.length)] ?? availableLetters[0];
+
+  return {
+    letter,
+    usedLetters: [...usedSet, letter],
+  };
 }
 
 export function getRequiredApprovalCount(playerCount: number): number {

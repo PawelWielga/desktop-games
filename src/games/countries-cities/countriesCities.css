@@ -1,3 +1,233 @@
-.countries-cities-root{min-height:100%;height:100%;display:grid;align-content:start;gap:clamp(.65rem,1.6vmin,1rem);padding:clamp(.75rem,2vmin,1.2rem);color:#1f2430;overflow:auto}.countries-cities-card{display:grid;gap:clamp(.75rem,1.8vmin,1.1rem);padding:clamp(.9rem,2.2vmin,1.35rem);border:.0625rem solid rgba(255,255,255,.72);border-radius:clamp(.8rem,2vmin,1.1rem);background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(216,241,255,.86));box-shadow:0 .65rem 1.4rem rgba(31,36,48,.16)}.countries-cities-center{max-width:48rem;margin-inline:auto;text-align:center}.countries-cities-header,.countries-cities-actions,.countries-cities-vote>div:last-child{display:flex;align-items:center;justify-content:space-between;gap:.65rem;flex-wrap:wrap}.countries-cities-grid,.countries-cities-scoring{display:grid;gap:.8rem}.countries-cities-grid{grid-template-columns:repeat(auto-fit,minmax(min(14rem,100%),1fr))}.countries-cities-field{display:grid;gap:.35rem;text-align:left;font-weight:800}.countries-cities-field input,.countries-cities-field textarea{width:100%;border:.0625rem solid rgba(31,36,48,.18);border-radius:.65rem;padding:.68rem .75rem;background:rgba(255,255,255,.76);color:inherit;font:inherit;font-weight:700}.countries-cities-field textarea{resize:vertical;min-height:8rem}.countries-cities-checkbox{display:flex;align-items:flex-start;gap:.55rem;font-weight:800}.countries-cities-primary,.countries-cities-root button{border:0;border-radius:.65rem;padding:.65rem .95rem;background:rgba(255,255,255,.82);color:#20342f;font:inherit;font-weight:900;cursor:pointer;box-shadow:0 .35rem .7rem rgba(31,36,48,.12)}.countries-cities-primary{background:linear-gradient(135deg,rgba(143,216,151,.94),rgba(222,248,213,.94))}.countries-cities-root button:disabled{opacity:.55;cursor:not-allowed}.countries-cities-chip-list{display:flex;gap:.45rem;flex-wrap:wrap;justify-content:center;padding:0;margin:0;list-style:none}.countries-cities-chip-list li,.countries-cities-header strong{border-radius:999px;padding:.35rem .65rem;background:rgba(255,255,255,.65)}.countries-cities-category{display:grid;gap:.6rem;padding:.8rem;border-radius:.8rem;background:rgba(255,255,255,.56)}.countries-cities-category h3{margin:0}.countries-cities-vote,.countries-cities-score-list li{display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.55rem;border-radius:.65rem;background:rgba(255,255,255,.68)}.countries-cities-vote>div:first-child{display:grid;gap:.15rem;min-width:0}.countries-cities-vote span{overflow-wrap:anywhere}.countries-cities-score-list{display:grid;gap:.55rem;margin:0;padding-left:1.3rem;text-align:left}@media (max-width:42rem){.countries-cities-root{padding:.65rem}.countries-cities-vote,.countries-cities-score-list li{align-items:stretch;flex-direction:column}}
-.countries-cities-selected{outline:.18rem solid rgba(31,36,48,.45);background:linear-gradient(135deg,rgba(246,207,87,.95),rgba(255,247,214,.95))!important}
-.countries-cities-vote select{border:.0625rem solid rgba(31,36,48,.18);border-radius:.55rem;padding:.45rem .55rem;background:rgba(255,255,255,.86);font:inherit;font-weight:800}
+.countries-cities-root {
+  min-height: 100%;
+  height: 100%;
+  display: grid;
+  align-content: start;
+  gap: clamp(0.65rem, 1.6vmin, 1rem);
+  padding: clamp(0.75rem, 2vmin, 1.2rem);
+  color: #1f2430;
+  overflow: auto;
+}
+
+.countries-cities-card {
+  display: grid;
+  gap: clamp(0.75rem, 1.8vmin, 1.1rem);
+  padding: clamp(0.9rem, 2.2vmin, 1.35rem);
+  border: 0.0625rem solid rgba(255, 255, 255, 0.72);
+  border-radius: clamp(0.8rem, 2vmin, 1.1rem);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(216, 241, 255, 0.86));
+  box-shadow: 0 0.65rem 1.4rem rgba(31, 36, 48, 0.16);
+}
+
+.countries-cities-center {
+  max-width: 48rem;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.countries-cities-header,
+.countries-cities-actions,
+.countries-cities-vote > div:last-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.countries-cities-grid,
+.countries-cities-scoring {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.countries-cities-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+}
+
+.countries-cities-field {
+  display: grid;
+  gap: 0.35rem;
+  text-align: left;
+  font-weight: 800;
+}
+
+.countries-cities-field input,
+.countries-cities-field textarea {
+  width: 100%;
+  border: 0.0625rem solid rgba(31, 36, 48, 0.18);
+  border-radius: 0.65rem;
+  padding: 0.68rem 0.75rem;
+  background: rgba(255, 255, 255, 0.76);
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+}
+
+.countries-cities-field textarea {
+  resize: vertical;
+  min-height: 8rem;
+}
+
+.countries-cities-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-weight: 800;
+}
+
+.countries-cities-primary,
+.countries-cities-root button {
+  border: 0;
+  border-radius: 0.65rem;
+  padding: 0.65rem 0.95rem;
+  background: rgba(255, 255, 255, 0.82);
+  color: #20342f;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 0.35rem 0.7rem rgba(31, 36, 48, 0.12);
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    filter 0.16s ease,
+    background 0.16s ease;
+}
+
+.countries-cities-primary {
+  background: linear-gradient(135deg, rgba(143, 216, 151, 0.94), rgba(222, 248, 213, 0.94));
+}
+
+.countries-cities-root button:not(:disabled):hover {
+  transform: translateY(-0.08rem);
+  box-shadow: 0 0.5rem 1rem rgba(31, 36, 48, 0.18);
+  filter: brightness(1.03);
+}
+
+.countries-cities-root button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 0.25rem 0.5rem rgba(31, 36, 48, 0.16);
+}
+
+.countries-cities-root button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.countries-cities-chip-list {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.countries-cities-chip-list li,
+.countries-cities-header strong {
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.countries-cities-letter-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  padding: 0.8rem 1rem;
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.68);
+  text-align: center;
+}
+
+.countries-cities-letter-card span {
+  font-weight: 800;
+}
+
+.countries-cities-letter-card strong {
+  font-size: clamp(2.4rem, 8vmin, 4rem);
+  line-height: 1;
+}
+
+.countries-cities-letter-card em {
+  color: rgba(31, 36, 48, 0.7);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.countries-cities-category {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.56);
+}
+
+.countries-cities-category h3 {
+  margin: 0;
+}
+
+.countries-cities-vote,
+.countries-cities-score-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.55rem;
+  border-radius: 0.65rem;
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.countries-cities-vote > div:first-child {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.countries-cities-vote span {
+  overflow-wrap: anywhere;
+}
+
+.countries-cities-score-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding-left: 1.3rem;
+  text-align: left;
+}
+
+.countries-cities-selected {
+  outline: 0.18rem solid rgba(31, 36, 48, 0.45);
+  background: linear-gradient(135deg, rgba(246, 207, 87, 0.95), rgba(255, 247, 214, 0.95)) !important;
+}
+
+.countries-cities-accept-review {
+  min-width: 13.5rem;
+}
+
+.countries-cities-review-accepted {
+  background: linear-gradient(135deg, rgba(92, 187, 117, 0.96), rgba(179, 234, 183, 0.96)) !important;
+  color: #12321f;
+}
+
+.countries-cities-vote select {
+  border: 0.0625rem solid rgba(31, 36, 48, 0.18);
+  border-radius: 0.55rem;
+  padding: 0.45rem 0.55rem;
+  background: rgba(255, 255, 255, 0.86);
+  font: inherit;
+  font-weight: 800;
+}
+
+@media (max-width: 42rem) {
+  .countries-cities-root {
+    padding: 0.65rem;
+  }
+
+  .countries-cities-vote,
+  .countries-cities-score-list li {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { areAnswersProbablySame, calculateAnswerScore, getRequiredApprovalCount, groupSimilarAnswers, normalizeAnswer } from "./countriesCities.logic";
+import {
+  COUNTRIES_CITIES_LETTERS,
+  areAnswersProbablySame,
+  calculateAnswerScore,
+  drawRoundLetter,
+  getRequiredApprovalCount,
+  groupSimilarAnswers,
+  normalizeAnswer,
+} from "./countriesCities.logic";
 
 describe("countriesCities.logic", () => {
   it("normalizes Polish characters and punctuation", () => {
@@ -21,6 +29,22 @@ describe("countriesCities.logic", () => {
       { key: "krakow", answers: ["Kraków", "Krakow"] },
       { key: "warszawa", answers: ["Warszawa"] },
     ]);
+  });
+
+  it("draws a letter that was not used earlier in the game", () => {
+    const usedLetters = COUNTRIES_CITIES_LETTERS.slice(0, 3);
+    const result = drawRoundLetter(usedLetters, () => 0);
+
+    if (result === null) {
+      throw new Error("Expected drawRoundLetter to return a letter.");
+    }
+
+    expect(result.letter).toBe(COUNTRIES_CITIES_LETTERS[3]);
+    expect(result.usedLetters).toEqual([...usedLetters, COUNTRIES_CITIES_LETTERS[3]]);
+  });
+
+  it("does not draw a letter after all letters were used", () => {
+    expect(drawRoundLetter(COUNTRIES_CITIES_LETTERS, () => 0)).toBeNull();
   });
 
   it("requires more than half of players to approve", () => {
