@@ -1,5 +1,5 @@
 import {
-  YOUTUBE_IFRAME_ALLOW,
+  getYouTubeIframeAllow,
   YOUTUBE_IFRAME_REFERRER_POLICY,
   YOUTUBE_IFRAME_SANDBOX,
 } from "./youtubeIframePolicy";
@@ -11,16 +11,6 @@ const PRELOADED_PLAYER_HEIGHT = 180;
 const YOUTUBE_EMBED_ORIGIN = "https://www.youtube-nocookie.com";
 
 export type YouTubePlayerLoadState = "idle" | "loading" | "ready" | "failed";
-
-type AttachDefaultYouTubePlayerCallbacks = {
-  onLoad?: () => void;
-  onError?: () => void;
-};
-
-type AttachedDefaultYouTubePlayer = {
-  attached: boolean;
-  dispose: () => void;
-};
 
 let preloadedIframe: HTMLIFrameElement | null = null;
 let hiddenHost: HTMLDivElement | null = null;
@@ -95,33 +85,19 @@ const prepareIframeForHiddenPreload = (iframe: HTMLIFrameElement): void => {
   iframe.tabIndex = -1;
 };
 
-const prepareIframeForPlayer = (iframe: HTMLIFrameElement): void => {
-  iframe.removeAttribute("width");
-  iframe.removeAttribute("height");
-  iframe.style.width = "";
-  iframe.style.height = "";
-  iframe.style.border = "";
-  iframe.style.opacity = "";
-  iframe.style.pointerEvents = "";
-  iframe.removeAttribute("tabindex");
-};
-
 const postPlayerCommand = (
   iframe: HTMLIFrameElement,
-  func: "mute" | "unMute" | "playVideo" | "pauseVideo" | "seekTo" | "setVolume",
-  args: Array<number | boolean> = []
+  func: "mute" | "pauseVideo"
 ): void => {
-  iframe.contentWindow?.postMessage(
-    JSON.stringify({ event: "command", func, args }),
-    YOUTUBE_EMBED_ORIGIN
-  );
-};
-
-const wakeDefaultPlayer = (iframe: HTMLIFrameElement): void => {
-  postPlayerCommand(iframe, "seekTo", [0, true]);
-  postPlayerCommand(iframe, "setVolume", [100]);
-  postPlayerCommand(iframe, "unMute");
-  postPlayerCommand(iframe, "playVideo");
+  try {
+    iframe.contentWindow?.postMessage(
+      JSON.stringify({ event: "command", func, args: [] }),
+      YOUTUBE_EMBED_ORIGIN
+    );
+  } catch {
+    // YouTube can briefly replace iframe contents while Firefox partitions storage
+    // or while React remounts the player. These commands are best-effort only.
+  }
 };
 
 export const startDefaultYouTubePreload = (): void => {
@@ -147,7 +123,12 @@ export const startDefaultYouTubePreload = (): void => {
   iframe.setAttribute("loading", "eager");
   iframe.setAttribute("referrerpolicy", YOUTUBE_IFRAME_REFERRER_POLICY);
   iframe.setAttribute("sandbox", YOUTUBE_IFRAME_SANDBOX);
-  iframe.allow = YOUTUBE_IFRAME_ALLOW;
+
+  const allow = getYouTubeIframeAllow();
+  if (allow) {
+    iframe.allow = allow;
+  }
+
   iframe.setAttribute("allowfullscreen", "true");
   iframe.addEventListener("load", () => {
     preloadedIframeLoadState = "ready";
@@ -163,62 +144,6 @@ export const startDefaultYouTubePreload = (): void => {
   preloadedIframeLoadState = "loading";
 };
 
-export const attachDefaultYouTubePlayer = (
-  target: HTMLElement | null,
-  callbacks: AttachDefaultYouTubePlayerCallbacks = {}
-): AttachedDefaultYouTubePlayer => {
-  if (!isBrowser() || !target) {
-    return { attached: false, dispose: () => undefined };
-  }
-
-  startDefaultYouTubePreload();
-  if (!preloadedIframe) {
-    return { attached: false, dispose: () => undefined };
-  }
-
-  let disposed = false;
-  const handleLoad = (): void => {
-    if (!disposed) callbacks.onLoad?.();
-  };
-  const handleError = (): void => {
-    if (!disposed) callbacks.onError?.();
-  };
-
-  if (preloadedIframeLoadState === "ready") {
-    callbacks.onLoad?.();
-  } else if (preloadedIframeLoadState === "failed") {
-    callbacks.onError?.();
-  } else {
-    preloadedIframe.addEventListener("load", handleLoad, { once: true });
-    preloadedIframe.addEventListener("error", handleError, { once: true });
-  }
-
-  prepareIframeForPlayer(preloadedIframe);
-  target.textContent = "";
-  target.appendChild(preloadedIframe);
-
-  wakeDefaultPlayer(preloadedIframe);
-  window.setTimeout(() => {
-    if (preloadedIframe?.parentElement === target) {
-      wakeDefaultPlayer(preloadedIframe);
-    }
-  }, 250);
-  window.setTimeout(() => {
-    if (preloadedIframe?.parentElement === target) {
-      wakeDefaultPlayer(preloadedIframe);
-    }
-  }, 750);
-
-  return {
-    attached: true,
-    dispose: () => {
-      disposed = true;
-      preloadedIframe?.removeEventListener("load", handleLoad);
-      preloadedIframe?.removeEventListener("error", handleError);
-    },
-  };
-};
-
 export const detachDefaultYouTubePlayer = (): void => {
   if (!isBrowser() || !preloadedIframe) return;
 
@@ -228,7 +153,10 @@ export const detachDefaultYouTubePlayer = (): void => {
   postPlayerCommand(preloadedIframe, "mute");
   postPlayerCommand(preloadedIframe, "pauseVideo");
   prepareIframeForHiddenPreload(preloadedIframe);
-  hiddenHost.appendChild(preloadedIframe);
+
+  if (preloadedIframe.parentElement !== hiddenHost) {
+    hiddenHost.appendChild(preloadedIframe);
+  }
 };
 
-export const canUsePreloadedYouTubePlayer = (): boolean => isBrowser();
+export const canUsePreloadedYouTubePlayer = (): boolean => false;
