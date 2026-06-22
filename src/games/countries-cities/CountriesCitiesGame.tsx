@@ -49,7 +49,7 @@ type VoteSummary = {
 
 const DEFAULT_CATEGORIES = ["Państwo", "Miasto", "Roślina", "Zwierzę", "Rzecz"];
 const TIMER_MS = 10_000;
-const AUTO_SUBMIT_GRACE_MS = 350;
+const HOST_AUTO_SUBMIT_GRACE_MS = 2_000;
 const VOTE_ORDER: ReviewVote[] = ["ok", "duplicate", "wrong"];
 
 const answerId = (playerId: string, category: string): string => `${playerId}::${category}`;
@@ -298,10 +298,12 @@ export default function CountriesCitiesGame(): React.ReactElement {
       return;
     }
 
+    const hasAllExpectedSubmissions = donePlayers.length >= players.length;
     const shouldEnd =
       endMode === "manual"
-        ? donePlayers.length >= players.length
-        : deadlineAt !== null && Date.now() >= deadlineAt + AUTO_SUBMIT_GRACE_MS;
+        ? hasAllExpectedSubmissions
+        : hasAllExpectedSubmissions || (deadlineAt !== null && Date.now() >= deadlineAt + HOST_AUTO_SUBMIT_GRACE_MS);
+
     if (shouldEnd) beginReview();
   }, [beginReview, deadlineAt, donePlayers.length, endMode, isHost, lobby, phase, players.length, submissions.length, now]);
 
