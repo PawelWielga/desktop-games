@@ -458,6 +458,10 @@ const translations: Record<Language, Record<string, string>> = {
     "youtube.searchHintLink": "kliknij tutaj",
     "youtube.defaultVideo": "Wróć do domyślnego filmu",
     "youtube.playerAria": "Odtwarzacz YouTube",
+    "youtube.playerLoading": "Ładowanie odtwarzacza…",
+    "youtube.playerFallbackTitle": "Nie udało się załadować odtwarzacza",
+    "youtube.playerFallbackDescription": "YouTube albo część jego zasobów jest blokowana przez DNS/adblock. Sama aplikacja działa dalej, możesz spróbować ponownie albo wyszukać inny film.",
+    "youtube.retryPlayer": "Spróbuj ponownie",
 
     "multiplayer.title": "Gra online",
     "multiplayer.subtitle": "Utwórz pokój albo dołącz kodem od hosta.",
@@ -948,6 +952,10 @@ const translations: Record<Language, Record<string, string>> = {
     "youtube.searchHintLink": "click here",
     "youtube.defaultVideo": "Back to default video",
     "youtube.playerAria": "YouTube player",
+    "youtube.playerLoading": "Loading the player…",
+    "youtube.playerFallbackTitle": "The player could not be loaded",
+    "youtube.playerFallbackDescription": "YouTube or some of its resources may be blocked by DNS/adblock. The app is still running, so you can try again or search for another video.",
+    "youtube.retryPlayer": "Try again",
 
     "multiplayer.title": "Online game",
     "multiplayer.subtitle": "Create a room or join with a host code.",

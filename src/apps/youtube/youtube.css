@@ -24,7 +24,8 @@
 
 .youtube-app__nav-button,
 .youtube-app__search-form button,
-.youtube-app__default-button {
+.youtube-app__default-button,
+.youtube-app__player-retry-button {
   min-height: 2.25rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 999px;
@@ -42,7 +43,8 @@
 
 .youtube-app__nav-button:hover,
 .youtube-app__search-form button:hover,
-.youtube-app__default-button:hover {
+.youtube-app__default-button:hover,
+.youtube-app__player-retry-button:hover {
   transform: translateY(-0.0625rem);
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.28);
@@ -79,8 +81,10 @@
 }
 
 .youtube-app__player {
+  position: relative;
   flex: 1;
   min-height: 0;
+  display: grid;
   padding: clamp(0.625rem, 2vmin, 1rem);
   box-sizing: border-box;
 }
@@ -93,6 +97,47 @@
   border-radius: clamp(0.75rem, 2vmin, 1rem);
   background: #000000;
   box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.35);
+}
+
+.youtube-app__player-state {
+  position: absolute;
+  inset: clamp(0.625rem, 2vmin, 1rem);
+  display: grid;
+  place-items: center;
+  border-radius: clamp(0.75rem, 2vmin, 1rem);
+  background:
+    radial-gradient(circle at center, rgba(255, 0, 51, 0.18), transparent 60%),
+    rgba(0, 0, 0, 0.78);
+  text-align: center;
+  z-index: 1;
+}
+
+.youtube-app__player-state-card {
+  width: min(100%, 30rem);
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: clamp(1rem, 4vmin, 2rem);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: clamp(1rem, 3vmin, 1.5rem);
+  background: rgba(17, 24, 39, 0.86);
+  color: rgba(248, 250, 252, 0.86);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.35);
+}
+
+.youtube-app__player-state-card h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 4vmin, 2rem);
+}
+
+.youtube-app__player-state-card p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.youtube-app__player-retry-button {
+  background: #ff0033;
+  border-color: #ff335c;
 }
 
 .youtube-app__search-panel {
