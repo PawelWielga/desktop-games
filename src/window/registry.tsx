@@ -1,4 +1,5 @@
 import React from "react";
+import AppErrorBoundary, { type AppLaunchMode } from "@/components/AppErrorBoundary";
 import youtubeIcon from "@/assets/brand-icons/youtube.svg";
 import battleshipsIcon from "@/assets/game-icons/battleships.svg";
 import cardsIcon from "@/assets/game-icons/cards.svg";
@@ -54,6 +55,54 @@ export type AppRegistration = {
 export type DesktopAppRegistration = AppRegistration & {
   showOnDesktop: true;
 };
+
+function isDirectRouteForApp(appId: string): boolean {
+  if (typeof window === "undefined") return false;
+
+  const normalizedPath = window.location.pathname.replace(/\/+$/g, "");
+  const encodedAppId = encodeURIComponent(appId);
+
+  return normalizedPath.endsWith(`/${appId}`) || normalizedPath.endsWith(`/${encodedAppId}`);
+}
+
+function getLaunchModeForApp(appId: string): AppLaunchMode {
+  if (typeof document !== "undefined" && document.documentElement.dataset.directGame === "1") {
+    return "direct-route";
+  }
+
+  return isDirectRouteForApp(appId) ? "direct-route" : "desktop-window";
+}
+
+function createErrorBoundaryLoader(
+  app: AppRegistration,
+  loader: WindowDefaults["loader"]
+): WindowDefaults["loader"] {
+  return async () => {
+    const mod = await loader();
+    const Component = mod.default;
+
+    const WrappedApp: React.ComponentType<unknown> = (props) => (
+      <AppErrorBoundary
+        context={{
+          appId: app.id,
+          appTitle: app.title,
+          appTitleKey: app.titleKey,
+          appKind: app.kind,
+          launchMode: getLaunchModeForApp(app.id),
+        }}
+      >
+        {React.createElement(
+          Component as React.ComponentType<Record<string, unknown>>,
+          (props ?? {}) as Record<string, unknown>
+        )}
+      </AppErrorBoundary>
+    );
+
+    WrappedApp.displayName = `${app.id}-error-boundary`;
+
+    return { default: WrappedApp };
+  };
+}
 
 export const AppRegistry: readonly AppRegistration[] = [
   {
@@ -359,6 +408,7 @@ export const WindowRegistry: Record<string, WindowDefaults> = AppRegistry.reduce
     title: app.title,
     titleKey: app.titleKey,
     ...app.window,
+    loader: createErrorBoundaryLoader(app, app.window.loader),
   };
 
   return registry;
