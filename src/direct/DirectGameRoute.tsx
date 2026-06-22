@@ -1,6 +1,7 @@
 import React, { Suspense, useEffect, useMemo } from "react";
 import {
   getAppRegistration,
+  getWindowDefaults,
   type AppRegistration,
   type WindowDefaults,
 } from "@/window/registry";
@@ -98,17 +99,11 @@ function DirectGameContent({
 
 export default function DirectGameRoute({ appId }: DirectGameRouteProps): React.ReactElement {
   const registration = getAppRegistration(appId);
+  const defaults = getWindowDefaults(appId);
 
-  if (!isDirectGameRegistration(registration)) {
+  if (!isDirectGameRegistration(registration) || !defaults) {
     return <main className="direct-game-route direct-game-route--empty">Nie znaleziono gry.</main>;
   }
-
-  const defaults: WindowDefaults = {
-    id: registration.id,
-    title: registration.title,
-    titleKey: registration.titleKey,
-    ...registration.window,
-  };
 
   return <DirectGameContent registration={registration} defaults={defaults} />;
 }
