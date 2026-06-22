@@ -35,6 +35,10 @@ describe("countriesCities.logic", () => {
     const usedLetters = COUNTRIES_CITIES_LETTERS.slice(0, 3);
     const result = drawRoundLetter(usedLetters, () => 0);
 
+    if (result === null) {
+      throw new Error("Expected drawRoundLetter to return a letter.");
+    }
+
     expect(result.letter).toBe(COUNTRIES_CITIES_LETTERS[3]);
     expect(result.usedLetters).toEqual([...usedLetters, COUNTRIES_CITIES_LETTERS[3]]);
   });
