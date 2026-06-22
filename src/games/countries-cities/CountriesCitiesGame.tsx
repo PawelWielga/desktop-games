@@ -17,7 +17,7 @@ type FinalResults = Record<string, AnswerResult>;
 type FinalScores = Record<string, number>;
 type ReviewReady = Record<number, string[]>;
 
-type SettingsMessage = GameSpecificMessage<"countries-cities:settings", { categories: string[]; endMode: EndMode }>;
+type SettingsMessage = GameSpecificMessage<"countries-cities:settings", { categories: string[]; endMode: EndMode; hostControlsReview: boolean }>;
 type StartRoundMessage = GameSpecificMessage<"countries-cities:start-round", { letter: string; usedLetters: string[] }>;
 type SubmitMessage = GameSpecificMessage<"countries-cities:submit", { player: PlayerProfile; answers: Record<string, string> }>;
 type DoneMessage = GameSpecificMessage<"countries-cities:done", { playerId: string }>;
@@ -99,6 +99,17 @@ function getHostAuthoritativeVoteSummary(
   return summary;
 }
 
+function getHostControlledVoteSummary(votes: Record<string, ReviewVote> | undefined, hostPlayerId: string): VoteSummary {
+  const summary: VoteSummary = { ok: 0, duplicate: 0, wrong: 0, winner: "ok" };
+
+  Object.values(votes ?? {}).forEach((vote) => {
+    summary[vote] += 1;
+  });
+
+  summary.winner = votes?.[hostPlayerId] ?? "ok";
+  return summary;
+}
+
 function pickVoteWinner(summary: Pick<VoteSummary, "ok" | "duplicate" | "wrong">): ReviewVote {
   return VOTE_ORDER.reduce((winner, vote) => (summary[vote] > summary[winner] ? vote : winner), "ok" as ReviewVote);
 }
@@ -128,6 +139,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const [categoriesText, setCategoriesText] = useState(DEFAULT_CATEGORIES.join("\n"));
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [endMode, setEndMode] = useState<EndMode>("timer");
+  const [hostControlsReview, setHostControlsReview] = useState(true);
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
   const [usedLetters, setUsedLetters] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -187,6 +199,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
         setCategories(message.categories);
         setCategoriesText(message.categories.join("\n"));
         setEndMode(message.endMode);
+        setHostControlsReview(message.hostControlsReview);
         setCurrentLetter(null);
         setUsedLetters([]);
         resetRound();
@@ -244,6 +257,10 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const currentReady = reviewReady[categoryIndex] ?? [];
   const hasAvailableRoundLetters = usedLetters.length < COUNTRIES_CITIES_LETTERS.length;
   const hasAcceptedCurrentReview = currentReady.includes(lobby.localPlayer.id);
+  const requiredReviewApprovals = hostControlsReview ? 1 : players.length;
+  const hasRequiredReviewApprovals = hostControlsReview
+    ? Boolean(hostPlayerId && currentReady.includes(hostPlayerId))
+    : currentReady.length >= players.length;
   const acceptReviewButtonClassName = hasAcceptedCurrentReview
     ? "countries-cities-primary countries-cities-accept-review countries-cities-review-accepted"
     : "countries-cities-primary countries-cities-accept-review";
@@ -303,12 +320,14 @@ export default function CountriesCitiesGame(): React.ReactElement {
         categories.map((category) => {
           const id = answerId(submission.playerId, category);
           const answer = submission.answers[category] ?? "";
-          const summary = getHostAuthoritativeVoteSummary(votes[id], hostPlayerId, id);
+          const summary = hostControlsReview
+            ? getHostControlledVoteSummary(votes[id], hostPlayerId)
+            : getHostAuthoritativeVoteSummary(votes[id], hostPlayerId, id);
           return [id, { winner: summary.winner, points: getAnswerPoints(answer, summary) }];
         })
       )
     );
-  }, [categories, hostPlayerId, submissions, votes]);
+  }, [categories, hostControlsReview, hostPlayerId, submissions, votes]);
 
   const calculatedFinalScores = useMemo<FinalScores>(
     () =>
@@ -331,7 +350,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
     setCurrentLetter(null);
     setUsedLetters([]);
     resetRound();
-    lobby.sendMessage({ type: "countries-cities:settings", categories: parsedCategories, endMode });
+    lobby.sendMessage({ type: "countries-cities:settings", categories: parsedCategories, endMode, hostControlsReview });
   };
 
   const startInput = (): void => {
@@ -364,11 +383,15 @@ export default function CountriesCitiesGame(): React.ReactElement {
   };
 
   const vote = (id: string, selectedVote: ReviewVote): void => {
+    if (hasAcceptedCurrentReview) return;
+
     addVote(id, lobby.localPlayer.id, selectedVote);
     lobby.sendMessage({ type: "countries-cities:vote", answerId: id, vote: selectedVote });
   };
 
   const setDuplicate = (id: string, groupKey: string | null): void => {
+    if (hasAcceptedCurrentReview) return;
+
     setDuplicateOverrides((items) => {
       const next = { ...items };
       if (groupKey) next[id] = groupKey;
@@ -385,13 +408,19 @@ export default function CountriesCitiesGame(): React.ReactElement {
     lobby.sendMessage({ type: "countries-cities:review-ready", categoryIndex, playerId: lobby.localPlayer.id });
   };
 
-  const revealCategory = (): void => {
+  const revealCategory = useCallback((): void => {
     if (!isHost) return;
 
     setFinalResults((items) => ({ ...items, ...calculatedFinalResults }));
     setPhase("reveal");
     lobby.sendMessage({ type: "countries-cities:reveal", categoryIndex, finalResults: calculatedFinalResults });
-  };
+  }, [calculatedFinalResults, categoryIndex, isHost, lobby]);
+
+  useEffect(() => {
+    if (!isHost || phase !== "review" || !hasRequiredReviewApprovals) return;
+
+    revealCategory();
+  }, [hasRequiredReviewApprovals, isHost, phase, revealCategory]);
 
   const nextCategory = (): void => {
     const nextIndex = categoryIndex + 1;
@@ -452,6 +481,14 @@ export default function CountriesCitiesGame(): React.ReactElement {
                   />
                   <span>{t("countriesCities.timerModeLabel")}</span>
                 </label>
+                <label className="countries-cities-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={hostControlsReview}
+                    onChange={(event) => setHostControlsReview(event.target.checked)}
+                  />
+                  <span>{t("countriesCities.hostControlsReviewLabel")}</span>
+                </label>
                 <p>{t("countriesCities.parsedCategories", { count: parsedCategories.length })}</p>
                 <button className="countries-cities-primary" type="button" disabled={parsedCategories.length === 0} onClick={publishSettings}>
                   {t("countriesCities.saveSettings")}
@@ -478,6 +515,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
             ))}
           </ul>
           <p>{t(`countriesCities.endMode.${endMode}`)}</p>
+          <p>{t(`countriesCities.reviewMode.${hostControlsReview ? "host" : "players"}`)}</p>
           {isHost ? (
             <>
               <button className="countries-cities-primary" type="button" disabled={!hasAvailableRoundLetters} onClick={startInput}>
@@ -535,7 +573,8 @@ export default function CountriesCitiesGame(): React.ReactElement {
 
   if (phase === "review" || phase === "reveal") {
     const answerGroups = groupsByCategory[currentCategory] ?? [];
-    const showAuthors = phase === "reveal";
+    const revealAuthors = phase === "reveal";
+    const showAuthorNames = revealAuthors || (isHost && hostControlsReview);
 
     return (
       <div className="countries-cities-root">
@@ -543,12 +582,12 @@ export default function CountriesCitiesGame(): React.ReactElement {
         <section className="countries-cities-card">
           <div className="countries-cities-header">
             <div>
-              <h2>{t(showAuthors ? "countriesCities.revealTitle" : "countriesCities.reviewTitle", { category: currentCategory })}</h2>
+              <h2>{t(revealAuthors ? "countriesCities.revealTitle" : "countriesCities.reviewTitle", { category: currentCategory })}</h2>
               <p>{t("countriesCities.categoryProgress", { current: categoryIndex + 1, total: categories.length })}</p>
             </div>
-            {!showAuthors && <strong>{t("countriesCities.reviewReady", { done: currentReady.length, total: players.length })}</strong>}
+            {!revealAuthors && <strong>{t("countriesCities.reviewReady", { done: currentReady.length, total: requiredReviewApprovals })}</strong>}
           </div>
-          {!showAuthors && <p>{t("countriesCities.reviewHint")}</p>}
+          {!revealAuthors && <p>{t(hostControlsReview ? "countriesCities.reviewHintHost" : "countriesCities.reviewHint")}</p>}
           <div className="countries-cities-scoring">
             {submissions.map((submission, index) => {
               const id = answerId(submission.playerId, currentCategory);
@@ -556,35 +595,51 @@ export default function CountriesCitiesGame(): React.ReactElement {
               const selectedVote = votes[id]?.[lobby.localPlayer.id];
               const summary = getVoteSummary(votes[id]);
               const result = displayedFinalResults[id];
-              const displayWinner = showAuthors ? result?.winner ?? summary.winner : summary.winner;
-              const displayPoints = showAuthors ? result?.points ?? 0 : getAnswerPoints(submission.answers[currentCategory] ?? "", summary);
+              const displayWinner = revealAuthors ? result?.winner ?? summary.winner : summary.winner;
+              const displayPoints = revealAuthors ? result?.points ?? 0 : getAnswerPoints(submission.answers[currentCategory] ?? "", summary);
               const duplicateGroup = duplicateOverrides[id] ?? "";
 
               return (
                 <article className="countries-cities-vote" key={id}>
                   <div>
-                    <strong>{showAuthors ? submission.playerName : t("countriesCities.anonymousAnswer", { number: index + 1 })}</strong>
+                    <strong>{showAuthorNames ? submission.playerName : t("countriesCities.anonymousAnswer", { number: index + 1 })}</strong>
                     <span>{answer}</span>
-                    {showAuthors && <em>{t(`countriesCities.voteResult.${displayWinner}`)}</em>}
+                    {revealAuthors && <em>{t(`countriesCities.voteResult.${displayWinner}`)}</em>}
                   </div>
-                  {!showAuthors ? (
+                  {!revealAuthors ? (
                     <div>
                       <span>{t("countriesCities.voteCounts", { ok: summary.ok, duplicate: summary.duplicate, wrong: summary.wrong })}</span>
-                      <button className={selectedVote === "ok" ? "countries-cities-selected" : undefined} type="button" onClick={() => vote(id, "ok")}>
+                      <button
+                        className={selectedVote === "ok" ? "countries-cities-selected" : undefined}
+                        type="button"
+                        disabled={hasAcceptedCurrentReview || (hostControlsReview && !isHost)}
+                        onClick={() => vote(id, "ok")}
+                      >
                         {t("countriesCities.vote.ok")}
                       </button>
                       <button
                         className={selectedVote === "duplicate" ? "countries-cities-selected" : undefined}
                         type="button"
+                        disabled={hasAcceptedCurrentReview || (hostControlsReview && !isHost)}
                         onClick={() => vote(id, "duplicate")}
                       >
                         {t("countriesCities.vote.duplicate")}
                       </button>
-                      <button className={selectedVote === "wrong" ? "countries-cities-selected" : undefined} type="button" onClick={() => vote(id, "wrong")}>
+                      <button
+                        className={selectedVote === "wrong" ? "countries-cities-selected" : undefined}
+                        type="button"
+                        disabled={hasAcceptedCurrentReview || (hostControlsReview && !isHost)}
+                        onClick={() => vote(id, "wrong")}
+                      >
                         {t("countriesCities.vote.wrong")}
                       </button>
                       {isHost && selectedVote === "duplicate" && (
-                        <select value={duplicateGroup} onChange={(event) => setDuplicate(id, event.target.value || null)} aria-label={t("countriesCities.duplicateSelect")}>
+                        <select
+                          value={duplicateGroup}
+                          disabled={hasAcceptedCurrentReview}
+                          onChange={(event) => setDuplicate(id, event.target.value || null)}
+                          aria-label={t("countriesCities.duplicateSelect")}
+                        >
                           <option value="">{t("countriesCities.notDuplicate")}</option>
                           {answerGroups
                             .filter((group) => group.key !== normalizeAnswer(submission.answers[currentCategory] ?? ""))
@@ -603,13 +658,19 @@ export default function CountriesCitiesGame(): React.ReactElement {
               );
             })}
           </div>
-          {!showAuthors ? (
+          {!revealAuthors ? (
             <div className="countries-cities-actions">
-              <button className={acceptReviewButtonClassName} type="button" onClick={acceptReview} aria-pressed={hasAcceptedCurrentReview}>
+              <button
+                className={acceptReviewButtonClassName}
+                type="button"
+                disabled={hasAcceptedCurrentReview || (hostControlsReview && !isHost)}
+                onClick={acceptReview}
+                aria-pressed={hasAcceptedCurrentReview}
+              >
                 {t(hasAcceptedCurrentReview ? "countriesCities.acceptedReview" : "countriesCities.acceptReview")}
               </button>
               {isHost && (
-                <button type="button" disabled={currentReady.length < players.length} onClick={revealCategory}>
+                <button type="button" disabled={!hasRequiredReviewApprovals} onClick={revealCategory}>
                   {t("countriesCities.revealAnswers")}
                 </button>
               )}
