@@ -144,7 +144,6 @@ export const startDefaultYouTubePreload = (): void => {
   const iframe = document.createElement("iframe");
   iframe.id = PRELOADED_PLAYER_ID;
   iframe.title = "YouTube";
-  iframe.src = buildDefaultYouTubeSrc(true);
   iframe.setAttribute("loading", "eager");
   iframe.setAttribute("referrerpolicy", YOUTUBE_IFRAME_REFERRER_POLICY);
   iframe.setAttribute("sandbox", YOUTUBE_IFRAME_SANDBOX);
@@ -158,6 +157,7 @@ export const startDefaultYouTubePreload = (): void => {
   });
 
   prepareIframeForHiddenPreload(iframe);
+  iframe.src = buildDefaultYouTubeSrc(true);
   hiddenHost.appendChild(iframe);
   preloadedIframe = iframe;
   preloadedIframeLoadState = "loading";
