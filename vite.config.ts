@@ -18,10 +18,14 @@ const normalizeBasePath = (value?: string): string => {
 };
 
 const base = normalizeBasePath(process.env?.VITE_BASE_PATH);
+const debugSourcemap = process.env?.VITE_DEBUG_SOURCEMAP === "true";
 
 export default defineConfig({
   plugins: [react()],
   base,
+  build: {
+    sourcemap: debugSourcemap ? "hidden" : false,
+  },
   resolve: {
     alias: {
       "@": srcPath,
