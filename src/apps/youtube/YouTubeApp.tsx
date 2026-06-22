@@ -15,11 +15,16 @@ import {
   detachDefaultYouTubePlayer,
   startDefaultYouTubePreload,
 } from "./youtubePreloader";
+import {
+  YOUTUBE_EMBED_ORIGIN,
+  YOUTUBE_IFRAME_ALLOW,
+  YOUTUBE_IFRAME_REFERRER_POLICY,
+  YOUTUBE_IFRAME_SANDBOX,
+} from "./youtubeIframePolicy";
 import "./youtube.css";
 
 const DEFAULT_VIDEO_ID = "dQw4w9WgXcQ";
 const PLAYER_LOAD_TIMEOUT_MS = 8000;
-const YOUTUBE_EMBED_ORIGIN = "https://www.youtube-nocookie.com";
 
 type ViewMode = "player" | "search";
 type PlayerLoadState = "loading" | "ready" | "failed";
@@ -265,8 +270,9 @@ export default function YouTubeApp(): React.ReactElement {
               key={iframeKey}
               src={embedSrc}
               title={source.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
+              allow={YOUTUBE_IFRAME_ALLOW}
+              sandbox={YOUTUBE_IFRAME_SANDBOX}
+              referrerPolicy={YOUTUBE_IFRAME_REFERRER_POLICY}
               loading="eager"
               allowFullScreen
               onLoad={() => setPlayerLoadState("ready")}
