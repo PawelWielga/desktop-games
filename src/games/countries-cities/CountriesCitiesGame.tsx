@@ -20,7 +20,6 @@ type ReviewReady = Record<number, string[]>;
 type SettingsMessage = GameSpecificMessage<"countries-cities:settings", { categories: string[]; endMode: EndMode; hostControlsReview: boolean }>;
 type StartRoundMessage = GameSpecificMessage<"countries-cities:start-round", { letter: string; usedLetters: string[] }>;
 type SubmitMessage = GameSpecificMessage<"countries-cities:submit", { player: PlayerProfile; answers: Record<string, string> }>;
-type DoneMessage = GameSpecificMessage<"countries-cities:done", { playerId: string }>;
 type DeadlineMessage = GameSpecificMessage<"countries-cities:deadline", { deadlineAt: number }>;
 type ReviewMessage = GameSpecificMessage<"countries-cities:review", { submissions: Submission[]; categoryIndex: number }>;
 type VoteMessage = GameSpecificMessage<"countries-cities:vote", { answerId: string; vote: ReviewVote }>;
@@ -32,7 +31,6 @@ type CountriesCitiesMessage =
   | SettingsMessage
   | StartRoundMessage
   | SubmitMessage
-  | DoneMessage
   | DeadlineMessage
   | ReviewMessage
   | VoteMessage
@@ -51,6 +49,7 @@ type VoteSummary = {
 
 const DEFAULT_CATEGORIES = ["Państwo", "Miasto", "Roślina", "Zwierzę", "Rzecz"];
 const TIMER_MS = 10_000;
+const HOST_AUTO_SUBMIT_GRACE_MS = 2_000;
 const VOTE_ORDER: ReviewVote[] = ["ok", "duplicate", "wrong"];
 
 const answerId = (playerId: string, category: string): string => `${playerId}::${category}`;
@@ -210,8 +209,6 @@ export default function CountriesCitiesGame(): React.ReactElement {
       } else if (message.type === "countries-cities:submit") {
         upsertSubmission({ playerId: message.player.id, playerName: message.player.name, answers: message.answers });
         addDonePlayer(message.player.id);
-      } else if (message.type === "countries-cities:done") {
-        addDonePlayer(message.playerId);
       } else if (message.type === "countries-cities:deadline") {
         setDeadlineAt(message.deadlineAt);
       } else if (message.type === "countries-cities:review") {
@@ -257,6 +254,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const currentReady = reviewReady[categoryIndex] ?? [];
   const hasAvailableRoundLetters = usedLetters.length < COUNTRIES_CITIES_LETTERS.length;
   const hasAcceptedCurrentReview = currentReady.includes(lobby.localPlayer.id);
+  const hasSubmittedAnswers = donePlayers.includes(lobby.localPlayer.id);
   const requiredReviewApprovals = hostControlsReview ? 1 : players.length;
   const hasRequiredReviewApprovals = hostControlsReview
     ? Boolean(hostPlayerId && currentReady.includes(hostPlayerId))
@@ -300,7 +298,12 @@ export default function CountriesCitiesGame(): React.ReactElement {
       return;
     }
 
-    const shouldEnd = endMode === "manual" ? donePlayers.length >= players.length : deadlineAt !== null && Date.now() >= deadlineAt;
+    const hasAllExpectedSubmissions = donePlayers.length >= players.length;
+    const shouldEnd =
+      endMode === "manual"
+        ? hasAllExpectedSubmissions
+        : hasAllExpectedSubmissions || (deadlineAt !== null && Date.now() >= deadlineAt + HOST_AUTO_SUBMIT_GRACE_MS);
+
     if (shouldEnd) beginReview();
   }, [beginReview, deadlineAt, donePlayers.length, endMode, isHost, lobby, phase, players.length, submissions.length, now]);
 
@@ -364,7 +367,9 @@ export default function CountriesCitiesGame(): React.ReactElement {
     lobby.sendMessage({ type: "countries-cities:start-round", letter: nextRound.letter, usedLetters: nextRound.usedLetters });
   };
 
-  const submitAnswers = (): void => {
+  const submitAnswers = useCallback((): void => {
+    if (hasSubmittedAnswers) return;
+
     const player = toProfile(lobby.localPlayer);
     const submission = {
       playerId: player.id,
@@ -375,12 +380,13 @@ export default function CountriesCitiesGame(): React.ReactElement {
     upsertSubmission(submission);
     addDonePlayer(player.id);
     lobby.sendMessage({ type: "countries-cities:submit", player, answers: submission.answers });
-  };
+  }, [addDonePlayer, answers, categories, hasSubmittedAnswers, lobby, upsertSubmission]);
 
-  const markDone = (): void => {
-    addDonePlayer(lobby.localPlayer.id);
-    lobby.sendMessage({ type: "countries-cities:done", playerId: lobby.localPlayer.id });
-  };
+  useEffect(() => {
+    if (phase !== "input" || !deadlineAt || hasSubmittedAnswers || Date.now() < deadlineAt) return;
+
+    submitAnswers();
+  }, [deadlineAt, hasSubmittedAnswers, now, phase, submitAnswers]);
 
   const vote = (id: string, selectedVote: ReviewVote): void => {
     if (hasAcceptedCurrentReview) return;
@@ -551,19 +557,24 @@ export default function CountriesCitiesGame(): React.ReactElement {
             {categories.map((category) => (
               <label className="countries-cities-field" key={category}>
                 <span>{category}</span>
-                <input value={answers[category] ?? ""} onChange={(event) => setAnswers((current) => ({ ...current, [category]: event.target.value }))} />
+                <input
+                  value={answers[category] ?? ""}
+                  disabled={hasSubmittedAnswers}
+                  onChange={(event) => setAnswers((current) => ({ ...current, [category]: event.target.value }))}
+                />
               </label>
             ))}
           </div>
           <div className="countries-cities-actions">
-            <button className="countries-cities-primary" type="button" onClick={submitAnswers}>
-              {t("countriesCities.submitAnswers")}
+            <button
+              className={`countries-cities-primary countries-cities-submit-answers${hasSubmittedAnswers ? " countries-cities-submit-accepted" : ""}`}
+              type="button"
+              disabled={hasSubmittedAnswers}
+              onClick={submitAnswers}
+              aria-pressed={hasSubmittedAnswers}
+            >
+              {t(hasSubmittedAnswers ? "countriesCities.answersConfirmed" : "countriesCities.confirmAnswers")}
             </button>
-            {endMode === "manual" && (
-              <button type="button" onClick={markDone}>
-                {t("countriesCities.markDone")}
-              </button>
-            )}
           </div>
           <p>{t("countriesCities.donePlayers", { done: donePlayers.length, total: players.length })}</p>
         </section>

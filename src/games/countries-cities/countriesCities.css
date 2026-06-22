@@ -206,6 +206,15 @@
   min-width: 13.5rem;
 }
 
+.countries-cities-submit-answers {
+  min-width: 11.5rem;
+}
+
+.countries-cities-submit-accepted {
+  background: linear-gradient(135deg, rgba(92, 187, 117, 0.96), rgba(179, 234, 183, 0.96)) !important;
+  color: #12321f;
+}
+
 .countries-cities-review-accepted {
   background: linear-gradient(135deg, rgba(92, 187, 117, 0.96), rgba(179, 234, 183, 0.96)) !important;
   color: #12321f;
@@ -230,4 +239,9 @@
     align-items: stretch;
     flex-direction: column;
   }
+}
+
+.countries-cities-submit-accepted:disabled {
+  opacity: 1;
+  cursor: default;
 }
