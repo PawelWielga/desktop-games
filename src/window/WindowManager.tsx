@@ -9,10 +9,11 @@ import React, {
 } from "react";
 import "./window.css";
 import { useWindowResize } from "./hooks/useWindowResize";
-import { getAppTitleKey, getWindowDefaults } from "./registry";
+import { getAppRegistration, getAppTitleKey, getWindowDefaults } from "./registry";
 import { useWindowDrag } from "./hooks/useWindowDrag";
 import { useSettings } from "@/settings/SettingsContext";
 import { useTranslation } from "@/i18n/useTranslation";
+import { openStandaloneAppWindow } from "./standaloneLaunch";
 
 /** Public spec for opening a window */
 export type WindowSpec = {
@@ -530,6 +531,7 @@ function WindowFrame(props: {
   const maximizeWindowLabel = w.maximized
     ? t("window.restoreWindow", { title: displayTitle })
     : t("window.maximizeWindow", { title: displayTitle });
+  const canOpenStandalone = getAppRegistration(w.id)?.kind === "game";
 
   return (
     <div
@@ -561,6 +563,17 @@ function WindowFrame(props: {
             e.stopPropagation();
           }}
         >
+          {canOpenStandalone && (
+            <button
+              className="window-control standalone"
+              type="button"
+              title={t("window.openStandalone")}
+              onClick={() => openStandaloneAppWindow(w.id, { width: w.width, height: w.height })}
+              aria-label={t("window.openStandaloneWindow", { title: displayTitle })}
+            >
+              ⛶
+            </button>
+          )}
           <button
             className="window-control"
             type="button"
