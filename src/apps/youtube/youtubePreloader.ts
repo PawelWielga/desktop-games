@@ -194,8 +194,9 @@ export const attachDefaultYouTubePlayer = (
   }
 
   prepareIframeForPlayer(preloadedIframe);
-  target.textContent = "";
-  target.appendChild(preloadedIframe);
+  if (preloadedIframe.parentElement !== target) {
+    target.appendChild(preloadedIframe);
+  }
 
   wakeDefaultPlayer(preloadedIframe);
   window.setTimeout(() => {
@@ -228,7 +229,9 @@ export const detachDefaultYouTubePlayer = (): void => {
   postPlayerCommand(preloadedIframe, "mute");
   postPlayerCommand(preloadedIframe, "pauseVideo");
   prepareIframeForHiddenPreload(preloadedIframe);
-  hiddenHost.appendChild(preloadedIframe);
+  if (preloadedIframe.parentElement !== hiddenHost) {
+    hiddenHost.appendChild(preloadedIframe);
+  }
 };
 
 export const canUsePreloadedYouTubePlayer = (): boolean => isBrowser();
