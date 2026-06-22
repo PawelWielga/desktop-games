@@ -14,13 +14,11 @@ describe("youtube iframe policy", () => {
   it("blocks popups and top-level navigation from the embedded player", () => {
     const sandboxTokens = YOUTUBE_IFRAME_SANDBOX.split(" ");
 
-    expect(sandboxTokens).toEqual(
-      expect.arrayContaining([
-        "allow-scripts",
-        "allow-same-origin",
-        "allow-presentation",
-      ])
-    );
+    expect(sandboxTokens).toEqual([
+      "allow-scripts",
+      "allow-same-origin",
+      "allow-presentation",
+    ]);
     expect(sandboxTokens).not.toContain("allow-popups");
     expect(sandboxTokens).not.toContain("allow-popups-to-escape-sandbox");
     expect(sandboxTokens).not.toContain("allow-top-navigation");
@@ -34,16 +32,6 @@ describe("youtube iframe policy", () => {
     expect(YOUTUBE_IFRAME_ALLOW).toContain("encrypted-media");
     expect(YOUTUBE_IFRAME_ALLOW).not.toContain("web-share");
     expect(YOUTUBE_IFRAME_ALLOW).not.toContain("clipboard-write");
-  });
-
-  it("keeps sandbox policy narrow enough to prevent the previous escape regression", () => {
-    const sandboxTokens = YOUTUBE_IFRAME_SANDBOX.split(" ");
-
-    expect(sandboxTokens).toEqual([
-      "allow-scripts",
-      "allow-same-origin",
-      "allow-presentation",
-    ]);
   });
 
   it("limits referrer data for the cross-origin iframe", () => {
