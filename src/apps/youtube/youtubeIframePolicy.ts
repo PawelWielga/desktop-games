@@ -1,11 +1,13 @@
-export const YOUTUBE_IFRAME_ALLOW = [
+export const YOUTUBE_IFRAME_ALLOW_TOKENS = [
   "accelerometer",
   "autoplay",
   "encrypted-media",
   "fullscreen",
   "gyroscope",
   "picture-in-picture",
-].join("; ");
+] as const;
+
+export const YOUTUBE_IFRAME_ALLOW = YOUTUBE_IFRAME_ALLOW_TOKENS.join("; ");
 
 export const YOUTUBE_IFRAME_SANDBOX_TOKENS = [
   "allow-scripts",
@@ -16,3 +18,14 @@ export const YOUTUBE_IFRAME_SANDBOX_TOKENS = [
 export const YOUTUBE_IFRAME_SANDBOX = YOUTUBE_IFRAME_SANDBOX_TOKENS.join(" ");
 
 export const YOUTUBE_IFRAME_REFERRER_POLICY = "strict-origin-when-cross-origin";
+
+const isFirefox = (): boolean =>
+  typeof navigator !== "undefined" && /\bFirefox\//.test(navigator.userAgent);
+
+export const getYouTubeIframeAllow = (): string | undefined => {
+  if (isFirefox()) {
+    return undefined;
+  }
+
+  return YOUTUBE_IFRAME_ALLOW;
+};

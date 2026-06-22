@@ -1,25 +1,12 @@
-import React, {
-  FormEvent,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { FormEvent, useEffect, useMemo, useState } from "react";
 import youtubeIcon from "@/assets/brand-icons/youtube.svg";
 import { useTranslation } from "@/i18n/useTranslation";
 import {
-  YOUTUBE_IFRAME_ALLOW,
+  getYouTubeIframeAllow,
   YOUTUBE_IFRAME_REFERRER_POLICY,
   YOUTUBE_IFRAME_SANDBOX,
 } from "./youtubeIframePolicy";
-import {
-  attachDefaultYouTubePlayer,
-  buildDefaultYouTubeSrc,
-  canUsePreloadedYouTubePlayer,
-  detachDefaultYouTubePlayer,
-  startDefaultYouTubePreload,
-} from "./youtubePreloader";
+import { buildDefaultYouTubeSrc } from "./youtubePreloader";
 import "./youtube.css";
 
 const DEFAULT_VIDEO_ID = "dQw4w9WgXcQ";
@@ -118,20 +105,11 @@ export default function YouTubeApp(): React.ReactElement {
     value: DEFAULT_VIDEO_ID,
     title: "YouTube",
   });
-  const playerRef = useRef<HTMLElement | null>(null);
 
   const embedSrc = useMemo(() => buildEmbedSrc(source), [source]);
   const iframeKey = `${embedSrc}:${playerReloadKey}`;
-  const shouldUsePreloadedPlayer =
-    mode === "player" &&
-    source.type === "video" &&
-    source.value === DEFAULT_VIDEO_ID &&
-    playerReloadKey === 0 &&
-    canUsePreloadedYouTubePlayer();
+  const iframeAllow = getYouTubeIframeAllow();
 
-  useEffect(() => {
-    startDefaultYouTubePreload();
-  }, []);
 
   useEffect(() => {
     if (mode !== "player") return;
@@ -145,29 +123,7 @@ export default function YouTubeApp(): React.ReactElement {
     }, PLAYER_LOAD_TIMEOUT_MS);
 
     return () => window.clearTimeout(timeout);
-  }, [embedSrc, mode, playerReloadKey, shouldUsePreloadedPlayer]);
-
-  useLayoutEffect(() => {
-    if (!shouldUsePreloadedPlayer) {
-      detachDefaultYouTubePlayer();
-      return;
-    }
-
-    const attachedPlayer = attachDefaultYouTubePlayer(playerRef.current, {
-      onLoad: () => setPlayerLoadState("ready"),
-      onError: () => setPlayerLoadState("failed"),
-    });
-
-    if (!attachedPlayer.attached) {
-      setPlayerLoadState("failed");
-      return;
-    }
-
-    return () => {
-      attachedPlayer.dispose();
-      detachDefaultYouTubePlayer();
-    };
-  }, [shouldUsePreloadedPlayer]);
+  }, [embedSrc, mode, playerReloadKey]);
 
   const playDefaultVideo = (): void => {
     setSource({
@@ -261,24 +217,21 @@ export default function YouTubeApp(): React.ReactElement {
         </main>
       ) : (
         <main
-          ref={playerRef}
           className="youtube-app__player"
           aria-label={t("youtube.playerAria")}
         >
-          {!shouldUsePreloadedPlayer && (
-            <iframe
-              key={iframeKey}
-              src={embedSrc}
-              title={source.title}
-              allow={YOUTUBE_IFRAME_ALLOW}
-              referrerPolicy={YOUTUBE_IFRAME_REFERRER_POLICY}
-              sandbox={YOUTUBE_IFRAME_SANDBOX}
-              loading="eager"
-              allowFullScreen
-              onLoad={() => setPlayerLoadState("ready")}
-              onError={() => setPlayerLoadState("failed")}
-            />
-          )}
+          <iframe
+            key={iframeKey}
+            src={embedSrc}
+            title={source.title}
+            allow={iframeAllow}
+            referrerPolicy={YOUTUBE_IFRAME_REFERRER_POLICY}
+            sandbox={YOUTUBE_IFRAME_SANDBOX}
+            loading="eager"
+            allowFullScreen
+            onLoad={() => setPlayerLoadState("ready")}
+            onError={() => setPlayerLoadState("failed")}
+          />
 
           {playerLoadState === "loading" && (
             <div className="youtube-app__player-state" aria-live="polite">

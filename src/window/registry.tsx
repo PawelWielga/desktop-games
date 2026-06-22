@@ -18,10 +18,6 @@ import snakeIcon from "@/assets/game-icons/snake.svg";
 import tetrisIcon from "@/assets/game-icons/tetris.svg";
 import tictactoeIcon from "@/assets/game-icons/tictactoe.svg";
 import settingsIcon from "@/assets/system-icons/settings.svg";
-import { startDefaultYouTubePreload } from "../apps/youtube/youtubePreloader";
-
-startDefaultYouTubePreload();
-
 export type WindowDefaults = {
   id: string;
   title: string;

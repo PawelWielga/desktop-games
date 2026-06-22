@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
+  getYouTubeIframeAllow,
   YOUTUBE_IFRAME_ALLOW,
   YOUTUBE_IFRAME_REFERRER_POLICY,
   YOUTUBE_IFRAME_SANDBOX,
@@ -51,5 +52,15 @@ describe("YouTube iframe policy", () => {
     expect(YOUTUBE_IFRAME_REFERRER_POLICY).toBe(
       "strict-origin-when-cross-origin"
     );
+  });
+
+  it("omits iframe allow in Firefox to avoid unsupported Feature Policy console noise", () => {
+    vi.stubGlobal("navigator", {
+      userAgent: "Mozilla/5.0 Firefox/152.0",
+    });
+
+    expect(getYouTubeIframeAllow()).toBeUndefined();
+
+    vi.unstubAllGlobals();
   });
 });
