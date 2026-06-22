@@ -1,6 +1,7 @@
-﻿import React, { useEffect } from "react";
+import React, { useEffect } from "react";
 import { SettingsProvider, useSettings } from "@/settings/SettingsContext";
 import Desktop from "@/desktop/Desktop";
+import DirectGameRoute, { getDirectGameIdFromLocation } from "@/direct/DirectGameRoute";
 import { WindowManager } from "@/window/WindowManager";
 
 /**
@@ -31,13 +32,31 @@ function ClockUpdater(): null {
   return null;
 }
 
-export default function App(): React.ReactElement {
+function DesktopShell(): React.ReactElement {
   return (
-    <SettingsProvider>
+    <>
       <ClockUpdater />
       <WindowManager>
         <Desktop />
       </WindowManager>
+    </>
+  );
+}
+
+function AppContent(): React.ReactElement {
+  const directGameId = getDirectGameIdFromLocation();
+
+  if (directGameId) {
+    return <DirectGameRoute appId={directGameId} />;
+  }
+
+  return <DesktopShell />;
+}
+
+export default function App(): React.ReactElement {
+  return (
+    <SettingsProvider>
+      <AppContent />
     </SettingsProvider>
   );
 }
