@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <title>desktop-games</title>
+    <script>
+      (function () {
+        var locationRef = window.location;
+        var pathname = locationRef.pathname;
+        var repoBase = "/desktop-games/";
+        var baseIndex = pathname.indexOf(repoBase);
+        var basePath = baseIndex >= 0 ? pathname.slice(0, baseIndex + repoBase.length) : "/";
+        var routePath = pathname.slice(basePath.length).replace(/^\/+/, "");
+        var query = routePath ? "?/" + routePath : locationRef.search;
+
+        if (routePath && locationRef.search) {
+          query += "&" + locationRef.search.slice(1);
+        }
+
+        locationRef.replace(basePath + query + locationRef.hash);
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>
