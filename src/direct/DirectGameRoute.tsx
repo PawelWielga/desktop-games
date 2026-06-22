@@ -1,4 +1,5 @@
 import React, { Suspense, useEffect, useMemo } from "react";
+import AppErrorBoundary from "@/components/AppErrorBoundary";
 import {
   getAppRegistration,
   type AppRegistration,
@@ -64,16 +65,16 @@ export function getDirectGameIdFromLocation(): string | undefined {
 
 function DirectGameContent({
   registration,
-  defaults,
+  loader,
 }: {
-  registration: AppRegistration;
-  defaults: WindowDefaults;
+  registration: AppRegistration & { window: NonNullable<AppRegistration["window"]> };
+  loader: WindowDefaults["loader"];
 }): React.ReactElement {
   const { t } = useTranslation();
   const title = registration.titleKey ? t(registration.titleKey) : registration.title;
   const GameComponent = useMemo(
-    () => React.lazy(defaults.loader as () => Promise<{ default: DirectGameComponent }>),
-    [defaults.loader]
+    () => React.lazy(loader as () => Promise<{ default: DirectGameComponent }>),
+    [loader]
   );
 
   useEffect(() => {
@@ -90,9 +91,19 @@ function DirectGameContent({
   return (
     <main className="direct-game-route" aria-label={title}>
       <div className="direct-game-route__content">
-        <Suspense fallback={<div className="direct-game-loading">Ładowanie gry…</div>}>
-          <GameComponent />
-        </Suspense>
+        <AppErrorBoundary
+          context={{
+            appId: registration.id,
+            appTitle: registration.title,
+            appTitleKey: registration.titleKey,
+            appKind: registration.kind,
+            launchMode: "direct-route",
+          }}
+        >
+          <Suspense fallback={<div className="direct-game-loading">Ładowanie gry…</div>}>
+            <GameComponent />
+          </Suspense>
+        </AppErrorBoundary>
       </div>
     </main>
   );
@@ -105,12 +116,5 @@ export default function DirectGameRoute({ appId }: DirectGameRouteProps): React.
     return <main className="direct-game-route direct-game-route--empty">Nie znaleziono gry.</main>;
   }
 
-  const defaults: WindowDefaults = {
-    id: registration.id,
-    title: registration.title,
-    titleKey: registration.titleKey,
-    ...registration.window,
-  };
-
-  return <DirectGameContent registration={registration} defaults={defaults} />;
+  return <DirectGameContent registration={registration} loader={registration.window.loader} />;
 }

@@ -42,6 +42,7 @@ Dokumentacja dla osób dodających nowe gry znajduje się tutaj:
 - [Adding a new game](docs/adding-a-game.md)
 - [Multiplayer architecture](docs/multiplayer.md)
 - [Icons and visual assets](docs/icons.md)
+- [Production error debugging](docs/production-error-debugging.md)
 
 ## Ikony i zasoby graficzne
 
