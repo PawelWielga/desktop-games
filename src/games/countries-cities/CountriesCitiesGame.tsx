@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { GameStartMenu, type GameStartMenuAction } from "@/components/GameStartMenu";
 import { useTranslation } from "@/i18n/useTranslation";
 import { InGameMultiplayerOverlay, MultiplayerPanel, useMultiplayerLobby } from "@/multiplayer";
-import type { GameResetMessage, GameSpecificMessage, GameStartMessage, PlayerProfile } from "@/multiplayer";
-import { groupSimilarAnswers, normalizeAnswer } from "./countriesCities.logic";
+import type { GameResetMessage, GameSpecificMessage, PlayerProfile } from "@/multiplayer";
+import { drawRoundLetter, groupSimilarAnswers, normalizeAnswer } from "./countriesCities.logic";
 import "./countriesCities.css";
 
 type Phase = "menu" | "lobby" | "setup" | "input" | "review" | "reveal" | "results";
@@ -18,6 +18,7 @@ type FinalScores = Record<string, number>;
 type ReviewReady = Record<number, string[]>;
 
 type SettingsMessage = GameSpecificMessage<"countries-cities:settings", { categories: string[]; endMode: EndMode }>;
+type StartRoundMessage = GameSpecificMessage<"countries-cities:start-round", { letter: string; usedLetters: string[] }>;
 type SubmitMessage = GameSpecificMessage<"countries-cities:submit", { player: PlayerProfile; answers: Record<string, string> }>;
 type DoneMessage = GameSpecificMessage<"countries-cities:done", { playerId: string }>;
 type DeadlineMessage = GameSpecificMessage<"countries-cities:deadline", { deadlineAt: number }>;
@@ -29,6 +30,7 @@ type RevealMessage = GameSpecificMessage<"countries-cities:reveal", { categoryIn
 type ResultsMessage = GameSpecificMessage<"countries-cities:results", { finalResults: FinalResults; finalScores: FinalScores }>;
 type CountriesCitiesMessage =
   | SettingsMessage
+  | StartRoundMessage
   | SubmitMessage
   | DoneMessage
   | DeadlineMessage
@@ -38,8 +40,7 @@ type CountriesCitiesMessage =
   | ReviewReadyMessage
   | RevealMessage
   | ResultsMessage
-  | GameResetMessage
-  | GameStartMessage;
+  | GameResetMessage;
 
 type VoteSummary = {
   ok: number;
@@ -127,6 +128,8 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const [categoriesText, setCategoriesText] = useState(DEFAULT_CATEGORIES.join("\n"));
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [endMode, setEndMode] = useState<EndMode>("timer");
+  const [currentLetter, setCurrentLetter] = useState<string | null>(null);
+  const [usedLetters, setUsedLetters] = useState<string[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [donePlayers, setDonePlayers] = useState<string[]>([]);
@@ -158,7 +161,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
     });
   }, []);
 
-  const resetRound = useCallback(() => {
+  const resetRound = useCallback((nextPhase: Phase = "setup") => {
     setAnswers({});
     setSubmissions([]);
     setDonePlayers([]);
@@ -169,8 +172,14 @@ export default function CountriesCitiesGame(): React.ReactElement {
     setFinalScores({});
     setCategoryIndex(0);
     setDeadlineAt(null);
-    setPhase("setup");
+    setPhase(nextPhase);
   }, []);
+
+  const resetGame = useCallback(() => {
+    setCurrentLetter(null);
+    setUsedLetters([]);
+    resetRound();
+  }, [resetRound]);
 
   const onMessage = useCallback(
     (message: CountriesCitiesMessage) => {
@@ -178,19 +187,13 @@ export default function CountriesCitiesGame(): React.ReactElement {
         setCategories(message.categories);
         setCategoriesText(message.categories.join("\n"));
         setEndMode(message.endMode);
+        setCurrentLetter(null);
+        setUsedLetters([]);
         resetRound();
-      } else if (message.type === "game:start") {
-        setAnswers({});
-        setSubmissions([]);
-        setDonePlayers([]);
-        setVotes({});
-        setDuplicateOverrides({});
-        setReviewReady({});
-        setFinalResults({});
-        setFinalScores({});
-        setCategoryIndex(0);
-        setDeadlineAt(null);
-        setPhase("input");
+      } else if (message.type === "countries-cities:start-round") {
+        setCurrentLetter(message.letter);
+        setUsedLetters(message.usedLetters);
+        resetRound("input");
       } else if (message.type === "countries-cities:submit") {
         upsertSubmission({ playerId: message.player.id, playerName: message.player.name, answers: message.answers });
         addDonePlayer(message.player.id);
@@ -222,10 +225,10 @@ export default function CountriesCitiesGame(): React.ReactElement {
         setFinalScores(message.finalScores);
         setPhase("results");
       } else if (message.type === "game:reset") {
-        resetRound();
+        resetGame();
       }
     },
-    [addDonePlayer, addReviewReady, addVote, resetRound, upsertSubmission]
+    [addDonePlayer, addReviewReady, addVote, resetGame, resetRound, upsertSubmission]
   );
 
   const lobby = useMultiplayerLobby<CountriesCitiesMessage>({ onGameMessage: onMessage });
@@ -239,6 +242,10 @@ export default function CountriesCitiesGame(): React.ReactElement {
   const secondsLeft = deadlineAt ? Math.max(0, Math.ceil((deadlineAt - now) / 1000)) : null;
   const currentCategory = categories[categoryIndex] ?? categories[0];
   const currentReady = reviewReady[categoryIndex] ?? [];
+  const hasAcceptedCurrentReview = currentReady.includes(lobby.localPlayer.id);
+  const acceptReviewButtonClassName = hasAcceptedCurrentReview
+    ? "countries-cities-primary countries-cities-accept-review countries-cities-review-accepted"
+    : "countries-cities-primary countries-cities-accept-review";
 
   useEffect(() => {
     if (!deadlineAt || phase !== "input") return undefined;
@@ -320,14 +327,20 @@ export default function CountriesCitiesGame(): React.ReactElement {
     if (parsedCategories.length === 0) return;
 
     setCategories(parsedCategories);
+    setCurrentLetter(null);
+    setUsedLetters([]);
     resetRound();
     lobby.sendMessage({ type: "countries-cities:settings", categories: parsedCategories, endMode });
   };
 
   const startInput = (): void => {
-    resetRound();
-    setPhase("input");
-    lobby.sendMessage({ type: "game:start" });
+    if (!isHost) return;
+
+    const nextRound = drawRoundLetter(usedLetters);
+    setCurrentLetter(nextRound.letter);
+    setUsedLetters(nextRound.usedLetters);
+    resetRound("input");
+    lobby.sendMessage({ type: "countries-cities:start-round", letter: nextRound.letter, usedLetters: nextRound.usedLetters });
   };
 
   const submitAnswers = (): void => {
@@ -364,6 +377,8 @@ export default function CountriesCitiesGame(): React.ReactElement {
   };
 
   const acceptReview = (): void => {
+    if (hasAcceptedCurrentReview) return;
+
     addReviewReady(categoryIndex, lobby.localPlayer.id);
     lobby.sendMessage({ type: "countries-cities:review-ready", categoryIndex, playerId: lobby.localPlayer.id });
   };
@@ -482,6 +497,13 @@ export default function CountriesCitiesGame(): React.ReactElement {
             <h2>{t("countriesCities.inputTitle")}</h2>
             {secondsLeft !== null && <strong>{t("countriesCities.timer", { seconds: secondsLeft })}</strong>}
           </div>
+          {currentLetter && (
+            <div className="countries-cities-letter-card" aria-live="polite">
+              <span>{t("countriesCities.roundLetter")}</span>
+              <strong>{currentLetter}</strong>
+              {usedLetters.length > 1 && <em>{t("countriesCities.usedLetters", { letters: usedLetters.join(", ") })}</em>}
+            </div>
+          )}
           <div className="countries-cities-grid">
             {categories.map((category) => (
               <label className="countries-cities-field" key={category}>
@@ -578,8 +600,8 @@ export default function CountriesCitiesGame(): React.ReactElement {
           </div>
           {!showAuthors ? (
             <div className="countries-cities-actions">
-              <button className="countries-cities-primary" type="button" onClick={acceptReview}>
-                {t("countriesCities.acceptReview")}
+              <button className={acceptReviewButtonClassName} type="button" onClick={acceptReview} aria-pressed={hasAcceptedCurrentReview}>
+                {t(hasAcceptedCurrentReview ? "countriesCities.acceptedReview" : "countriesCities.acceptReview")}
               </button>
               {isHost && (
                 <button type="button" disabled={currentReady.length < players.length} onClick={revealCategory}>
@@ -623,7 +645,7 @@ export default function CountriesCitiesGame(): React.ReactElement {
           type="button"
           onClick={() => {
             lobby.sendMessage({ type: "game:reset" });
-            resetRound();
+            resetGame();
           }}
         >
           {t("countriesCities.reset")}
