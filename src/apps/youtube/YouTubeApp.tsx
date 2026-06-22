@@ -118,7 +118,7 @@ export default function YouTubeApp(): React.ReactElement {
     value: DEFAULT_VIDEO_ID,
     title: "YouTube",
   });
-  const playerRef = useRef<HTMLElement | null>(null);
+  const preloadedPlayerHostRef = useRef<HTMLDivElement | null>(null);
 
   const embedSrc = useMemo(() => buildEmbedSrc(source), [source]);
   const iframeKey = `${embedSrc}:${playerReloadKey}`;
@@ -153,10 +153,13 @@ export default function YouTubeApp(): React.ReactElement {
       return;
     }
 
-    const attachedPlayer = attachDefaultYouTubePlayer(playerRef.current, {
-      onLoad: () => setPlayerLoadState("ready"),
-      onError: () => setPlayerLoadState("failed"),
-    });
+    const attachedPlayer = attachDefaultYouTubePlayer(
+      preloadedPlayerHostRef.current,
+      {
+        onLoad: () => setPlayerLoadState("ready"),
+        onError: () => setPlayerLoadState("failed"),
+      }
+    );
 
     if (!attachedPlayer.attached) {
       setPlayerLoadState("failed");
@@ -260,12 +263,13 @@ export default function YouTubeApp(): React.ReactElement {
           </div>
         </main>
       ) : (
-        <main
-          ref={playerRef}
-          className="youtube-app__player"
-          aria-label={t("youtube.playerAria")}
-        >
-          {!shouldUsePreloadedPlayer && (
+        <main className="youtube-app__player" aria-label={t("youtube.playerAria")}>
+          {shouldUsePreloadedPlayer ? (
+            <div
+              ref={preloadedPlayerHostRef}
+              className="youtube-app__player-frame-host"
+            />
+          ) : (
             <iframe
               key={iframeKey}
               src={embedSrc}
