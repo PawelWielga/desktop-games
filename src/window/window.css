@@ -176,3 +176,7 @@
   .window-header { padding-inline: clamp(0.45rem, 2vmin, var(--space-3)); }
   .window-controls { gap: clamp(0.25rem, 1.5vmin, var(--space-2)); }
 }
+
+.window-control.standalone {
+  font-size: 0.95rem;
+}
