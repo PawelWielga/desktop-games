@@ -10,6 +10,7 @@ import React, {
 import "./window.css";
 import { useWindowResize } from "./hooks/useWindowResize";
 import { getAppRegistration, getAppTitleKey, getWindowDefaults } from "./registry";
+import { wrapWindowContentWithProviders } from "./windowContentProviders";
 import { useWindowDrag } from "./hooks/useWindowDrag";
 import { useSettings } from "@/settings/SettingsContext";
 import { useTranslation } from "@/i18n/useTranslation";
@@ -238,7 +239,7 @@ export function WindowManager({ children }: { children: React.ReactNode }): Reac
 
       const next: WindowState = {
         id: spec.id,
-        content: spec.content,
+        content: wrapWindowContentWithProviders(spec.id, spec.content),
         title: spec.title ?? defaults?.title ?? spec.id,
         x: rect.x,
         y: rect.y,
