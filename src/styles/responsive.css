@@ -1,0 +1,197 @@
+/* Shared responsive guardrails for the desktop shell, app windows and game UIs. */
+:root {
+  --ui-compact-width: 42rem;
+  --ui-tiny-width: 24rem;
+  --ui-mobile-padding: clamp(0.5rem, 2.5vmin, 0.9rem);
+  --ui-mobile-gap: clamp(0.45rem, 2vmin, 0.75rem);
+  --ui-action-min-height: clamp(2.1rem, 6vmin, 2.55rem);
+  --ui-action-padding-x: clamp(0.65rem, 2.8vmin, 0.95rem);
+}
+
+html,
+body,
+#root {
+  max-width: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+img,
+svg,
+canvas,
+video,
+iframe {
+  max-width: 100%;
+}
+
+:where(.window-content, .game-start-menu, .game-start-card, .countries-cities-root, .countries-cities-card, .countries-cities-vote, .countries-cities-category, .countries-cities-score-list, .online-setup, .mp-panel, .ttt-root, .snake-root, .ms-root, .ps-root) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+:where(.window-content, .game-start-card, .countries-cities-card, .countries-cities-vote, .countries-cities-score-list li, .online-setup, .mp-panel) {
+  overflow-wrap: anywhere;
+}
+
+:where(.game-start-menu button, .countries-cities-root button, .online-setup button, .mp-panel button, .snake-hud button, .ms-root button, .ttt-root button, .ps-root button) {
+  max-width: 100%;
+  min-width: 0;
+  min-height: var(--ui-action-min-height);
+  padding-inline: var(--ui-action-padding-x);
+  white-space: normal;
+  text-wrap: balance;
+}
+
+:where(.countries-cities-actions, .countries-cities-vote > div:last-child, .mp-panel, .online-setup) {
+  min-width: 0;
+}
+
+.window-content {
+  overflow-x: hidden;
+}
+
+.taskbar-apps {
+  min-width: 0;
+}
+
+.taskbar-btn {
+  min-width: 0;
+  max-width: min(11rem, 26vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 42rem) {
+  :root {
+    --window-viewport-gap: max(0.35rem, env(safe-area-inset-left, 0px));
+    --game-ui-gap: var(--ui-mobile-gap);
+    --game-ui-padding: var(--ui-mobile-padding);
+    --game-ui-control-height: var(--ui-action-min-height);
+  }
+
+  .window {
+    min-width: min(18rem, calc(100dvw - (var(--window-viewport-gap) * 2)));
+    max-width: calc(100dvw - (var(--window-viewport-gap) * 2));
+  }
+
+  .window-header {
+    min-width: 0;
+  }
+
+  .window-title {
+    flex: 1 1 auto;
+  }
+
+  .window-controls {
+    gap: clamp(0.25rem, 1.6vmin, 0.45rem);
+  }
+
+  .taskbar-btn {
+    max-width: min(8.5rem, 34vw);
+    padding-inline: 0.55rem;
+  }
+
+  .game-start-menu {
+    width: 100%;
+    gap: var(--ui-mobile-gap);
+  }
+
+  .game-start-menu__heading h1 {
+    font-size: clamp(1.85rem, 11vw, 2.75rem);
+    letter-spacing: -0.04em;
+  }
+
+  .game-start-card,
+  .game-start-card--featured {
+    gap: var(--ui-mobile-gap);
+    padding: var(--ui-mobile-padding);
+  }
+
+  .countries-cities-root {
+    gap: var(--ui-mobile-gap);
+    padding: var(--ui-mobile-padding);
+    overflow-x: hidden;
+  }
+
+  .countries-cities-card {
+    gap: var(--ui-mobile-gap);
+    padding: var(--ui-mobile-padding);
+  }
+
+  .countries-cities-header {
+    align-items: stretch;
+  }
+
+  .countries-cities-header > *,
+  .countries-cities-actions > *,
+  .countries-cities-vote > div:last-child > * {
+    flex: 1 1 min(12rem, 100%);
+  }
+
+  .countries-cities-accept-review,
+  .countries-cities-submit-answers {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .countries-cities-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 24rem) {
+  :root {
+    --desktop-icon-size: clamp(3.1rem, 16vw, 3.8rem);
+    --desktop-icon-font-size: clamp(1.55rem, 7vw, 2.05rem);
+    --desktop-icon-column: calc(var(--desktop-icon-size) + 0.75rem);
+    --desktop-icon-row: calc(var(--desktop-icon-size) + 2.1rem);
+    --window-control-size: 1.55rem;
+  }
+
+  .desktop-grid {
+    gap: 1rem 0.45rem;
+  }
+
+  .icon-label {
+    font-size: 0.68rem;
+  }
+
+  .taskbar {
+    left: max(env(safe-area-inset-left, 0px), 0.55rem);
+    right: max(env(safe-area-inset-right, 0px), 0.55rem);
+  }
+
+  .system-tray {
+    display: none;
+  }
+
+  .window-header {
+    padding-inline: 0.45rem;
+  }
+
+  .countries-cities-letter-card strong {
+    font-size: clamp(2rem, 18vw, 3rem);
+  }
+
+  .countries-cities-chip-list li,
+  .countries-cities-header strong {
+    padding-inline: 0.5rem;
+  }
+}
+
+@media (max-height: 38rem) {
+  .window-content,
+  .countries-cities-root {
+    overscroll-behavior: contain;
+  }
+
+  .countries-cities-letter-card {
+    padding-block: 0.55rem;
+  }
+
+  .countries-cities-letter-card strong {
+    font-size: clamp(2rem, 10vmin, 3rem);
+  }
+}
