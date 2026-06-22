@@ -167,21 +167,131 @@ body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
   white-space: nowrap;
 }
 
-/* Mobile tweaks */
+/* Mobile phone shell */
 @media (max-width: 48rem) {
-  .license-watermark {
-    right: max(env(safe-area-inset-right, 0px), var(--space-3));
-    bottom: calc(var(--taskbar-height) + max(env(safe-area-inset-bottom, 0px), var(--space-3)));
-    font-size: clamp(0.6875rem, 2.4vmin, 0.75rem);
+  :root {
+    --taskbar-height: calc(4.75rem + env(safe-area-inset-bottom, 0px));
+    --desktop-icon-size: clamp(3.8rem, 18vw, 4.8rem);
+    --desktop-icon-font-size: clamp(1.9rem, 8vw, 2.5rem);
+    --desktop-icon-column: calc(var(--desktop-icon-size) + 1rem);
+    --desktop-icon-row: calc(var(--desktop-icon-size) + 2.35rem);
+  }
+
+  body {
+    background: #05070d;
+  }
+
+  .desktop-root {
+    min-height: 100dvh;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 25% 15%, rgba(96, 165, 250, 0.24), transparent 34%),
+      radial-gradient(circle at 85% 30%, rgba(45, 212, 191, 0.18), transparent 32%),
+      #05070d;
+  }
+
+  .desktop-root::before {
+    content: "";
+    position: fixed;
+    top: max(env(safe-area-inset-top, 0px), 0.55rem);
+    left: 50%;
+    width: min(7.5rem, 34vw);
+    height: 0.32rem;
+    border-radius: 999px;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.5);
+    z-index: calc(var(--z-windows) + 2);
+    pointer-events: none;
   }
 
   .desktop-grid {
-    padding: var(--space-3);
-    gap: var(--space-3);
+    height: 100dvh;
+    padding:
+      calc(max(env(safe-area-inset-top, 0px), 0.75rem) + 2.75rem)
+      max(env(safe-area-inset-right, 0px), 0.85rem)
+      calc(var(--taskbar-height) + 1.15rem)
+      max(env(safe-area-inset-left, 0px), 0.85rem);
+    grid-template-columns: repeat(auto-fit, var(--desktop-icon-column));
+    gap: 1.3rem 0.65rem;
+    align-content: start;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .desktop-icon {
+    border-radius: 1.35rem;
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.22);
+    box-shadow: 0 0.55rem 1.15rem rgba(0, 0, 0, 0.24);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .desktop-icon:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: translateY(-0.125rem);
+  }
+
+  .desktop-icon.is-dragging {
+    transform: scale(1.04);
+  }
+
+  .desktop-icon__asset {
+    width: clamp(2.45rem, 11vw, 3.1rem);
+    height: clamp(2.45rem, 11vw, 3.1rem);
+  }
+
+  .icon-label {
+    top: calc(var(--desktop-icon-size) + 0.45rem);
+    width: var(--desktop-icon-column);
+    max-width: var(--desktop-icon-column);
+    min-height: 2rem;
+    white-space: normal;
+    line-height: 1.15;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    font-size: clamp(0.68rem, 3.2vw, 0.78rem);
+  }
+
+  .license-watermark {
+    display: none;
+  }
+
+  .taskbar {
+    left: max(env(safe-area-inset-left, 0px), 1rem);
+    right: max(env(safe-area-inset-right, 0px), 1rem);
+    bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+    height: 4rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 2rem;
+    background: rgba(8, 13, 23, 0.72);
+    box-shadow: 0 0.85rem 2rem rgba(0, 0, 0, 0.35);
+    justify-content: center;
+  }
+
+  .start-button {
+    position: static;
+    width: 3.1rem;
+    height: 3.1rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.13);
+    font-size: 1.2rem;
+  }
+
+  .start-button:hover {
+    background: rgba(255, 255, 255, 0.22);
   }
 
   .taskbar-apps {
-    max-width: 48vw;
+    display: none;
+  }
+
+  .system-tray {
+    right: 1.15rem;
+    font-size: 0.78rem;
   }
 
   .system-tray span:not(.clock) {
