@@ -4,6 +4,7 @@ import { useWindowManager } from "@/window/WindowManager";
 import { getAppRegistration, getDesktopApps, getWindowDefaults } from "@/window/registry";
 import ProgressiveImage from "@/components/ProgressiveImage";
 import { useTranslation } from "@/i18n/useTranslation";
+import { PlayerSettingsProvider } from "@/settings/player/PlayerSettingsContext";
 import {
   createDesktopIconLayout,
   isIconPosition,
@@ -391,22 +392,11 @@ export default function Desktop(): React.ReactElement {
     taskRefs.current[i] = el;
   };
 
-  // Lazy-load settings panel and provider chunk (single definition)
+  // Lazy-load settings panel chunk (single definition). Player settings context is shared with games.
   const PlayerSettingsPanel = React.useMemo(
     () => React.lazy(() => import("@/settings/player/PlayerSettingsPanel")),
     []
   );
-  const [PlayerSettingsProvider, setPlayerSettingsProvider] =
-    useState<React.ComponentType<{ children: React.ReactNode }> | null>(null);
-  useEffect(() => {
-    let mounted = true;
-    import("@/settings/player/PlayerSettingsContext").then((mod) => {
-      if (mounted) setPlayerSettingsProvider(() => mod.PlayerSettingsProvider as React.ComponentType<{ children: React.ReactNode }>);
-    });
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
  return (
    <div className="desktop-root">
@@ -512,16 +502,14 @@ export default function Desktop(): React.ReactElement {
 
       {/* Settings modal portal-like render above taskbar */}
       <React.Suspense fallback={null}>
-        {PlayerSettingsProvider && (
-          <PlayerSettingsProvider>
-            <PlayerSettingsPanel
-              open={showSettings}
-              onClose={() => setShowSettings(false)}
-              variant={window.innerWidth <= 640 ? "drawer" : "modal"}
-              initialFocusSelector="#ps-language"
-            />
-          </PlayerSettingsProvider>
-        )}
+        <PlayerSettingsProvider>
+          <PlayerSettingsPanel
+            open={showSettings}
+            onClose={() => setShowSettings(false)}
+            variant={window.innerWidth <= 640 ? "drawer" : "modal"}
+            initialFocusSelector="#ps-language"
+          />
+        </PlayerSettingsProvider>
       </React.Suspense>
     </div>
   );
