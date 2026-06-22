@@ -642,10 +642,12 @@ export default function CountriesCitiesGame(): React.ReactElement {
             ))}
         </ol>
         {isHost && (
+          <>
             <button className="countries-cities-primary" type="button" disabled={!hasAvailableRoundLetters} onClick={startInput}>
               {t("countriesCities.nextRound")}
             </button>
             {!hasAvailableRoundLetters && <p>{t("countriesCities.allLettersUsed")}</p>}
+          </>
         )}
         <button
           type="button"
