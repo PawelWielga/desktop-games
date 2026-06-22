@@ -6,10 +6,7 @@ import {
   YOUTUBE_IFRAME_REFERRER_POLICY,
   YOUTUBE_IFRAME_SANDBOX,
 } from "./youtubeIframePolicy";
-import {
-  buildDefaultYouTubeSrc,
-  startDefaultYouTubePreload,
-} from "./youtubePreloader";
+import { buildDefaultYouTubeSrc } from "./youtubePreloader";
 import "./youtube.css";
 
 const DEFAULT_VIDEO_ID = "dQw4w9WgXcQ";
@@ -113,9 +110,6 @@ export default function YouTubeApp(): React.ReactElement {
   const iframeKey = `${embedSrc}:${playerReloadKey}`;
   const iframeAllow = getYouTubeIframeAllow();
 
-  useEffect(() => {
-    startDefaultYouTubePreload();
-  }, []);
 
   useEffect(() => {
     if (mode !== "player") return;
