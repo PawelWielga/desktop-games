@@ -5,6 +5,7 @@ import {
   type WindowDefaults,
 } from "@/window/registry";
 import { useTranslation } from "@/i18n/useTranslation";
+import { resolveDirectGameRouteAppId } from "./directGameRouteAliases";
 import "./direct-game-route.css";
 
 type DirectGameRouteProps = {
@@ -50,7 +51,8 @@ export function getDirectGameIdFromPathname(
 
   if (routeSegments.length !== 1) return undefined;
 
-  const appId = safelyDecodePathSegment(routeSegments[0] ?? "");
+  const routeAppId = safelyDecodePathSegment(routeSegments[0] ?? "");
+  const appId = resolveDirectGameRouteAppId(routeAppId);
   const app = getAppRegistration(appId);
   return isDirectGameRegistration(app) ? app.id : undefined;
 }
