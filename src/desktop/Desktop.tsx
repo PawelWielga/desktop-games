@@ -5,6 +5,7 @@ import { getAppRegistration, getDesktopApps, getWindowDefaults } from "@/window/
 import ProgressiveImage from "@/components/ProgressiveImage";
 import { useTranslation } from "@/i18n/useTranslation";
 import { PlayerSettingsProvider } from "@/settings/player/PlayerSettingsContext";
+import { getDirectGameRouteSegment } from "@/direct/directGameRouteAliases";
 import {
   createDesktopIconLayout,
   isIconPosition,
@@ -40,6 +41,7 @@ type DragState = {
 
 const DESKTOP_ICON_LAYOUT_STORAGE_KEY = "desktop.iconLayout.v1";
 const DRAG_THRESHOLD_PX = 4;
+const PHONE_VIEWPORT_MAX_WIDTH = 767;
 
 const readStoredLayout = (): DesktopIconLayout => {
   if (typeof window === "undefined") return {};
@@ -125,6 +127,19 @@ const applyDropPosition = (layout: DesktopIconLayout, draggedId: string, nextPos
   return nextLayout;
 };
 
+const getViewportWidth = (): number => {
+  if (typeof window === "undefined") return Number.POSITIVE_INFINITY;
+  return Math.floor(window.visualViewport?.width ?? window.innerWidth);
+};
+
+const isPhoneSizedViewport = (): boolean => getViewportWidth() <= PHONE_VIEWPORT_MAX_WIDTH;
+
+const getDirectGameRouteUrl = (appId: string): string => {
+  const base: string = (import.meta as any).env?.BASE_URL ?? "/";
+  const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+  return `${normalizedBase}${encodeURIComponent(getDirectGameRouteSegment(appId))}`;
+};
+
 export default function Desktop(): React.ReactElement {
   const { open, handles, focus } = useWindowManager();
   const { t } = useTranslation();
@@ -190,6 +205,11 @@ export default function Desktop(): React.ReactElement {
 
     if (app.kind === "system") {
       if (app.id === "settings") setShowSettings(true);
+      return;
+    }
+
+    if (app.kind === "game" && isPhoneSizedViewport()) {
+      window.location.assign(getDirectGameRouteUrl(id));
       return;
     }
 
@@ -398,8 +418,8 @@ export default function Desktop(): React.ReactElement {
     []
   );
 
- return (
-   <div className="desktop-root">
+  return (
+    <div className="desktop-root">
       {/* Wallpaper layer */}
       <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }} aria-hidden>
         {(() => {
