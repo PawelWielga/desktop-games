@@ -9,6 +9,11 @@ import React, {
 import youtubeIcon from "@/assets/brand-icons/youtube.svg";
 import { useTranslation } from "@/i18n/useTranslation";
 import {
+  YOUTUBE_IFRAME_ALLOW,
+  YOUTUBE_IFRAME_REFERRER_POLICY,
+  YOUTUBE_IFRAME_SANDBOX,
+} from "./youtubeIframePolicy";
+import {
   attachDefaultYouTubePlayer,
   buildDefaultYouTubeSrc,
   canUsePreloadedYouTubePlayer,
@@ -265,8 +270,9 @@ export default function YouTubeApp(): React.ReactElement {
               key={iframeKey}
               src={embedSrc}
               title={source.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
+              allow={YOUTUBE_IFRAME_ALLOW}
+              referrerPolicy={YOUTUBE_IFRAME_REFERRER_POLICY}
+              sandbox={YOUTUBE_IFRAME_SANDBOX}
               loading="eager"
               allowFullScreen
               onLoad={() => setPlayerLoadState("ready")}

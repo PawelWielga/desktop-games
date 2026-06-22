@@ -1,3 +1,9 @@
+import {
+  YOUTUBE_IFRAME_ALLOW,
+  YOUTUBE_IFRAME_REFERRER_POLICY,
+  YOUTUBE_IFRAME_SANDBOX,
+} from "./youtubeIframePolicy";
+
 const DEFAULT_YOUTUBE_VIDEO_ID = "dQw4w9WgXcQ";
 const PRELOADED_PLAYER_ID = "youtube-default-preloaded-player";
 const PRELOADED_PLAYER_WIDTH = 320;
@@ -140,9 +146,9 @@ export const startDefaultYouTubePreload = (): void => {
   iframe.title = "YouTube";
   iframe.src = buildDefaultYouTubeSrc(true);
   iframe.setAttribute("loading", "eager");
-  iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-  iframe.allow =
-    "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+  iframe.setAttribute("referrerpolicy", YOUTUBE_IFRAME_REFERRER_POLICY);
+  iframe.setAttribute("sandbox", YOUTUBE_IFRAME_SANDBOX);
+  iframe.allow = YOUTUBE_IFRAME_ALLOW;
   iframe.setAttribute("allowfullscreen", "true");
   iframe.addEventListener("load", () => {
     preloadedIframeLoadState = "ready";
