@@ -24,7 +24,9 @@ describe("youtube iframe policy", () => {
     expect(sandboxTokens).not.toContain("allow-popups");
     expect(sandboxTokens).not.toContain("allow-popups-to-escape-sandbox");
     expect(sandboxTokens).not.toContain("allow-top-navigation");
-    expect(sandboxTokens).not.toContain("allow-top-navigation-by-user-activation");
+    expect(sandboxTokens).not.toContain(
+      "allow-top-navigation-by-user-activation"
+    );
   });
 
   it("does not grant optional share or clipboard permissions", () => {
