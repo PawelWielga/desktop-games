@@ -1,180 +1,103 @@
-/* Window manager root must NOT isolate backdrop if we want to see the page wallpaper behind headers */
 .wm-root {
   position: fixed;
   inset: 0;
-  pointer-events: none; /* windows will re-enable */
-  /* remove isolation that blocked sampling from page background */
-  /* isolation: isolate; */
-  z-index: 1; /* sit above desktop wallpaper but below overlays */
+  pointer-events: none;
+  z-index: 1;
 }
 
-/* Window container */
 .window {
   position: absolute;
-  /* keep shell slightly translucent like legacy so header/backdrop has something to sample */
-  background: rgba(255,255,255,0.05);
-  color: var(--window-fg, #eaeaea);
+  background: var(--window-bg, #ffffff);
+  color: var(--window-fg, #111111);
   border: 1px solid rgba(255,255,255,0.25);
-  border-radius: var(--radius-2); /* softened corners with token */
-  box-shadow: var(--shadow-xl, var(--shadow-3));
+  border-radius: var(--radius-2, 0.75rem);
+  box-shadow: var(--shadow-xl, 0 1rem 3rem rgba(0,0,0,0.25));
   overflow: hidden;
-  pointer-events: auto; /* interactive */
+  pointer-events: auto;
   display: flex;
   flex-direction: column;
-  /* optional subtle global glass on window body */
-  -webkit-backdrop-filter: blur(0.375rem) saturate(120%);
-  backdrop-filter: blur(0.375rem) saturate(120%);
-  min-width: min(32rem, calc(100dvw - (var(--window-viewport-gap) * 2)));
-  min-height: min(20rem, calc(100dvh - var(--taskbar-height) - var(--trial-banner-reserved-height) - (var(--window-viewport-gap) * 2)));
-  /* Allow window to grow up to the safe desktop area without sliding under overlays. */
-  max-width: calc(100dvw - (var(--window-viewport-gap) * 2));
-  max-height: calc(100dvh - var(--taskbar-height) - var(--trial-banner-reserved-height) - (var(--window-viewport-gap) * 2));
-  z-index: var(--z-window);
-  /* Enable smooth visual feedback during drag */
-  will-change: left, top;
-  touch-action: none; /* ensure pointer events behave consistently during drag */
+  min-width: min(20rem, calc(100dvw - (var(--window-viewport-gap, 12px) * 2)));
+  min-height: min(16rem, calc(100dvh - var(--taskbar-height, 48px) - var(--trial-banner-reserved-height, 0px) - (var(--window-viewport-gap, 12px) * 2)));
 }
 
-/* Glassmorphism window titlebar */
 .window-header {
-  height: var(--window-header-height);
+  height: var(--window-header-height, 2.25rem);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--space-3);
+  padding: 0 var(--space-3, 0.75rem);
   user-select: none;
-  cursor: grab; /* indicate draggable area */
-  position: relative;
-  z-index: 1;
-  /* Ensure header participates in pointer events */
-  pointer-events: auto;
-  /* Glass look from legacy */
-  background: rgba(255, 255, 255, 0.12);
-  background-image: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05));
-  -webkit-backdrop-filter: blur(0.75rem) saturate(140%);
-  backdrop-filter: blur(0.75rem) saturate(140%);
-  border-bottom: 1px solid rgba(255,255,255,0.25);
-  box-shadow:
-    0 0.5rem 1.5rem rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  cursor: grab;
+  background: rgba(255,255,255,0.12);
   color: #fff;
-}
-
-/* Fallback when backdrop-filter unsupported */
-@supports not ((-webkit-backdrop-filter: none) or (backdrop-filter: none)) {
-  .window-header {
-    background: rgba(20, 20, 20, 0.65);
-    color: #fff;
-  }
 }
 
 .window-title {
-  font-size: clamp(0.8125rem, 2vmin, 0.875rem);
+  font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: .0125rem;
-  text-shadow: 0 0.0625rem 0.125rem rgba(0,0,0,0.35);
-  color: #fff;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* Controls to match legacy look */
 .window-controls {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-2, 0.5rem);
   align-items: center;
-  /* Keep buttons clickable but do not allow them to capture drags started on header text area */
-  pointer-events: auto;
   flex-shrink: 0;
 }
+
 .window-control {
-  width: var(--window-control-size);
-  height: var(--window-control-size);
+  width: var(--window-control-size, 1.75rem);
+  height: var(--window-control-size, 1.75rem);
   border: 1px solid rgba(255,255,255,0.25);
-  border-radius: var(--radius-1);
+  border-radius: var(--radius-1, 0.375rem);
   background: rgba(255,255,255,0.12);
   color: #fff;
   cursor: pointer;
-  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  touch-action: manipulation;
-  transition: transform .12s ease, background .12s ease;
-  /* Prevent dragging when starting on a control */
-  -webkit-user-drag: none;
-  user-select: none;
-}
-.window-control:hover {
-  background: rgba(255,255,255,0.22);
-  transform: translateY(-0.0625rem);
-}
-.window-control.close:hover {
-  background: #e81123;
-  border-color: rgba(255,255,255,0.35);
-  color: #fff;
 }
 
-/* Content opaque so apps do not bleed through; header remains glassy */
+.window-control:hover {
+  background: rgba(255,255,255,0.22);
+}
+
+.window-control.close:hover {
+  background: #e81123;
+}
+
+.window-control.standalone {
+  font-size: 0.95rem;
+}
+
 .window-content {
-  /* Fill remaining space below header and allow scrolling if needed */
-  height: calc(100% - var(--window-header-height));
   flex: 1 1 auto;
-  min-height: 0; /* prevent flex min-content from shrinking container */
+  min-height: 0;
   padding: 0;
   overflow: auto;
   background: var(--window-bg, #ffffff);
 }
 
-/* Resizer */
 .window-resizer {
   position: absolute;
-  right: 0; bottom: 0;
-  width: clamp(1rem, 3vmin, 1.375rem);
-  height: clamp(1rem, 3vmin, 1.375rem);
+  right: 0;
+  bottom: 0;
+  width: 1.25rem;
+  height: 1.25rem;
   cursor: nwse-resize;
-  background:
-    linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.3) 50%),
-    linear-gradient(135deg, transparent 70%, rgba(255,255,255,0.15) 70%);
-  opacity: 0.7;
 }
 
-/* Theme variables */
 :root, [data-theme="dark"] {
   --window-bg: #0f141b;
   --window-fg: #e7eaf0;
 }
+
 [data-theme="light"] {
   --window-bg: #f2f4f8;
   --window-fg: #1f2430;
-}
-
-/* Focus outlines for a11y */
-.window:focus-visible,
-.window-control:focus-visible {
-  outline: 0.125rem solid color-mix(in srgb, var(--color-accent) 70%, #ffffff 30%);
-  outline-offset: 0.125rem;
-  border-radius: var(--radius-2);
-}
-
-/* High-contrast larger hit targets when enabled via data attribute on root */
-:root[data-a11y-targets="high"] .window-resizer {
-  width: clamp(1.25rem, 4vmin, 1.5rem);
-  height: clamp(1.25rem, 4vmin, 1.5rem);
-}
-:root[data-a11y-targets="high"] .window-header {
-  min-height: clamp(2.5rem, 6dvh, 2.75rem);
-}
-
-/* UI quality pass: safer windows on 320px and low displays */
-.window { min-width: min(20rem, calc(100dvw - (var(--window-viewport-gap) * 2))); min-height: min(16rem, calc(100dvh - var(--taskbar-height) - var(--trial-banner-reserved-height) - (var(--window-viewport-gap) * 2))); }
-.window-content { overscroll-behavior: contain; }
-@media (max-width: 36rem), (max-height: 38rem) {
-  .window { border-radius: clamp(0.45rem, 1.5vmin, var(--radius-2)); }
-  .window-header { padding-inline: clamp(0.45rem, 2vmin, var(--space-3)); }
-  .window-controls { gap: clamp(0.25rem, 1.5vmin, var(--space-2)); }
 }
 
 .window-error-boundary {
@@ -184,19 +107,12 @@
   align-items: flex-start;
   justify-content: center;
   gap: var(--space-4, 1rem);
-  padding: clamp(var(--space-4, 1rem), 4vw, var(--space-6, 1.5rem));
-  color: var(--window-fg, var(--color-fg, #111111));
-  background: var(--window-bg, var(--color-bg, #ffffff));
-  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+  padding: var(--space-6, 1.5rem);
+  color: var(--window-fg, #111111);
+  background: var(--window-bg, #ffffff);
 }
 
 .window-error-boundary__icon {
-  display: grid;
-  width: 3rem;
-  height: 3rem;
-  place-items: center;
-  border-radius: 999px;
-  background: rgba(255, 193, 7, 0.18);
   font-size: 1.5rem;
 }
 
@@ -206,87 +122,26 @@
   max-width: 42rem;
 }
 
-.window-error-boundary__body h2 {
-  margin: 0;
-  font-size: clamp(1.1rem, 2.5vw, 1.45rem);
-}
-
+.window-error-boundary__body h2,
 .window-error-boundary__body p {
   margin: 0;
-  color: var(--color-muted, #6b7280);
-  line-height: 1.5;
 }
 
 .window-error-boundary__close {
-  justify-self: start;
   border: 1px solid var(--color-border, rgba(15, 23, 42, 0.2));
   border-radius: var(--radius-2, 0.5rem);
   padding: var(--space-2, 0.5rem) var(--space-4, 1rem);
-  background: rgba(255, 255, 255, 0.12);
-  background: color-mix(
-    in srgb,
-    var(--window-bg, var(--color-bg, #ffffff)) 86%,
-    var(--window-fg, var(--color-fg, #111111)) 14%
-  );
-  color: var(--window-fg, var(--color-fg, #111111));
-  font-weight: 700;
   cursor: pointer;
-}
-
-.window-error-boundary__close:hover {
-  background: rgba(255, 255, 255, 0.2);
-  background: color-mix(
-    in srgb,
-    var(--window-bg, var(--color-bg, #ffffff)) 78%,
-    var(--window-fg, var(--color-fg, #111111)) 22%
-  );
 }
 
 .window-error-boundary__details {
   width: 100%;
   max-width: 52rem;
-  border: 1px solid var(--color-border, rgba(15, 23, 42, 0.14));
-  border-radius: var(--radius-2, 0.5rem);
-  padding: var(--space-3, 0.75rem);
-  background: rgba(255, 255, 255, 0.08);
-  background: color-mix(
-    in srgb,
-    var(--window-bg, var(--color-bg, #ffffff)) 90%,
-    var(--window-fg, var(--color-fg, #111111)) 10%
-  );
-}
-
-.window-error-boundary__details summary {
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.window-error-boundary__details dl {
-  display: grid;
-  gap: var(--space-2, 0.5rem);
-  margin: var(--space-3, 0.75rem) 0 0;
-}
-
-.window-error-boundary__details dt {
-  font-weight: 700;
-}
-
-.window-error-boundary__details dd {
-  margin: 0;
 }
 
 .window-error-boundary__details pre {
   max-height: 14rem;
   overflow: auto;
-  margin: 0;
-  border-radius: var(--radius-1, 0.375rem);
-  padding: var(--space-3, 0.75rem);
-  background: rgba(15, 23, 42, 0.08);
-  background: color-mix(
-    in srgb,
-    var(--window-bg, var(--color-bg, #ffffff)) 82%,
-    var(--window-fg, var(--color-fg, #111111)) 18%
-  );
   white-space: pre-wrap;
   word-break: break-word;
 }
