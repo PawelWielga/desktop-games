@@ -5,6 +5,7 @@ import App from "./App";
 import { restoreGitHubPagesSpaRoute } from "./routing/githubPagesSpa";
 import "./styles/base.css";
 import "./index.css";
+import "./styles/responsive.css";
 
 restoreGitHubPagesSpaRoute();
 
